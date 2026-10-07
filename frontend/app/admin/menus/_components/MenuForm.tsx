@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import type { MenuFormState } from "../_actions";
+import { MENU_CATEGORIES } from "../_lib/menuCategories";
 import styles from "../menus.module.css";
 
 type MenuAction = (state: MenuFormState, data: FormData) => Promise<MenuFormState>;
@@ -14,6 +15,7 @@ export function MenuForm({ action, initialState, cancelHref, submitLabel }: {
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
+  const hasLegacyCategory = state.values.category && !MENU_CATEGORIES.some((category) => category === state.values.category);
 
   return (
     <form action={formAction} className={styles.menuForm}>
@@ -37,7 +39,11 @@ export function MenuForm({ action, initialState, cancelHref, submitLabel }: {
         </div>
         <div className={styles.formField}>
           <label htmlFor="category">카테고리</label>
-          <input id="category" name="category" type="text" maxLength={40} required defaultValue={state.values.category} aria-invalid={!!state.errors.category} aria-describedby={state.errors.category ? "category-error" : undefined} />
+          <select id="category" name="category" required defaultValue={state.values.category} aria-invalid={!!state.errors.category} aria-describedby={state.errors.category ? "category-error" : undefined}>
+            <option value="" disabled>카테고리를 선택해 주세요</option>
+            {hasLegacyCategory && <option value={state.values.category}>{state.values.category} (기존 분류)</option>}
+            {MENU_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+          </select>
           {state.errors.category && <span id="category-error" className={styles.fieldError}>{state.errors.category}</span>}
         </div>
         <div className={styles.formField}>

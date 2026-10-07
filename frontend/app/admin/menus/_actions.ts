@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { MENU_IMAGE_PLACEHOLDER, mockMenuRepository, type MenuInput } from "@/app/_lib/mock/menus";
 import { requireRole } from "@/app/_lib/session/session";
+import { MENU_CATEGORIES } from "./_lib/menuCategories";
 
 type Field = "name" | "nameEn" | "imageUrl" | "description" | "category" | "price" | "available" | "isNew" | "recommended";
 
@@ -13,7 +14,7 @@ export type MenuFormState = {
   message?: string;
 };
 
-function validate(formData: FormData): { state: MenuFormState; input?: MenuInput } {
+function validate(formData: FormData, existingCategory?: string): { state: MenuFormState; input?: MenuInput } {
   const values = {
     name: String(formData.get("name") ?? "").trim(),
     nameEn: String(formData.get("nameEn") ?? "").trim(),
@@ -32,7 +33,9 @@ function validate(formData: FormData): { state: MenuFormState; input?: MenuInput
     errors.imageUrl = "HTTPS 이미지 주소나 /images/menus/ 경로를 입력해 주세요.";
   }
   if (!values.description || values.description.length > 500) errors.description = "설명은 1~500자로 입력해 주세요.";
-  if (!values.category || values.category.length > 40) errors.category = "카테고리는 1~40자로 입력해 주세요.";
+  if (!values.category || values.category.length > 40 || (!MENU_CATEGORIES.some((category) => category === values.category) && values.category !== existingCategory)) {
+    errors.category = "목록에서 카테고리를 선택해 주세요.";
+  }
   const price = Number(values.price);
   if (!/^\d+$/.test(values.price) || !Number.isSafeInteger(price) || price < 1) {
     errors.price = "가격은 1원 이상의 정수로 입력해 주세요.";
@@ -90,7 +93,13 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 
 export async function updateMenu(id: string, _previous: MenuFormState, formData: FormData): Promise<MenuFormState> {
   await requireRole("admin", `/admin/menus/${id}/edit`);
-  const { state, input } = validate(formData);
+  let existingCategory: string | undefined;
+  try {
+    existingCategory = (await mockMenuRepository.get(id))?.category;
+  } catch {
+    return { ..._previous, message: "메뉴를 수정하지 못했습니다. 다시 시도해 주세요." };
+  }
+  const { state, input } = validate(formData, existingCategory);
   if (!input) return state;
 
   let updated;
