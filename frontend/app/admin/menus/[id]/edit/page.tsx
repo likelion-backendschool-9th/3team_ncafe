@@ -22,7 +22,7 @@ export default async function EditMenuPage({ params }: { params: Promise<{ id: s
       <div className={styles.heading}><div><p className="eyebrow">메뉴 관리</p><h1>메뉴 수정</h1><p>메뉴 정보를 변경합니다.</p></div></div>
       <MenuForm
         action={updateMenu.bind(null, id)}
-        initialState={{ values: { name: menu.name, description: menu.description, price: String(menu.price), available: String(menu.available) }, errors: {} }}
+        initialState={{ values: { name: menu.name, nameEn: menu.nameEn, imageUrl: menu.imageUrl, description: menu.description, category: menu.category, price: String(menu.price), available: String(menu.available), isNew: String(menu.isNew), recommended: String(menu.recommended) }, errors: {} }}
         cancelHref={`/admin/menus/${id}`}
         submitLabel="변경 저장"
       />
