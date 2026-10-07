@@ -1,73 +1,243 @@
-/* ===== 디자인 시스템 =====
- * 변수는 @newtil/design-tokens 가, 컴포넌트는 @newtil/materials 가, 브랜드 값은 NCafe 테마가 정한다.
- * 페이지 모듈 CSS 는 레이아웃만 갖고 컴포넌트(버튼·카드·필드·배지)는 newtil 클래스를 문자열로 쓴다.
- */
-@import "@newtil/design-tokens";
-@import "@newtil/materials/index.css";
-@import "@newtil/materials/themes/ncafe.css";
-/* 마감 층 — 규격 밖의 배치·간격은 유틸리티(속성:값)와 속성:ex 로. postcss.config.js 의 JIT 가 쓰인 것만 넣는다. */
-@import "@newtil/css";
-
-* {
-  box-sizing: border-box;
+:root {
+  color-scheme: light;
+  --background: #f7f4ef;
+  --surface: #ffffff;
+  --surface-soft: #f2ece3;
+  --text: #26221d;
+  --muted: #736c64;
+  --border: #ded7ce;
+  --accent: #6b4330;
+  --accent-hover: #543221;
+  --danger: #ad3434;
 }
 
-html,
+* { box-sizing: border-box; }
+
+html { min-height: 100%; }
+
 body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   margin: 0;
-  padding: 0;
+  background: var(--background);
+  color: var(--text);
+  font-family: Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  line-height: 1.55;
 }
 
-body {
-  font-family: var(--font-family-sans);
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--color-text);
-  background: var(--color-surface-1);
-  -webkit-font-smoothing: antialiased;
+.site-content { flex: 1; min-width: 0; }
+
+button, input { font: inherit; }
+a { color: inherit; }
+
+.container {
+  width: min(100% - 2rem, 1120px);
+  margin-inline: auto;
 }
 
-a {
-  color: inherit;
+.site-header {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.site-header__inner {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.site-header__nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.92rem;
+}
+
+.site-header__nav a { text-decoration: none; }
+.site-header__nav a:hover, .text-button:hover { text-decoration: underline; }
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
   text-decoration: none;
 }
 
-img {
-  display: block;
-  max-width: 100%;
+.brand__mark {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--accent);
+  color: white;
+  font-size: 1.3rem;
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
-  color: inherit;
-}
+.user-badge { color: var(--muted); }
 
-button {
+.button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.1rem;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent);
+  color: white;
   cursor: pointer;
+  font-weight: 700;
+  text-decoration: none;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-p,
-ul,
-ol,
-figure {
-  margin: 0;
+.button:hover { background: var(--accent-hover); }
+.button:focus-visible, .text-button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: 3px solid #b99279;
+  outline-offset: 2px;
 }
+.button--small { min-height: 36px; padding: 0.35rem 0.8rem; }
 
-ul,
-ol {
+.text-button {
   padding: 0;
-  list-style: none;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 700;
 }
 
-table {
-  border-collapse: collapse;
+.page-content { padding-block: clamp(3rem, 8vw, 6rem); }
+
+.state-panel {
+  max-width: 700px;
+  padding: clamp(2rem, 6vw, 4rem);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: 0 16px 40px #3428190a;
+}
+
+.state-panel h1, .auth-card h1 {
+  margin: 0.3rem 0 0.75rem;
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+  letter-spacing: -0.045em;
+  line-height: 1.2;
+}
+
+.state-panel > p:not(.eyebrow) { max-width: 46ch; color: var(--muted); }
+.state-panel__action { margin-top: 1.8rem; }
+
+.eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.muted { color: var(--muted); }
+
+.auth-page {
+  display: grid;
+  min-height: calc(100vh - 160px);
+  place-items: start center;
+  padding-block: 4rem;
+}
+
+.auth-card {
+  width: min(100%, 460px);
+  padding: clamp(1.5rem, 5vw, 2.6rem);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.form-stack { display: grid; gap: 1rem; margin-top: 1.7rem; }
+.form-stack label { display: grid; gap: 0.4rem; font-weight: 700; }
+.form-stack input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+}
+.form-stack .button { width: 100%; margin-top: 0.3rem; }
+.auth-card__aside { margin: 1.5rem 0 0; text-align: center; }
+.auth-card__aside a { color: var(--accent); font-weight: 700; }
+
+.form-error {
+  padding: 0.8rem;
+  border-radius: 8px;
+  background: #fce9e9;
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+.demo-note {
+  display: grid;
+  gap: 0.15rem;
+  margin-top: 1.6rem;
+  padding: 0.9rem;
+  border-radius: 10px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.demo-note strong { color: var(--text); }
+
+.workspace {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 2rem;
+  padding-block: 2rem;
+}
+.workspace__sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 1.4rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  font-size: 0.9rem;
+}
+.workspace__sidebar a { color: var(--accent); font-weight: 700; }
+.workspace__main .state-panel { max-width: none; }
+
+.site-footer {
+  padding-block: 1.5rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.site-footer__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  flex-wrap: wrap;
+}
+
+.site-footer__brand { color: var(--text); font-weight: 800; }
+
+@media (max-width: 720px) {
+  .site-header__inner { min-height: 64px; }
+  .site-header__nav { gap: 0.6rem; }
+  .user-badge { display: none; }
+  .workspace { grid-template-columns: 1fr; gap: 1rem; }
+  .workspace__sidebar { padding: 1rem; }
+  .auth-page { padding-block: 2rem; }
 }
