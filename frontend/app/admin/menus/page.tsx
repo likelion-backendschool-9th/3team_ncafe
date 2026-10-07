@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { EmptyState } from "@/app/_components/ui/EmptyState";
+import { mockCategoryRepository } from "@/app/_lib/mock/categories";
 import { mockMenuRepository } from "@/app/_lib/mock/menus";
 import { requireRole } from "@/app/_lib/session/session";
 import { MenuTable } from "./_components/MenuTable";
@@ -24,7 +25,7 @@ export default async function AdminMenusPage({ searchParams }: { searchParams: M
   const { q, category, status, sort, created, deleted, missing } = await searchParams;
   const query = single(q).trim().slice(0, 100);
   const allMenus = await mockMenuRepository.list();
-  const categories = [...new Set(allMenus.map((menu) => menu.category))].sort((a, b) => a.localeCompare(b, "ko"));
+  const categories = (await mockCategoryRepository.list()).map((item) => item.name).sort((a, b) => a.localeCompare(b, "ko"));
   const selectedCategory = categories.includes(single(category)) ? single(category) : "";
   const selectedStatus = ["available", "unavailable"].includes(single(status)) ? single(status) : "";
   const selectedSort = ["newest", "oldest", "name", "price-low", "price-high"].includes(single(sort)) ? single(sort) : "newest";
@@ -33,7 +34,7 @@ export default async function AdminMenusPage({ searchParams }: { searchParams: M
     .filter((menu) => {
       const matchesQuery = !query || menu.name.toLocaleLowerCase("ko").includes(needle) || menu.nameEn.toLocaleLowerCase("en").includes(needle);
       const matchesStatus = !selectedStatus || menu.available === (selectedStatus === "available");
-      return matchesQuery && (!selectedCategory || menu.category === selectedCategory) && matchesStatus;
+      return matchesQuery && (!selectedCategory || menu.categories.includes(selectedCategory)) && matchesStatus;
     })
     .sort((a, b) => {
       if (selectedSort === "oldest") return a.createdAt.localeCompare(b.createdAt);

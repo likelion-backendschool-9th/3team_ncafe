@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { mockCategoryRepository } from "@/app/_lib/mock/categories";
 import { mockMenuRepository } from "@/app/_lib/mock/menus";
 import { requireRole } from "@/app/_lib/session/session";
 import { updateMenu } from "../../_actions";
@@ -11,6 +12,7 @@ export default async function EditMenuPage({ params }: { params: Promise<{ id: s
   await requireRole("admin", `/admin/menus/${id}/edit`);
   const menu = await mockMenuRepository.get(id);
   if (!menu) notFound();
+  const categories = await mockCategoryRepository.list();
 
   return (
     <div className={styles.page}>
@@ -22,9 +24,10 @@ export default async function EditMenuPage({ params }: { params: Promise<{ id: s
       <div className={styles.heading}><div><p className="eyebrow">메뉴 관리</p><h1>메뉴 수정</h1><p>메뉴 정보를 변경합니다.</p></div></div>
       <MenuForm
         action={updateMenu.bind(null, id)}
-        initialState={{ values: { name: menu.name, nameEn: menu.nameEn, imageUrl: menu.imageUrl, description: menu.description, category: menu.category, price: String(menu.price), available: String(menu.available), isNew: String(menu.isNew), recommended: String(menu.recommended) }, errors: {} }}
+        initialState={{ values: { name: menu.name, nameEn: menu.nameEn, imageUrl: menu.imageUrl, description: menu.description, categories: menu.categories.join(","), price: String(menu.price), available: String(menu.available), isNew: String(menu.isNew), recommended: String(menu.recommended), tempHot: String(menu.temperatures.includes("hot")), tempIce: String(menu.temperatures.includes("ice")) }, errors: {} }}
         cancelHref={`/admin/menus/${id}`}
         submitLabel="변경 저장"
+        categoryOptions={categories.map((category) => category.name)}
       />
     </div>
   );
