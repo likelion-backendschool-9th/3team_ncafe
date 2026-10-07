@@ -1,122 +1,35 @@
-// 관리자 대시보드 — 통계 카드(m3-grid + StatCard) · 최근 주문(m3-card + m3-table) · 인기 메뉴(m3-list + m3-progress) · 바로 가기.
-// 데이터는 lib/mock 의 DASHBOARD (모양 = GET /api/admin/dashboard).
 import Link from "next/link";
-import StatCard, { type Stat } from "./_components/StatCard";
-import { DASHBOARD } from "@/lib/mock";
-import { ORDER_STATUS, won } from "@/lib/format";
+import { mockMenuRepository } from "@/app/_lib/mock/menus";
+import { requireRole } from "@/app/_lib/session/session";
+import styles from "./admin.module.css";
 
-const QUICK = [
-  { href: "/admin/menus/list", icon: "description", name: "메뉴 목록 관리" },
-  { href: "/admin/menus/create", icon: "add", name: "새 메뉴 등록" },
-  { href: "/", icon: "home", name: "사용자 사이트 보기" },
-];
-
-export default function AdminDashboardPage() {
-  const d = DASHBOARD;
-  const stats: Stat[] = [
-    { label: "오늘 주문", value: `${d.todayOrders}건` },
-    { label: "오늘 매출", value: `${won(d.todaySales)}원` },
-    { label: "제조 대기", value: `${d.preparing}건`, delta: "제조 중 상태의 주문" },
-    { label: "신규 회원", value: `${d.newMembersThisWeek}명`, delta: "최근 7일" },
-  ];
+export default async function AdminPage() {
+  await requireRole("admin", "/admin");
+  const menus = await mockMenuRepository.list();
+  const availableCount = menus.filter((menu) => menu.available).length;
 
   return (
-    <>
-      <div className="display:flex align-items:flex-end justify-content:space-between flex-wrap:wrap gap:4 margin-bottom:7">
+    <div className={styles.page}>
+      <header className={styles.heading}>
+        <p className="eyebrow">관리자 인덱스</p>
+        <h1>nCafe 관리</h1>
+        <p>메뉴부터 관리해 보세요. 현재 등록된 메뉴와 판매 상태를 확인할 수 있습니다.</p>
+      </header>
+
+      <section className={styles.summary} aria-label="메뉴 현황">
+        <div className={styles.metric}><span>전체 메뉴</span><strong>{menus.length}</strong></div>
+        <div className={styles.metric}><span>판매 중</span><strong>{availableCount}</strong></div>
+        <div className={styles.metric}><span>판매 중지</span><strong>{menus.length - availableCount}</strong></div>
+      </section>
+
+      <section className={styles.card} aria-labelledby="menu-management-title">
         <div>
-          <h1 className="font-size:heading-md font-weight:bold letter-spacing:tight">대시보드</h1>
-          <p className="margin-top:2 font-size:body-sm color:text-muted">
-            판매 중 {d.menusOn} · 품절 {d.menusSoldout} · 비공개 {d.menusHidden}
-          </p>
+          <p className="eyebrow">메뉴 관리</p>
+          <h2 id="menu-management-title">메뉴 목록</h2>
+          <p>메뉴 목록에서 상세 확인, 등록, 수정, 삭제로 이동합니다.</p>
         </div>
-        <Link href="/admin/menus/create" className="m3-btn btn-icon:leading">
-          <i className="m3-icon icon:add" aria-hidden="true"></i>
-          메뉴 등록
-        </Link>
-      </div>
-
-      <ul className="m3-grid grid-cols:4 grid-gap:3 margin-bottom:7">
-        {stats.map((s) => (
-          <StatCard key={s.label} {...s} />
-        ))}
-      </ul>
-
-      <div
-        className="display:grid grid-template-columns:1 gap:5 md:grid-template-columns:ex align-items:start"
-        style={{ "--grid-template-columns-ex": "minmax(0, 2fr) minmax(0, 1fr)" }}
-      >
-        <section className="m3-card card:outlined" aria-labelledby="recent-orders">
-          <div className="m3-toolbar toolbar:card">
-            <h2 id="recent-orders" className="toolbar-start font-size:body-lg font-weight:semibold">
-              최근 주문
-            </h2>
-          </div>
-          <table className="m3-table">
-            <thead>
-              <tr>
-                <th scope="col">주문번호</th>
-                <th scope="col">고객</th>
-                <th scope="col">메뉴</th>
-                <th scope="col" className="table-align:end">
-                  금액
-                </th>
-                <th scope="col">상태</th>
-              </tr>
-            </thead>
-            <tbody>
-              {d.recentOrders.map((o) => (
-                <tr key={o.orderNo}>
-                  <td className="color:text-muted">{o.orderNo}</td>
-                  <td>{o.customer}</td>
-                  <td>{o.summary}</td>
-                  <td className="table-align:end">{won(o.total)}원</td>
-                  <td>
-                    <span className={`m3-badge badge:inline badge-color:${ORDER_STATUS[o.status].color}`}>
-                      {ORDER_STATUS[o.status].label}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-
-        <div className="display:flex flex-direction:column gap:5">
-          <section className="m3-card card:outlined card-padding:self" aria-labelledby="rank-title">
-            <h2 id="rank-title" className="margin-bottom:4 font-size:body-lg font-weight:semibold">
-              인기 메뉴
-            </h2>
-            <ol className="m3-list list-size:compact">
-              {d.ranks.map((r, i) => (
-                <li key={r.menuId} className="list-item">
-                  <span className="list-leading font-weight:bold color:text-muted">{i + 1}</span>
-                  <div className="list-content">
-                    <span className="list-headline">{r.name}</span>
-                    <div className="m3-progress margin-top:1" style={{ "--progress-value": `${r.ratio}%` }}></div>
-                  </div>
-                  <span className="list-trailing">{r.count}개</span>
-                </li>
-              ))}
-            </ol>
-          </section>
-
-          <section className="m3-card card:outlined card-padding:self" aria-labelledby="quick-title">
-            <h2 id="quick-title" className="margin-bottom:4 font-size:body-lg font-weight:semibold">
-              바로 가기
-            </h2>
-            <ul className="m3-list list-size:compact">
-              {QUICK.map((q) => (
-                <li key={q.name}>
-                  <Link href={q.href} className="list-item">
-                    <i className={`m3-icon list-leading icon:${q.icon}`} aria-hidden="true"></i>
-                    <span className="list-content">{q.name}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
-      </div>
-    </>
+        <Link className="button" href="/admin/menus">메뉴 목록 보기</Link>
+      </section>
+    </div>
   );
 }
