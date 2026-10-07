@@ -1,41 +1,41 @@
-# NCafe 프론트 (목업 본)
+# nCafe 프론트엔드
 
-Next.js 16(App Router) · TypeScript · newtil. 이 브랜치(`newtil`)는 백엔드를 부르지 않고 **목업 데이터**로 화면을 그린다. API 로 연결한 본은 `api` 브랜치.
+Next.js App Router와 TypeScript로 구성한 프론트엔드 기본 구조다. 화면 범위와 단계는 [프론트엔드 청사진](../frontend-청사진.md)을 따른다.
+
+## 로컬 실행
 
 ```bash
+cd frontend
 npm install
-npm run dev     # http://localhost:3000
+cp .env.local.example .env.local
+# .env.local의 MOCK_SESSION_SECRET을 32자 이상 임의 문자열로 변경
+npm run dev
 ```
 
-## 목업 데이터 — [lib/mock.ts](lib/mock.ts)
+세션 키는 각 개발 환경에서 새로 만들어야 한다. `openssl rand -base64 32`로 생성할 수 있다.
 
-- **모양은 백엔드 DTO 와 같다** — [lib/types.ts](lib/types.ts)(`MenuSummary`·`MenuDetail`·`Category`·`Favorite`·`Basket`·`Order`·`Dashboard`·`AdminMenuDetail`)가 정본이고, 백엔드(`../backend`)의 `dto/` 와 1:1.
-- **값은 백엔드의 `db/seed.sql` 과 같다** — 메뉴 12개(id 20~31, 레몬에이드 비공개·크루아상 품절·스무디 둘 신메뉴), 카테고리 개수 5/2/2/2, 홍길동의 좋아요 4·장바구니 3·주문 5, 대시보드 집계.
-- 페이지는 `import { MENUS } from "@/lib/mock"` 처럼 읽어 그리기만 한다. API 로 바꿀 때는 그 자리를 `fetch` 결과로 갈아 끼우면 된다(`api` 브랜치가 그 결과).
-- 금액·날짜·상태 표기는 [lib/format.ts](lib/format.ts)(`won`, `dateTime`, `ORDER_STATUS`, `MENU_STATUS`, `image`).
+## 목 인증
 
-| 화면 | 쓰는 상수 | 해당 API |
-|---|---|---|
-| `/` | `CATEGORIES`, `MENUS` | GET /api/categories, /api/menus |
-| `/menus` | `CATEGORIES`, `MENUS` | GET /api/menus?category&price&sort&page |
-| `/menus/[slug]` | `MENU_DETAIL`(카페라떼) | GET /api/menus/{slug} |
-| `/my/orders` `favorites` `basket` | `ORDERS`, `FAVORITES`, `BASKET`, `USER` | GET /api/my/… |
-| `/admin` | `DASHBOARD` | GET /api/admin/dashboard |
-| `/admin/menus/list` | `ADMIN_MENUS` | GET /api/admin/menus |
-| `/admin/menus/[id]`, `edit` | `ADMIN_MENU_DETAIL`(카페라떼) | GET /api/admin/menus/{id} |
+백엔드 인증 계약이 정해지기 전까지 로컬 개발에서만 쓰는 목 인증이다. 첫 실행 시 `.data/users.json`에 아래 계정을 만든다.
 
-동적 라우트(`[slug]`, `[id]`)는 어떤 값으로 와도 카페라떼를 보여준다(목업).
+| 역할 | 이메일 | 비밀번호 |
+| --- | --- | --- |
+| 관리자 | `admin@ncafe.local` | `demo1234!` |
+| 고객 | `customer@ncafe.local` | `demo1234!` |
+| 배달기사 | `driver@ncafe.local` | `demo1234!` |
 
-## 구조
+회원가입으로 만든 고객 계정도 `.data/users.json`에 저장된다. 비밀번호는 해시로 저장하고, 세션은 서명된 HttpOnly 쿠키로 관리한다. 목 저장소는 운영 환경에서 동작하지 않도록 막아 두었다. 실제 서비스용 인증과 결제는 후속 단계에서 별도 계약과 제공자를 확정해야 한다.
 
+## 프론트엔드 메뉴 계약
+
+관리자 메뉴 화면은 프론트엔드 모델을 기준으로 먼저 구현한다. 메뉴 필드는 `id`, `name`, `description`, `price`, `available`, `updatedAt`이다. 목록 검색은 `name`, 판매 상태 필터는 `available`을 사용한다. 등록·수정 입력은 이름, 설명, 가격, 판매 상태다.
+
+현재 관리자 화면은 `app/_lib/mock/menus.ts`를 통해 `.data/menus.json`에 등록·수정·삭제 결과를 저장한다. 백엔드 API는 이 화면 계약에 맞춰 추후 연결한다. `.data/`는 Git에서 제외한다.
+
+## 확인 명령
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
 ```
-app/
-  layout.tsx · globals.css       폰트·전역 CSS(design-tokens → materials → themes/ncafe → @newtil/css)
-  (anon)/                         공개 — m3-site (홈 · 메뉴 목록 · 상세 · 로그인 · 회원가입 · 비밀번호 찾기 · 소개)
-  my/                             회원 — 주문 내역 · 좋아요 · 장바구니
-  admin/                          관리자 — m3-layout (대시보드 · 메뉴 목록/등록/상세/수정)
-  _components/, */_components/    쓰는 곳 가까이 둔 컴포넌트(파스칼 파일 하나)
-lib/                              types · mock · format
-```
-
-스타일은 newtil 만 쓴다 — 페이지 CSS 0줄. 방(m3-site · m3-layout) → 가구(m3-grid · m3-card · m3-form …) → 물품(버튼·필드) → 유틸리티 마감, 토큰 밖의 값만 `속성:ex` + `--속성-ex`.

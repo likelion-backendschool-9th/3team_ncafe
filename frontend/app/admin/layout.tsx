@@ -1,27 +1,18 @@
-// 관리자 방 — m3-layout (드로어 + 상단 앱 바 + 본문). 페이지는 layout-content 안만 만든다.
-import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import AdminNav from "./_components/AdminNav";
-import { ADMIN } from "@/lib/mock";
+import Link from "next/link";
+import { requireRole } from "@/app/_lib/session/session";
 
-export const metadata: Metadata = { title: { default: "관리자", template: "%s - NCafe 관리자" } };
-
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default async function AdminLayout({ children }: { children: ReactNode }) {
+  await requireRole("admin", "/admin");
   return (
-    <div className="m3-layout layout:fixed-drawer">
-      <AdminNav />
-      <div className="layout-main">
-        <header className="m3-top-app-bar layout-header bar:outlined">
-          <span className="bar-title">관리자</span>
-          <div className="bar-trailing">
-            <span className="font-size:body-sm font-weight:semibold">{ADMIN.name}</span>
-            <button type="button" className="m3-btn btn:outlined btn-size:xs">
-              로그아웃
-            </button>
-          </div>
-        </header>
-        <main className="layout-content">{children}</main>
-      </div>
+    <div className="container workspace">
+      <aside className="workspace__sidebar" aria-label="관리자 메뉴">
+        <p className="eyebrow">관리자</p>
+        <Link href="/admin">관리자 홈</Link>
+        <Link href="/admin/menus">메뉴 목록</Link>
+        <span className="muted">다른 관리 기능은 이후 단계에서 연결합니다.</span>
+      </aside>
+      <main className="workspace__main">{children}</main>
     </div>
   );
 }
