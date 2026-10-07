@@ -5,7 +5,7 @@ import { requireRole } from "@/app/_lib/session/session";
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   await requireRole("admin", "/admin");
   return (
-    <div className="container workspace">
+    <div className="container workspace workspace--wide">
       <aside className="workspace__sidebar" aria-label="관리자 메뉴">
         <p className="eyebrow">관리자</p>
         <Link href="/admin">관리자 홈</Link>

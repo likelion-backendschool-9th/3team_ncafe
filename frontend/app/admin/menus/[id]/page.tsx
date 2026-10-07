@@ -1,6 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { mockMenuRepository } from "@/app/_lib/mock/menus";
+import { MENU_IMAGE_PLACEHOLDER, mockMenuRepository } from "@/app/_lib/mock/menus";
 import { requireRole } from "@/app/_lib/session/session";
 import { deleteMenu } from "../_actions";
 import { DeleteMenuButton } from "../_components/DeleteMenuButton";
@@ -32,10 +33,16 @@ export default async function MenuDetailPage({ params, searchParams }: {
       {updated === "1" && <p className={styles.notice} role="status">메뉴를 수정했습니다.</p>}
       {deleteError === "1" && <p className="form-error" role="alert">메뉴를 삭제하지 못했습니다. 다시 시도해 주세요.</p>}
       <dl className={styles.detailCard}>
-        <div><dt>메뉴명</dt><dd>{menu.name}</dd></div>
+        <div><dt>이미지</dt><dd><Image className={styles.detailImage} src={menu.imageUrl || MENU_IMAGE_PLACEHOLDER} alt={`${menu.name} 이미지`} width={200} height={150} unoptimized /></dd></div>
+        <div><dt>메뉴명 (한글)</dt><dd>{menu.name}</dd></div>
+        <div><dt>메뉴명 (영어)</dt><dd>{menu.nameEn || "영문명 없음"}</dd></div>
+        <div><dt>카테고리</dt><dd>{menu.category}</dd></div>
         <div><dt>설명</dt><dd>{menu.description}</dd></div>
         <div><dt>가격</dt><dd>{won.format(menu.price)}원</dd></div>
         <div><dt>판매 상태</dt><dd>{menu.available ? "판매 중" : "판매 중지"}</dd></div>
+        <div><dt>NEW</dt><dd>{menu.isNew ? "표시" : "표시 안 함"}</dd></div>
+        <div><dt>추천 메뉴</dt><dd>{menu.recommended ? "추천" : "추천 안 함"}</dd></div>
+        <div><dt>등록일</dt><dd>{date.format(new Date(menu.createdAt))}</dd></div>
         <div><dt>최근 수정</dt><dd>{date.format(new Date(menu.updatedAt))}</dd></div>
       </dl>
       <div className={styles.detailActions}>

@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { mockMenuRepository, type MenuInput } from "@/app/_lib/mock/menus";
+import { MENU_IMAGE_PLACEHOLDER, mockMenuRepository, type MenuInput } from "@/app/_lib/mock/menus";
 import { requireRole } from "@/app/_lib/session/session";
 
-type Field = "name" | "description" | "price" | "available";
+type Field = "name" | "nameEn" | "imageUrl" | "description" | "category" | "price" | "available" | "isNew" | "recommended";
 
 export type MenuFormState = {
   values: Record<Field, string>;
@@ -16,13 +16,23 @@ export type MenuFormState = {
 function validate(formData: FormData): { state: MenuFormState; input?: MenuInput } {
   const values = {
     name: String(formData.get("name") ?? "").trim(),
+    nameEn: String(formData.get("nameEn") ?? "").trim(),
+    imageUrl: String(formData.get("imageUrl") ?? "").trim(),
     description: String(formData.get("description") ?? "").trim(),
+    category: String(formData.get("category") ?? "").trim(),
     price: String(formData.get("price") ?? "").trim(),
     available: String(formData.get("available") ?? ""),
+    isNew: formData.get("isNew") === "on" ? "true" : "false",
+    recommended: formData.get("recommended") === "on" ? "true" : "false",
   };
   const errors: MenuFormState["errors"] = {};
-  if (!values.name || values.name.length > 80) errors.name = "메뉴명은 1~80자로 입력해 주세요.";
+  if (!values.name || values.name.length > 80) errors.name = "한글 메뉴명은 1~80자로 입력해 주세요.";
+  if (!values.nameEn || values.nameEn.length > 80) errors.nameEn = "영문 메뉴명은 1~80자로 입력해 주세요.";
+  if (values.imageUrl.length > 2048 || (values.imageUrl && !isValidImageUrl(values.imageUrl))) {
+    errors.imageUrl = "HTTPS 이미지 주소나 /images/menus/ 경로를 입력해 주세요.";
+  }
   if (!values.description || values.description.length > 500) errors.description = "설명은 1~500자로 입력해 주세요.";
+  if (!values.category || values.category.length > 40) errors.category = "카테고리는 1~40자로 입력해 주세요.";
   const price = Number(values.price);
   if (!/^\d+$/.test(values.price) || !Number.isSafeInteger(price) || price < 1) {
     errors.price = "가격은 1원 이상의 정수로 입력해 주세요.";
@@ -33,9 +43,29 @@ function validate(formData: FormData): { state: MenuFormState; input?: MenuInput
   return {
     state: { values, errors },
     input: Object.keys(errors).length === 0
-      ? { name: values.name, description: values.description, price, available: values.available === "true" }
+      ? {
+          name: values.name,
+          nameEn: values.nameEn,
+          imageUrl: values.imageUrl || MENU_IMAGE_PLACEHOLDER,
+          description: values.description,
+          category: values.category,
+          price,
+          available: values.available === "true",
+          isNew: values.isNew === "true",
+          recommended: values.recommended === "true",
+        }
       : undefined,
   };
+}
+
+function isValidImageUrl(value: string): boolean {
+  if (/^\/images\/menus\/[a-zA-Z0-9/_-]+\.(svg|png|jpe?g|webp)$/.test(value)) return true;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password;
+  } catch {
+    return false;
+  }
 }
 
 function refreshMenus() {
