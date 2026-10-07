@@ -30,6 +30,15 @@ export default async function AdminPage() {
         </div>
         <Link className="button" href="/admin/menus">메뉴 목록 보기</Link>
       </section>
+
+      <section className={styles.card} aria-labelledby="category-management-title">
+        <div>
+          <p className="eyebrow">카테고리 관리</p>
+          <h2 id="category-management-title">카테고리</h2>
+          <p>메뉴 등록 폼에서 선택할 카테고리를 추가·수정·삭제합니다.</p>
+        </div>
+        <Link className="button" href="/admin/categories">카테고리 관리</Link>
+      </section>
     </div>
   );
 }

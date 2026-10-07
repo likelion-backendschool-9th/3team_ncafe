@@ -36,7 +36,8 @@ export default async function MenuDetailPage({ params, searchParams }: {
         <div><dt>이미지</dt><dd><Image className={styles.detailImage} src={menu.imageUrl || MENU_IMAGE_PLACEHOLDER} alt={`${menu.name} 이미지`} width={200} height={150} unoptimized /></dd></div>
         <div><dt>메뉴명 (한글)</dt><dd>{menu.name}</dd></div>
         <div><dt>메뉴명 (영어)</dt><dd>{menu.nameEn || "영문명 없음"}</dd></div>
-        <div><dt>카테고리</dt><dd>{menu.category}</dd></div>
+        <div><dt>카테고리</dt><dd>{menu.categories.join(", ")}</dd></div>
+        <div><dt>온도</dt><dd>{menu.temperatures.length > 0 ? menu.temperatures.map((t) => (t === "hot" ? "핫" : "아이스")).join(", ") : "온도 구분 없음"}</dd></div>
         <div><dt>설명</dt><dd>{menu.description}</dd></div>
         <div><dt>가격</dt><dd>{won.format(menu.price)}원</dd></div>
         <div><dt>판매 상태</dt><dd>{menu.available ? "판매 중" : "판매 중지"}</dd></div>

@@ -43,7 +43,7 @@ export function MenuTable({ menus, createdId }: {
                   </div>
                   <span className={styles.secondaryName}>{menu.nameEn || "영문명 없음"}</span>
                 </td>
-                <td>{menu.category}</td>
+                <td>{menu.categories.join(", ")}</td>
                 <td>{won.format(menu.price)}원</td>
                 <td>
                   <span className={`${styles.status} ${menu.available ? styles.statusAvailable : styles.statusUnavailable}`}>

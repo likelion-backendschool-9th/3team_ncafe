@@ -2,11 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { MENU_IMAGE_PLACEHOLDER, mockMenuRepository, type MenuInput } from "@/app/_lib/mock/menus";
+import { MENU_IMAGE_PLACEHOLDER, mockMenuRepository, type MenuInput, type Temperature } from "@/app/_lib/mock/menus";
+import { mockCategoryRepository } from "@/app/_lib/mock/categories";
 import { requireRole } from "@/app/_lib/session/session";
-import { MENU_CATEGORIES } from "./_lib/menuCategories";
+import { saveMenuImage, UploadError } from "@/app/_lib/mock/uploads";
 
-type Field = "name" | "nameEn" | "imageUrl" | "description" | "category" | "price" | "available" | "isNew" | "recommended";
+type Field = "name" | "nameEn" | "imageUrl" | "description" | "categories" | "price" | "available" | "isNew" | "recommended" | "tempHot" | "tempIce";
 
 export type MenuFormState = {
   values: Record<Field, string>;
@@ -14,17 +15,20 @@ export type MenuFormState = {
   message?: string;
 };
 
-function validate(formData: FormData, existingCategory?: string): { state: MenuFormState; input?: MenuInput } {
+async function validate(formData: FormData, existingCategories: string[] = []): Promise<{ state: MenuFormState; input?: MenuInput }> {
+  const selectedCategories = formData.getAll("categories").map((value) => String(value).trim()).filter(Boolean);
   const values = {
     name: String(formData.get("name") ?? "").trim(),
     nameEn: String(formData.get("nameEn") ?? "").trim(),
     imageUrl: String(formData.get("imageUrl") ?? "").trim(),
     description: String(formData.get("description") ?? "").trim(),
-    category: String(formData.get("category") ?? "").trim(),
+    categories: selectedCategories.join(","),
     price: String(formData.get("price") ?? "").trim(),
     available: String(formData.get("available") ?? ""),
     isNew: formData.get("isNew") === "on" ? "true" : "false",
     recommended: formData.get("recommended") === "on" ? "true" : "false",
+    tempHot: formData.get("tempHot") === "on" ? "true" : "false",
+    tempIce: formData.get("tempIce") === "on" ? "true" : "false",
   };
   const errors: MenuFormState["errors"] = {};
   if (!values.name || values.name.length > 80) errors.name = "한글 메뉴명은 1~80자로 입력해 주세요.";
@@ -33,8 +37,14 @@ function validate(formData: FormData, existingCategory?: string): { state: MenuF
     errors.imageUrl = "HTTPS 이미지 주소나 /images/menus/ 경로를 입력해 주세요.";
   }
   if (!values.description || values.description.length > 500) errors.description = "설명은 1~500자로 입력해 주세요.";
-  if (!values.category || values.category.length > 40 || (!MENU_CATEGORIES.some((category) => category === values.category) && values.category !== existingCategory)) {
-    errors.category = "목록에서 카테고리를 선택해 주세요.";
+  if (selectedCategories.length === 0) {
+    errors.categories = "카테고리를 하나 이상 선택해 주세요.";
+  } else {
+    const availableCategories = (await mockCategoryRepository.list()).map((category) => category.name);
+    const hasInvalidCategory = selectedCategories.some(
+      (category) => !availableCategories.includes(category) && !existingCategories.includes(category),
+    );
+    if (hasInvalidCategory) errors.categories = "목록에 없는 카테고리가 선택되어 있습니다. 다시 선택해 주세요.";
   }
   const price = Number(values.price);
   if (!/^\d+$/.test(values.price) || !Number.isSafeInteger(price) || price < 1) {
@@ -43,21 +53,45 @@ function validate(formData: FormData, existingCategory?: string): { state: MenuF
   if (values.available !== "true" && values.available !== "false") {
     errors.available = "판매 상태를 선택해 주세요.";
   }
+  if (values.tempHot !== "true" && values.tempIce !== "true") {
+    errors.tempHot = "핫 또는 아이스를 하나 이상 선택해 주세요.";
+  }
+
+  // 파일 업로드가 있으면 입력한 URL 대신 업로드한 파일을 우선 사용
+  let resolvedImageUrl = values.imageUrl;
+  const imageFile = formData.get("imageFile");
+  if (imageFile instanceof File && imageFile.size > 0) {
+    try {
+      resolvedImageUrl = await saveMenuImage(imageFile);
+      values.imageUrl = resolvedImageUrl;
+    } catch (error) {
+      errors.imageUrl = error instanceof UploadError ? error.message : "이미지 업로드에 실패했습니다.";
+    }
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return { state: { values, errors } };
+  }
+
+  const temperatures: Temperature[] = [
+    ...(values.tempHot === "true" ? (["hot"] as const) : []),
+    ...(values.tempIce === "true" ? (["ice"] as const) : []),
+  ];
+
   return {
     state: { values, errors },
-    input: Object.keys(errors).length === 0
-      ? {
-          name: values.name,
-          nameEn: values.nameEn,
-          imageUrl: values.imageUrl || MENU_IMAGE_PLACEHOLDER,
-          description: values.description,
-          category: values.category,
-          price,
-          available: values.available === "true",
-          isNew: values.isNew === "true",
-          recommended: values.recommended === "true",
-        }
-      : undefined,
+    input: {
+      name: values.name,
+      nameEn: values.nameEn,
+      imageUrl: resolvedImageUrl || MENU_IMAGE_PLACEHOLDER,
+      description: values.description,
+      categories: selectedCategories,
+      price,
+      available: values.available === "true",
+      isNew: values.isNew === "true",
+      recommended: values.recommended === "true",
+      temperatures,
+    },
   };
 }
 
@@ -78,7 +112,7 @@ function refreshMenus() {
 
 export async function createMenu(_previous: MenuFormState, formData: FormData): Promise<MenuFormState> {
   await requireRole("admin", "/admin/menus/new");
-  const { state, input } = validate(formData);
+  const { state, input } = await validate(formData);
   if (!input) return state;
 
   let createdId: string;
@@ -93,13 +127,13 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 
 export async function updateMenu(id: string, _previous: MenuFormState, formData: FormData): Promise<MenuFormState> {
   await requireRole("admin", `/admin/menus/${id}/edit`);
-  let existingCategory: string | undefined;
+  let existingCategories: string[] = [];
   try {
-    existingCategory = (await mockMenuRepository.get(id))?.category;
+    existingCategories = (await mockMenuRepository.get(id))?.categories ?? [];
   } catch {
     return { ..._previous, message: "메뉴를 수정하지 못했습니다. 다시 시도해 주세요." };
   }
-  const { state, input } = validate(formData, existingCategory);
+  const { state, input } = await validate(formData, existingCategories);
   if (!input) return state;
 
   let updated;

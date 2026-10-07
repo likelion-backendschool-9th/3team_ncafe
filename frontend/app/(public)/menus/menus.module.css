@@ -1,0 +1,192 @@
+.page {
+  --cream: #f2efe6;
+  --cream-paper: #fbfaf5;
+  --walnut: #1c1a17;
+  --burgundy: #2a2824;
+  --amber: #8f887c;
+  --hairline: #1c1a17b0;
+  position: relative;
+  min-height: 60vh;
+  background: var(--cream);
+  color: var(--walnut);
+  font-family: var(--font-serif), "Apple SD Gothic Neo", serif;
+}
+
+/* 옅은 종이 질감만 — 신문지 텍스처는 인덱스 페이지 전용 */
+.page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse at 10% 10%, #8f887c2a 0, transparent 28rem),
+    radial-gradient(ellipse at 90% 60%, #8f887c22 0, transparent 32rem);
+}
+.page > * { position: relative; z-index: 1; }
+
+.heading {
+  padding-block: clamp(2.2rem, 5vw, 3.2rem) clamp(1.2rem, 3vw, 1.8rem);
+  text-align: center;
+}
+.eyebrow {
+  margin: 0;
+  color: var(--burgundy);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.title {
+  position: relative;
+  display: inline-block;
+  margin: 0.4rem 0 0;
+  padding-bottom: 0.5rem;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 400;
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  letter-spacing: 0.01em;
+}
+.title::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 54px;
+  height: 5px;
+  background: var(--burgundy);
+  transform: translateX(-50%);
+  box-shadow: 0 7px 0 var(--amber);
+}
+.subtitle { margin: 0.75rem 0 0; color: var(--walnut); opacity: 0.75; }
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  padding-block: 0.5rem 2rem;
+}
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0.4rem 1rem;
+  border: 2px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--cream-paper);
+  color: var(--walnut);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+.filterChip:hover { border-color: var(--burgundy); }
+.filterChipActive {
+  border-color: var(--burgundy);
+  background: var(--burgundy);
+  color: var(--cream);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.4rem;
+  padding-block: 1rem clamp(3rem, 6vw, 4.5rem);
+}
+@media (max-width: 980px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 720px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 460px) { .grid { grid-template-columns: 1fr; } }
+
+.card {
+  display: grid;
+  border: 3px double var(--hairline);
+  background: var(--cream-paper);
+  overflow: hidden;
+  color: var(--walnut);
+  text-decoration: none;
+  box-shadow: 4px 4px 0 var(--cream), 6px 6px 0 var(--hairline);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card:hover { transform: translateY(-3px); border-color: var(--burgundy); }
+.cardImageWrap {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: #ffffff80;
+  border-bottom: 3px double var(--hairline);
+}
+.cardImage { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cardImage[data-unavailable="true"] { filter: grayscale(0.6) brightness(0.9); }
+.badgeNew, .badgeRecommend, .badgeSoldOut {
+  position: absolute;
+  top: 0.55rem;
+  display: inline-flex;
+  padding: 0.22rem 0.55rem;
+  border-radius: 2px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+.badgeNew { left: 0.55rem; background: var(--amber); color: var(--walnut); }
+.badgeRecommend { right: 0.55rem; background: var(--burgundy); color: var(--cream); }
+.badgeSoldOut { left: 0.55rem; background: var(--walnut); color: var(--cream); }
+.cardBody { display: grid; gap: 0.15rem; padding: 0.9rem 1.05rem 1.1rem; }
+.cardName { margin: 0; font-family: var(--font-serif), serif; font-weight: 700; font-size: 1rem; }
+.cardNameEn { margin: 0; color: var(--walnut); opacity: 0.6; font-size: 0.76rem; letter-spacing: 0.02em; text-transform: uppercase; }
+.priceRow { display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.4rem; }
+.leader { flex: 1 1 auto; height: 0; border-bottom: 1px dotted var(--hairline); margin-bottom: 0.3rem; }
+.price { flex-shrink: 0; font-weight: 800; color: var(--burgundy); }
+
+.empty { padding: 3rem 1rem; text-align: center; color: var(--walnut); opacity: 0.75; }
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 1.4rem;
+  color: var(--walnut);
+  opacity: 0.7;
+  font-size: 0.88rem;
+}
+.breadcrumb a { color: var(--burgundy); text-decoration: none; font-weight: 700; }
+.breadcrumb a:hover { text-decoration: underline; }
+
+.detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2.2rem;
+  align-items: start;
+  padding-block: 1.6rem clamp(3rem, 6vw, 4.5rem);
+}
+@media (max-width: 760px) { .detail { grid-template-columns: 1fr; } }
+
+.detailImageWrap {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border: 4px double var(--hairline);
+  background: #ffffff80;
+  box-shadow: 6px 6px 0 var(--cream), 8px 8px 0 var(--hairline);
+}
+.detailImage { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.detailBody { display: grid; gap: 1rem; align-content: start; }
+.detailBadges { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.detailBadge {
+  display: inline-flex;
+  padding: 0.25rem 0.65rem;
+  border-radius: 2px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+.detailBadgeNew { background: var(--amber); color: var(--walnut); }
+.detailBadgeRecommend { background: var(--burgundy); color: var(--cream); }
+.detailBadgeSoldOut { background: var(--walnut); color: var(--cream); }
+
+.detailName { margin: 0; font-family: var(--font-display), sans-serif; font-weight: 400; font-size: clamp(1.8rem, 4vw, 2.4rem); }
+.detailNameEn { margin: 0; color: var(--walnut); opacity: 0.6; letter-spacing: 0.04em; text-transform: uppercase; }
+.detailPrice { margin: 0.2rem 0; font-size: 1.5rem; font-weight: 800; color: var(--burgundy); }
+.detailDescription { margin: 0; color: var(--walnut); opacity: 0.85; line-height: 1.8; max-width: 52ch; }
+
+.detailMeta { display: grid; gap: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed var(--hairline); }
+.detailMetaRow { display: flex; gap: 0.6rem; font-size: 0.92rem; }
+.detailMetaLabel { flex-shrink: 0; width: 72px; color: var(--walnut); opacity: 0.6; font-weight: 700; }
+.detailMetaValue { color: var(--walnut); }
