@@ -1,12 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Black_Han_Sans, Gowun_Batang } from "next/font/google";
 import { mockCategoryRepository } from "@/app/_lib/mock/categories";
 import { MENU_IMAGE_PLACEHOLDER, mockMenuRepository } from "@/app/_lib/mock/menus";
 import styles from "./menus.module.css";
-
-const display = Black_Han_Sans({ subsets: ["latin"], weight: "400", preload: false, variable: "--font-display" });
-const serif = Gowun_Batang({ subsets: ["latin"], weight: ["400", "700"], preload: false, variable: "--font-serif" });
 
 const won = new Intl.NumberFormat("ko-KR");
 
@@ -24,7 +20,7 @@ export default async function MenusPage({ searchParams }: {
   );
 
   return (
-    <main className={`${styles.page} ${display.variable} ${serif.variable}`}>
+    <main className={styles.page}>
       <div className="container">
         <div className={styles.heading}>
           <p className={styles.eyebrow}>삼다방 메뉴판</p>

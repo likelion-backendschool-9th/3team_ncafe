@@ -7,7 +7,6 @@ import { createSession } from "@/app/_lib/session/session";
 const landingByRole: Record<Role, string> = {
   customer: "/",
   admin: "/admin",
-  driver: "/driver",
 };
 
 function safeNext(value: FormDataEntryValue | null): string | null {

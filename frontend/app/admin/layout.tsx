@@ -11,6 +11,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         <Link href="/admin">관리자 홈</Link>
         <Link href="/admin/menus">메뉴 목록</Link>
         <Link href="/admin/categories">카테고리 관리</Link>
+        <Link href="/admin/music-box">뮤직박스 운영</Link>
         <span className="muted">다른 관리 기능은 이후 단계에서 연결합니다.</span>
       </aside>
       <main className="workspace__main">{children}</main>
