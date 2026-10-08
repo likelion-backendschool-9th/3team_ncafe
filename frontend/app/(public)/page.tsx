@@ -14,10 +14,7 @@ const won = new Intl.NumberFormat('ko-KR');
 const HERO_IMAGE_URL = '/images/hero/dabang-interior-music-box-booth.png';
 
 function pickFeatured(menus: Menu[]): Menu[] {
-  const available = menus.filter((menu) => menu.available);
-  const featured = available.filter((menu) => menu.recommended || menu.isNew);
-  const rest = available.filter((menu) => !menu.recommended && !menu.isNew);
-  return [...featured, ...rest].slice(0, 16);
+  return menus.filter((menu) => menu.available && menu.recommended).slice(0, 16);
 }
 
 export default async function HomePage() {
@@ -123,7 +120,7 @@ export default async function HomePage() {
           </span>
           <h3>정성 가득 보양차</h3>
           <p>
-            십전대보탕부터 쌍화차, 생강차까지 — 한의원 저리가라, 매일
+            쌍화차부터 생강차, 율무차까지 — 한의원 저리가라, 매일
             정성껏 달인 보양차로 몸을 다독여요.
           </p>
         </div>
@@ -141,8 +138,7 @@ export default async function HomePage() {
         </div>
         {featuredMenus.length === 0 ? (
           <p className={styles.empty}>
-            등록된 메뉴가 아직 없어요. 관리자 페이지에서 먼저 메뉴를 등록해
-            주세요.
+            추천 메뉴가 아직 없어요. 전체 메뉴에서 다른 메뉴를 둘러보세요.
           </p>
         ) : (
           <div className={styles.featuredGrid}>
