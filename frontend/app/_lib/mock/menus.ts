@@ -27,16 +27,8 @@ const menuImageUrls: Record<string, string> = {
   아메리카노: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=900&q=80",
   카페라떼: "https://images.unsplash.com/photo-1643245253892-11f9af8a7306?auto=format&fit=crop&w=900&q=80",
   치즈케이크: "https://images.unsplash.com/photo-1779608993337-fc83f391bbed?auto=format&fit=crop&w=900&q=80",
-  십전대보탕: "https://recipe1.ezmember.co.kr/cache/recipe/2020/12/02/999a2203eb6e4dc3df0b3aebff4077ee1.jpg",
   쌍화차: "https://godomall.speedycdn.net/735670b9a8c2322bfcb81dbc356e372d/goods/198/image/detail/198_detail_057.jpg",
   생강차: "https://hannaone.com/wp-content/uploads/2017/05/Saenggang-Cha-Korean-Ginger-Tea.jpg",
-  인삼차: "https://cdn.yemek.com/uploads/2024/03/ginseng-cayi-shutter.jpg",
-  홍삼차: "https://www.kankokuichiba.jp/cdn/shop/files/03_e1806bc7-b20c-4575-b0ff-312a9a5af3b5.jpg?v=1685349525&width=900",
-  대추차: "https://cdn.imweb.me/thumbnail/20250729/303572059060a.jpg",
-  모과차: "https://images.unsplash.com/photo-1707763531064-d7c5a275d6b3?auto=format&fit=crop&w=900&q=80",
-  오미자차: "https://img.choroc.com/newshop/goods/025299/025299_1.jpg",
-  "수제 단팥죽": "https://www.korean-culture.org/CONTENTS/BOARD/images/2patjuk_finish_L1.jpg",
-  "수제 모나카": "https://www.chowhound.com/img/gallery/16-unique-traditional-japanese-desserts/monaka-1740493199.jpg",
 };
 const legacySeedFields: Record<string, { nameEn: string; categories: string[]; imageUrl: string; recommended: boolean }> = {
   아메리카노: { nameEn: "Americano", categories: ["커피"], imageUrl: menuImageUrls["아메리카노"], recommended: true },
@@ -48,19 +40,16 @@ function menus(): Menu[] {
   const stored = readMockData<Menu[]>(fileName, () => {
     const createdAt = new Date().toISOString();
     return [
-      { id: randomUUID(), name: "아메리카노", nameEn: "Americano", imageUrl: menuImageUrls["아메리카노"], description: "진한 에스프레소와 물", categories: ["커피"], price: 4500, available: true, isNew: false, recommended: true, temperatures: ["hot", "ice"], createdAt, updatedAt: createdAt },
-      { id: randomUUID(), name: "카페라떼", nameEn: "Cafe Latte", imageUrl: menuImageUrls["카페라떼"], description: "에스프레소와 우유", categories: ["커피"], price: 5000, available: true, isNew: true, recommended: false, temperatures: ["hot", "ice"], createdAt, updatedAt: createdAt },
-      { id: randomUUID(), name: "치즈케이크", nameEn: "Cheesecake", imageUrl: menuImageUrls["치즈케이크"], description: "부드러운 치즈케이크", categories: ["디저트"], price: 6200, available: false, isNew: false, recommended: false, temperatures: [], createdAt, updatedAt: createdAt },
-      { id: randomUUID(), name: "십전대보탕", nameEn: "Sipjeon-daebotang", imageUrl: menuImageUrls["십전대보탕"], description: "열 가지 한약재를 달여 보양이 되는 다방 대표 보양차", categories: ["차"], price: 7000, available: true, isNew: false, recommended: true, temperatures: ["hot"], createdAt, updatedAt: createdAt },
-      { id: randomUUID(), name: "쌍화차", nameEn: "Ssanghwacha", imageUrl: menuImageUrls["쌍화차"], description: "노른자 동동 띄운 그 시절 다방 쌍화차", categories: ["차"], price: 6000, available: true, isNew: false, recommended: true, temperatures: ["hot"], createdAt, updatedAt: createdAt },
+      { id: randomUUID(), name: "다방커피", nameEn: "Dabang Coffee", imageUrl: MENU_IMAGE_PLACEHOLDER, description: "커피 둘, 설탕 둘, 프림 둘. 그 시절 다방 그대로의 달달한 커피", categories: ["커피"], price: 3500, available: true, isNew: false, recommended: true, temperatures: ["hot", "ice"], createdAt, updatedAt: createdAt },
+      { id: randomUUID(), name: "밀크 커피", nameEn: "Milk Coffee", imageUrl: MENU_IMAGE_PLACEHOLDER, description: "따끈한 우유에 커피를 듬뿍 탄 부드러운 밀크 커피", categories: ["커피"], price: 4000, available: true, isNew: false, recommended: false, temperatures: ["hot", "ice"], createdAt, updatedAt: createdAt },
+      { id: randomUUID(), name: "쌍화차", nameEn: "Ssanghwacha", imageUrl: menuImageUrls["쌍화차"], description: "노른자 동동 띄우고 잣·대추 듬뿍 올린 다방 쌍화차", categories: ["차"], price: 6000, available: true, isNew: false, recommended: true, temperatures: ["hot"], createdAt, updatedAt: createdAt },
       { id: randomUUID(), name: "생강차", nameEn: "Ginger Tea", imageUrl: menuImageUrls["생강차"], description: "알싸하고 따뜻한 국산 생강을 우려낸 차", categories: ["차"], price: 4500, available: true, isNew: false, recommended: false, temperatures: ["hot"], createdAt, updatedAt: createdAt },
-      { id: randomUUID(), name: "인삼차", nameEn: "Ginseng Tea", imageUrl: menuImageUrls["인삼차"], description: "쌉쌀하고 깊은 향의 고려 인삼차", categories: ["차"], price: 5500, available: true, isNew: false, recommended: false, temperatures: ["hot"], createdAt, updatedAt: createdAt },
-      { id: randomUUID(), name: "홍삼차", nameEn: "Red Ginseng Tea", imageUrl: menuImageUrls["홍삼차"], description: "은은하게 단맛이 도는 홍삼 보양차", categories: ["차"], price: 6000, available: true, isNew: true, recommended: false, temperatures: ["hot"], createdAt, updatedAt: createdAt },
-      { id: randomUUID(), name: "대추차", nameEn: "Jujube Tea", imageUrl: menuImageUrls["대추차"], description: "푹 고아낸 대추의 자연스러운 단맛", categories: ["차"], price: 4800, available: true, isNew: false, recommended: false, temperatures: ["hot"], createdAt, updatedAt: createdAt },
-      { id: randomUUID(), name: "모과차", nameEn: "Quince Tea", imageUrl: menuImageUrls["모과차"], description: "새콤달콤 향긋한 모과청을 우려낸 차", categories: ["차"], price: 4800, available: true, isNew: false, recommended: false, temperatures: ["hot"], createdAt, updatedAt: createdAt },
-      { id: randomUUID(), name: "오미자차", nameEn: "Omija Tea", imageUrl: menuImageUrls["오미자차"], description: "다섯 가지 맛이 어우러진 상큼한 오미자차", categories: ["차"], price: 4800, available: true, isNew: true, recommended: false, temperatures: ["hot", "ice"], createdAt, updatedAt: createdAt },
-      { id: randomUUID(), name: "수제 단팥죽", nameEn: "Handmade Red Bean Porridge", imageUrl: menuImageUrls["수제 단팥죽"], description: "매일 아침 직접 쑤는 뜨끈한 단팥죽, 새알심 한가득", categories: ["디저트"], price: 6500, available: true, isNew: true, recommended: true, temperatures: ["hot"], createdAt, updatedAt: createdAt },
-      { id: randomUUID(), name: "수제 모나카", nameEn: "Handmade Monaka", imageUrl: menuImageUrls["수제 모나카"], description: "바삭한 웨하스 사이 직접 만든 아이스크림을 채운 모나카", categories: ["디저트"], price: 4500, available: true, isNew: true, recommended: false, temperatures: [], createdAt, updatedAt: createdAt },
+      { id: randomUUID(), name: "율무차", nameEn: "Job's Tears Tea", imageUrl: MENU_IMAGE_PLACEHOLDER, description: "고소하고 걸쭉한 율무차에 견과를 솔솔 뿌려 드려요", categories: ["차"], price: 4000, available: true, isNew: true, recommended: false, temperatures: ["hot"], createdAt, updatedAt: createdAt },
+      { id: randomUUID(), name: "칡즙", nameEn: "Arrowroot Juice", imageUrl: MENU_IMAGE_PLACEHOLDER, description: "쌉싸름한 뒷맛이 개운한 국산 칡즙", categories: ["논커피"], price: 5000, available: false, isNew: false, recommended: false, temperatures: ["ice"], createdAt, updatedAt: createdAt },
+      { id: randomUUID(), name: "오렌지 쥬스", nameEn: "Orange Juice", imageUrl: MENU_IMAGE_PLACEHOLDER, description: "유리잔에 얼음 동동, 새콤달콤 오렌지 쥬스", categories: ["논커피"], price: 4500, available: true, isNew: false, recommended: false, temperatures: ["ice"], createdAt, updatedAt: createdAt },
+      { id: randomUUID(), name: "카스테라", nameEn: "Castella", imageUrl: MENU_IMAGE_PLACEHOLDER, description: "촉촉하고 폭신한 옛날 카스테라 한 조각", categories: ["디저트"], price: 4000, available: true, isNew: false, recommended: true, temperatures: [], createdAt, updatedAt: createdAt },
+      { id: randomUUID(), name: "계란후라이", nameEn: "Fried Egg", imageUrl: MENU_IMAGE_PLACEHOLDER, description: "노른자를 살짝 익힌 반숙 계란후라이, 모닝커피와 함께", categories: ["기타"], price: 2000, available: true, isNew: false, recommended: false, temperatures: [], createdAt, updatedAt: createdAt },
+      { id: randomUUID(), name: "깨죽", nameEn: "Sesame Porridge", imageUrl: MENU_IMAGE_PLACEHOLDER, description: "검은깨를 곱게 갈아 쑨 고소한 깨죽", categories: ["기타"], price: 5500, available: true, isNew: true, recommended: false, temperatures: ["hot"], createdAt, updatedAt: createdAt },
     ];
   });
   // Older local mock records predate these fields; keep them readable.

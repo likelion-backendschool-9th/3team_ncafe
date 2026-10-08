@@ -98,24 +98,22 @@
 .cardImage { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 220ms ease; }
 .card:hover .cardImage { transform: scale(1.05); }
 .cardImage[data-unavailable="true"] { filter: grayscale(0.7) brightness(0.85); }
+.badges { position: absolute; top: 0.6rem; left: 0.6rem; display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .badgeNew, .badgeRecommend, .badgeSoldOut {
-  position: absolute;
-  top: 0.6rem;
   padding: 0.28rem 0.48rem;
   color: #fff;
   font-family: Arial, "Apple SD Gothic Neo", sans-serif;
   font-size: 0.68rem;
   font-weight: 800;
 }
-.badgeNew { left: 0.6rem; background: var(--teal-dark); }
-.badgeRecommend { right: 0.6rem; background: var(--red); }
-.badgeSoldOut { left: 0.6rem; background: var(--ink); }
-.cardBody { display: grid; flex: 1; align-content: start; gap: 0.2rem; padding: 1rem; border-top: 5px solid var(--red); }
-.cardName { margin: 0; font-family: var(--font-display), "Apple SD Gothic Neo", sans-serif; font-size: 1.13rem; font-weight: 400; }
-.cardNameEn { margin: 0; color: #6e6359; font-family: Arial, sans-serif; font-size: 0.74rem; }
-.priceRow { display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.7rem; }
-.leader { flex: 1; border-bottom: 1px dotted #86776a; }
-.price { color: var(--red-dark); font-family: Arial, sans-serif; font-weight: 800; }
+.badgeNew { background: var(--teal-dark); }
+.badgeRecommend { background: var(--red); }
+.badgeSoldOut { background: var(--ink); }
+.cardBody { display: flex; flex: 1; flex-wrap: wrap; align-items: baseline; align-content: start; gap: 0.2rem 0.7rem; padding: 1rem; border-top: 5px solid var(--red); }
+.cardName { margin: 0; font-family: var(--font-menu-name), var(--font-display), "Apple SD Gothic Neo", sans-serif; font-size: 1.5rem; font-weight: 400; line-height: 1.25; }
+/* 옛 다방 메뉴판처럼 메뉴명은 왼쪽, ₩ 가격은 오른쪽 끝에 둔다 */
+.price { margin: 0 0 0 auto;color: var(--red-dark); font-family: var(--font-menu-name), Arial, sans-serif; font-size: 1.15rem; white-space: nowrap; }
+.wonSign { margin-right: 0.15em; font-size: 0.8em; }
 .empty { margin: 1rem 0 4rem; padding: 3rem 1rem; border: 1px solid #2d211c66; background: var(--paper); color: var(--ink); text-align: center; }
 .empty p { margin: 0 0 0.8rem; }
 .empty a { color: var(--red-dark); font-weight: 700; }
@@ -132,7 +130,7 @@
 .detailBadgeNew { background: var(--teal-dark); }
 .detailBadgeRecommend { background: var(--red); }
 .detailBadgeSoldOut { background: var(--ink); }
-.detailName { margin: 0; font-family: var(--font-display), "Apple SD Gothic Neo", sans-serif; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1.2; letter-spacing: -0.06em; }
+.detailName { margin: 0; font-family: var(--font-menu-name), var(--font-display), "Apple SD Gothic Neo", sans-serif; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1.2; letter-spacing: -0.06em; }
 .detailNameEn { margin: 0.3rem 0 0; color: #d6ba95; font-family: Arial, sans-serif; letter-spacing: 0.06em; }
 .detailPrice { margin: 0.2rem 0; color: #f18b73; font-family: Arial, sans-serif; font-size: 1.8rem; font-weight: 800; }
 .detailDescription { max-width: 52ch; margin: 0; line-height: 1.8; }

@@ -125,17 +125,18 @@ export default async function MenusPage({ searchParams }: { searchParams: MenuSe
                     data-unavailable={!menu.available}
                     className={styles.cardImage}
                   />
-                  {!menu.available && <span className={styles.badgeSoldOut}>품절</span>}
-                  {menu.available && menu.isNew && <span className={styles.badgeNew}>NEW</span>}
-                  {menu.available && menu.recommended && <span className={styles.badgeRecommend}>추천</span>}
+                  <div className={styles.badges}>
+                    {!menu.available && <span className={styles.badgeSoldOut}>품절</span>}
+                    {menu.available && menu.isNew && <span className={styles.badgeNew}>NEW</span>}
+                    {menu.available && menu.recommended && <span className={styles.badgeRecommend}>추천</span>}
+                  </div>
                 </div>
                 <div className={styles.cardBody}>
                   <p className={styles.cardName}>{menu.name}</p>
-                  <p className={styles.cardNameEn}>{menu.nameEn}</p>
-                  <div className={styles.priceRow}>
-                    <span className={styles.leader} aria-hidden="true" />
-                    <span className={styles.price}>{won.format(menu.price)}원</span>
-                  </div>
+                  <p className={styles.price}>
+                    <span className={styles.wonSign}>₩</span>
+                    {won.format(menu.price)}
+                  </p>
                 </div>
               </Link>
             ))}
