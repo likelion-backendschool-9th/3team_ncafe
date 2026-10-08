@@ -1,23 +1,58 @@
 import Image from "next/image";
 import Link from "next/link";
 import { mockCategoryRepository } from "@/app/_lib/mock/categories";
-import { MENU_IMAGE_PLACEHOLDER, mockMenuRepository } from "@/app/_lib/mock/menus";
+import { MENU_IMAGE_PLACEHOLDER, mockMenuRepository, type Menu } from "@/app/_lib/mock/menus";
 import styles from "./menus.module.css";
 
 const won = new Intl.NumberFormat("ko-KR");
+type MenuSearchParams = Promise<{
+  q?: string | string[];
+  category?: string | string[];
+  sort?: string | string[];
+}>;
 
-export default async function MenusPage({ searchParams }: {
-  searchParams: Promise<{ category?: string }>;
-}) {
-  const { category } = await searchParams;
+const sortOptions = ["newest", "name", "price-low", "price-high"] as const;
+type SortOption = typeof sortOptions[number];
+
+function single(value: string | string[] | undefined): string {
+  return typeof value === "string" ? value : "";
+}
+
+function sortMenus(menus: Menu[], sort: SortOption): Menu[] {
+  return [...menus].sort((a, b) => {
+    if (sort === "name") return a.name.localeCompare(b.name, "ko") || a.id.localeCompare(b.id);
+    if (sort === "price-low") return a.price - b.price || a.name.localeCompare(b.name, "ko");
+    if (sort === "price-high") return b.price - a.price || a.name.localeCompare(b.name, "ko");
+    return b.createdAt.localeCompare(a.createdAt) || a.name.localeCompare(b.name, "ko");
+  });
+}
+
+export default async function MenusPage({ searchParams }: { searchParams: MenuSearchParams }) {
+  const { q, category, sort } = await searchParams;
   const [allMenus, categories] = await Promise.all([
     mockMenuRepository.list(),
     mockCategoryRepository.list(),
   ]);
+  const query = single(q).trim().slice(0, 100);
+  const selectedCategory = categories.some((item) => item.name === single(category)) ? single(category) : "";
+  const requestedSort = single(sort);
+  const selectedSort: SortOption = sortOptions.includes(requestedSort as SortOption)
+    ? requestedSort as SortOption
+    : "newest";
+  const needle = query.toLocaleLowerCase("ko");
+  const visibleMenus = sortMenus(allMenus.filter((menu) => {
+    const matchesQuery = !needle || menu.name.toLocaleLowerCase("ko").includes(needle)
+      || menu.nameEn.toLocaleLowerCase("en").includes(needle);
+    return matchesQuery && (!selectedCategory || menu.categories.includes(selectedCategory));
+  }), selectedSort);
 
-  const visibleMenus = allMenus.filter(
-    (menu) => !category || menu.categories.includes(category),
-  );
+  function categoryHref(name: string): string {
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (name) params.set("category", name);
+    if (selectedSort !== "newest") params.set("sort", selectedSort);
+    return params.size ? `/menus?${params.toString()}` : "/menus";
+  }
 
   return (
     <main className={styles.page}>
@@ -30,24 +65,52 @@ export default async function MenusPage({ searchParams }: {
 
         <nav className={styles.filterRow} aria-label="카테고리 필터">
           <Link
-            href="/menus"
-            className={`${styles.filterChip} ${!category ? styles.filterChipActive : ""}`}
+            href={categoryHref("")}
+            className={`${styles.filterChip} ${!selectedCategory ? styles.filterChipActive : ""}`}
+            aria-current={!selectedCategory ? "page" : undefined}
           >
             전체
           </Link>
           {categories.map((c) => (
             <Link
               key={c.id}
-              href={`/menus?category=${encodeURIComponent(c.name)}`}
-              className={`${styles.filterChip} ${category === c.name ? styles.filterChipActive : ""}`}
+              href={categoryHref(c.name)}
+              className={`${styles.filterChip} ${selectedCategory === c.name ? styles.filterChipActive : ""}`}
+              aria-current={selectedCategory === c.name ? "page" : undefined}
             >
               {c.name}
             </Link>
           ))}
         </nav>
 
+        <form className={styles.searchForm} method="get" role="search">
+          {selectedCategory && <input type="hidden" name="category" value={selectedCategory} />}
+          <label className={styles.searchField} htmlFor="customer-menu-query">
+            메뉴 검색
+            <input id="customer-menu-query" name="q" type="search" maxLength={100} defaultValue={query} placeholder="한글 또는 영어 메뉴명" />
+          </label>
+          <label className={styles.sortField} htmlFor="customer-menu-sort">
+            정렬
+            <select id="customer-menu-sort" name="sort" defaultValue={selectedSort}>
+              <option value="newest">최근 등록순</option>
+              <option value="name">메뉴명순</option>
+              <option value="price-low">가격 낮은순</option>
+              <option value="price-high">가격 높은순</option>
+            </select>
+          </label>
+          <button className="button" type="submit">검색</button>
+        </form>
+
+        <div className={styles.resultRow}>
+          <p>메뉴 <strong>{visibleMenus.length}</strong>개</p>
+          {(query || selectedCategory || selectedSort !== "newest") && <Link href="/menus">전체 메뉴 보기</Link>}
+        </div>
+
         {visibleMenus.length === 0 ? (
-          <p className={styles.empty}>해당 카테고리에 등록된 메뉴가 없어요.</p>
+          <div className={styles.empty} role="status">
+            <p>{allMenus.length === 0 ? "등록된 메뉴가 아직 없어요." : "조건에 맞는 메뉴가 없어요."}</p>
+            {allMenus.length > 0 && <Link href="/menus">검색 조건 초기화</Link>}
+          </div>
         ) : (
           <div className={styles.grid}>
             {visibleMenus.map((menu) => (
