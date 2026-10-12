@@ -23,6 +23,14 @@ export type MenuInput = Pick<Menu, "name" | "nameEn" | "imageUrl" | "description
 
 const fileName = "menus.json";
 export const MENU_IMAGE_PLACEHOLDER = "/images/menus/placeholder.svg";
+const rasterMenuImages = new Set([
+  "persimmon-vinegar", "set-jujube", "set-boyang", "perilla-seed-tea", "strawberry-juice", "yam-tea",
+  "green-tea", "black-tea", "arrowroot-tea", "jobs-tears-tea", "sansuyu", "solomons-seal-tea", "yuja-tea",
+  "arrowroot-juice", "fresh-arrowroot-juice", "honey-tea", "mugwort-tea", "ginkgo-tea", "cocoa", "milk",
+  "orange-juice", "maesil-juice", "tomato-juice", "castella", "fried-egg", "sesame-porridge", "set-morning",
+  "set-ssanghwa", "set-yuja", "set-strawberry", "coffee", "ginger-tea", "ginseng-tea", "ssanghwacha",
+  "jujube-tea", "monaka",
+]);
 const menuImageUrls: Record<string, string> = {
   아메리카노: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=900&q=80",
   카페라떼: "https://images.unsplash.com/photo-1643245253892-11f9af8a7306?auto=format&fit=crop&w=900&q=80",
@@ -86,7 +94,8 @@ function menus(): Menu[] {
     const now = Date.now();
     return seedMenus.map(({ image, available = true, isNew = false, recommended = false, ...menu }, index) => {
       const createdAt = new Date(now - (isNew ? 0 : (index + 1) * 60_000)).toISOString();
-      return { ...menu, id: randomUUID(), imageUrl: `/images/menus/${image}.svg`, available, isNew, recommended, createdAt, updatedAt: createdAt };
+      const extension = rasterMenuImages.has(image) ? "jpg" : "svg";
+      return { ...menu, id: randomUUID(), imageUrl: `/images/menus/${image}.${extension}`, available, isNew, recommended, createdAt, updatedAt: createdAt };
     });
   });
   // Older local mock records predate these fields; keep them readable.
