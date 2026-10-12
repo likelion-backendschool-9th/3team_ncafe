@@ -184,6 +184,11 @@ h1, h2, h3 { font-family: var(--font-display), "Apple SD Gothic Neo", sans-serif
   line-height: 1.2;
 }
 
+.state-panel h1 {
+  font-family: var(--font-body), "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  font-weight: 700;
+}
+
 .state-panel > p:not(.eyebrow) { max-width: 46ch; color: var(--muted); }
 .state-panel__action { margin-top: 1.8rem; }
 
