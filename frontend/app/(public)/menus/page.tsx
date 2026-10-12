@@ -126,9 +126,9 @@ export default async function MenusPage({ searchParams }: { searchParams: MenuSe
                     className={styles.cardImage}
                   />
                   <div className={styles.badges}>
-                    {!menu.available && <span className={styles.badgeSoldOut}>품절</span>}
-                    {menu.available && menu.isNew && <span className={styles.badgeNew}>NEW</span>}
-                    {menu.available && menu.recommended && <span className={styles.badgeRecommend}>추천</span>}
+                    {!menu.available && <span className={`${styles.chip} ${styles.chipSoldOut}`}>품절</span>}
+                    {menu.available && menu.recommended && <span className={`${styles.chip} ${styles.chipRecommend}`}>추천</span>}
+                    {menu.available && menu.isNew && <span className={`${styles.chip} ${styles.chipNew}`}>첫 개시</span>}
                   </div>
                 </div>
                 <div className={styles.cardBody}>
