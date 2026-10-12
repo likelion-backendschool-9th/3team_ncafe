@@ -1,12 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Black_Han_Sans, Gowun_Batang } from "next/font/google";
 import { MENU_IMAGE_PLACEHOLDER, mockMenuRepository } from "@/app/_lib/mock/menus";
 import styles from "../menus.module.css";
-
-const display = Black_Han_Sans({ subsets: ["latin"], weight: "400", preload: false, variable: "--font-display" });
-const serif = Gowun_Batang({ subsets: ["latin"], weight: ["400", "700"], preload: false, variable: "--font-serif" });
 
 const won = new Intl.NumberFormat("ko-KR");
 const temperatureLabel: Record<string, string> = { hot: "핫", ice: "아이스" };
@@ -19,7 +15,7 @@ export default async function MenuDetailPage({ params }: {
   if (!menu) notFound();
 
   return (
-    <main className={`${styles.page} ${display.variable} ${serif.variable}`}>
+    <main className={styles.page}>
       <div className="container">
         <nav className={styles.breadcrumb} aria-label="현재 위치">
           <Link href="/menus">전체 메뉴</Link>

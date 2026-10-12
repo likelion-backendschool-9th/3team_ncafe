@@ -1,0 +1,35 @@
+.page { display: grid; gap: 1.7rem; }
+.heading h1 { margin: 0.3rem 0; font-size: clamp(2rem, 4vw, 2.8rem); }
+.heading p:last-child { margin: 0; color: var(--muted); }
+.notice { margin: 0; padding: 0.85rem 1rem; border-left: 5px solid #207a72; background: #e6eee4; color: #254f45; font-weight: 700; }
+.section { display: grid; gap: 0.9rem; }
+.sectionHeading { display: flex; align-items: baseline; gap: 0.7rem; }
+.sectionHeading h2 { margin: 0; font-size: 1.45rem; }
+.count { color: var(--muted); font-weight: 700; }
+.currentCard, .requestCard, .empty, .history { margin: 0; padding: 1.3rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.currentCard { display: grid; gap: 1rem; border-left: 5px solid #a82b2d; }
+.currentCard strong { font-size: 1.25rem; }
+.currentCard p { margin: 0.65rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.currentCard audio { width: min(100%, 520px); }
+.finishButton { min-height: 44px; padding: 0.65rem 1rem; border: 1px solid #6f452f; border-radius: 2px; background: transparent; color: #583524; cursor: pointer; font: inherit; font-weight: 700; }
+.finishButton:hover { background: #ead5b7; }
+.empty { color: var(--muted); }
+.requestList { display: grid; gap: 1rem; }
+.requestCard { display: grid; gap: 0.7rem; }
+.requestMeta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.3rem 1rem; color: var(--muted); font-size: 0.82rem; }
+.requestMeta span:last-child { color: #9b2924; font-weight: 800; }
+.requestCard h3 { margin: 0; font-size: 1.2rem; }
+.requestCard h3 small { color: var(--muted); font-family: var(--font-body), sans-serif; font-size: 0.8em; font-weight: 500; }
+.requestCard blockquote { margin: 0; padding: 0.7rem 1rem; border-left: 3px solid #207a72; background: #fff8ec; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+.playbackForm { display: grid; gap: 0.4rem; margin-top: 0.4rem; }
+.playbackForm label { font-weight: 700; font-size: 0.87rem; }
+.playbackForm > div { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.playbackForm input { flex: 1 1 250px; min-width: 0; min-height: 44px; padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: 2px; background: #fff8ec; color: var(--text); font: inherit; }
+.playbackForm input[type="file"] { width: 100%; padding: 0.45rem; }
+.fileHint { margin: 0; color: var(--muted); font-size: 0.8rem; }
+.playbackForm input:focus-visible, .finishButton:focus-visible { outline: 3px solid #207a72; outline-offset: 2px; }
+.playbackForm .formError { margin: 0; color: #9b2924; font-size: 0.87rem; }
+.history { display: grid; gap: 0.6rem; padding-left: 2.5rem; }
+.history li { padding-right: 0.6rem; }
+.history span { float: right; color: var(--muted); font-size: 0.85rem; }
+@media (max-width: 640px) { .history span { display: block; float: none; } }

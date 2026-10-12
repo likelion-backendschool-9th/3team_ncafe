@@ -1,0 +1,54 @@
+.page {
+  min-height: 70vh;
+  padding: 2rem 0 5rem;
+  background: radial-gradient(circle at 86% 18%, #70402488, transparent 42%), #382114;
+  color: #f5e7cf;
+}
+.hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 290px;
+  padding: clamp(2rem, 6vw, 4.5rem);
+  border: 8px solid #674126;
+  background: linear-gradient(90deg, #1c120dec, #26170dc9 48%, #26170d66), url('/images/hero/dabang-interior-music-box-booth.png') center 48% / cover;
+  box-shadow: 8px 9px 0 #1b110b;
+}
+.eyebrow, .panelEyebrow { margin: 0; color: #dfb67c; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.16em; }
+.hero h1 { margin: 0.65rem 0 0.8rem; font-size: clamp(2.4rem, 5vw, 4.2rem); line-height: 1.18; }
+.hero > p:last-child { margin: 0; font-size: 1.03rem; }
+.success { margin: 1.5rem 0 0; padding: 0.9rem 1.1rem; border-left: 5px solid #207a72; background: #f5e7cf; color: #34251d; font-weight: 700; }
+.layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr); gap: 1.4rem; margin-top: 2rem; align-items: start; }
+.sideColumn { display: grid; gap: 1.4rem; }
+.paperPanel { padding: clamp(1.4rem, 3vw, 2.3rem); border: 1px solid #b38d61; background: #f5e7cf; color: #34251d; box-shadow: 6px 7px 0 #1b110b; }
+.paperPanel .panelEyebrow { color: #8c2f2b; }
+.paperPanel h2 { margin: 0.3rem 0 0.7rem; font-size: clamp(1.65rem, 3vw, 2.25rem); }
+.intro { margin: 0 0 1.5rem; color: #65513f; }
+.requestForm { display: grid; gap: 1rem; }
+.formGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.formGrid label { display: grid; gap: 0.4rem; font-weight: 700; }
+.formGrid label:first-child, .storyField { grid-column: 1 / -1; }
+.formGrid input, .formGrid textarea { width: 100%; min-height: 46px; padding: 0.7rem 0.8rem; border: 1px solid #a98b6b; border-radius: 2px; background: #fff8ec; color: #34251d; font: inherit; }
+.formGrid textarea { resize: vertical; }
+.formGrid input:focus-visible, .formGrid textarea:focus-visible { outline: 3px solid #207a72; outline-offset: 2px; }
+.formHint { margin: 0; color: #665545; font-size: 0.82rem; }
+.formError { margin: 0; color: #9b2924; font-weight: 700; }
+.submitButton { min-height: 48px; padding: 0.7rem 1.2rem; border: 0; border-radius: 2px; background: #a82b2d; color: #fff8ec; cursor: pointer; font: inherit; font-weight: 800; }
+.submitButton:hover { background: #812125; }
+.submitButton:disabled { opacity: 0.6; cursor: wait; }
+.submitButton:focus-visible { outline: 3px solid #207a72; outline-offset: 2px; }
+.nowPlaying { display: grid; justify-items: start; gap: 0.3rem; }
+.record { display: grid; width: 56px; height: 56px; place-items: center; margin: 0.6rem 0; border: 8px solid #2a211e; border-radius: 50%; background: #a82b2d; color: #fff8ec; font-size: 1.5rem; }
+.nowPlaying h3 { margin: 0; font-size: 1.4rem; }
+.artist { margin: 0; color: #665545; }
+.nowPlaying blockquote { margin: 1rem 0 0; padding-left: 1rem; border-left: 3px solid #207a72; font-family: var(--font-serif), serif; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+.requester { margin: 0.3rem 0 0.8rem; color: #665545; font-size: 0.85rem; }
+.audioPlayer { width: 100%; max-width: 100%; }
+.empty { margin: 1rem 0 0; color: #665545; }
+.count { font-family: var(--font-body), sans-serif; font-size: 0.8em; color: #a82b2d; }
+.queue { display: grid; gap: 0; margin: 0.7rem 0 0; padding: 0; list-style: none; }
+.queue li { display: grid; gap: 0.2rem; padding: 0.85rem 0; border-bottom: 1px solid #d8c6aa; }
+.queue li:last-child { border-bottom: 0; }
+.queue li > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
+.queue li span, .queue li small { color: #665545; }
+@media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .page { padding-top: 1rem; } .hero { min-height: 250px; padding: 1.5rem; } .formGrid { grid-template-columns: 1fr; } }

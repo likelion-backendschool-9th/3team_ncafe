@@ -108,6 +108,7 @@ function isValidImageUrl(value: string): boolean {
 function refreshMenus() {
   revalidatePath("/admin");
   revalidatePath("/admin/menus");
+  revalidatePath("/menus");
 }
 
 export async function createMenu(_previous: MenuFormState, formData: FormData): Promise<MenuFormState> {
@@ -145,6 +146,7 @@ export async function updateMenu(id: string, _previous: MenuFormState, formData:
   if (!updated) return { ...state, message: "수정할 메뉴를 찾을 수 없습니다." };
   refreshMenus();
   revalidatePath(`/admin/menus/${id}`);
+  revalidatePath(`/menus/${id}`);
   redirect(`/admin/menus/${id}?updated=1`);
 }
 
@@ -158,5 +160,6 @@ export async function deleteMenu(id: string): Promise<void> {
   }
   if (!removed) redirect("/admin/menus?missing=1");
   refreshMenus();
+  revalidatePath(`/menus/${id}`);
   redirect("/admin/menus?deleted=1");
 }
