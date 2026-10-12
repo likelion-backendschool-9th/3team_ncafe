@@ -8,7 +8,7 @@ export type Category = {
 };
 
 const fileName = "categories.json";
-const defaultNames = ["커피", "논커피", "차", "디저트", "기타"];
+const defaultNames = ["커피", "차", "쥬스", "다과", "세트"];
 
 function categories(): Category[] {
   return readMockData<Category[]>(fileName, () => {

@@ -157,7 +157,7 @@ export default async function HomePage() {
                     unoptimized
                     className={styles.menuCardImage}
                   />
-                  {menu.isNew && <span className={styles.badgeNew}>NEW</span>}
+                  {menu.isNew && <span className={styles.badgeNew}>첫 개시</span>}
                   {menu.recommended && (
                     <span className={styles.badgeRecommend}>추천</span>
                   )}
