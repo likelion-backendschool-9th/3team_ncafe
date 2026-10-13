@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import localFont from "next/font/local";
 import { SiteFooter } from "./_components/SiteFooter";
 import { SiteHeader } from "./_components/SiteHeader";
+import { CartProvider } from "./_lib/cart/CartContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,9 +19,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko">
       <body className={`${display.variable} ${serif.variable} ${body.variable}`}>
-        <SiteHeader />
-        <div className="site-content">{children}</div>
-        <SiteFooter />
+        <CartProvider>
+          <SiteHeader />
+          <div className="site-content">{children}</div>
+          <SiteFooter />
+        </CartProvider>
       </body>
     </html>
   );

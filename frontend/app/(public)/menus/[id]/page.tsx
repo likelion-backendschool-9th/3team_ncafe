@@ -64,7 +64,9 @@ export default async function MenuDetailPage({ params }: {
             </div>
 
             <OrderPanel
+              menuId={menu.id}
               menuName={menu.name}
+              imageUrl={menu.imageUrl || MENU_IMAGE_PLACEHOLDER}
               price={menu.price}
               temperatures={menu.temperatures}
               available={menu.available}

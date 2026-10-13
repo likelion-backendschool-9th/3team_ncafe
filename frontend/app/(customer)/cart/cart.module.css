@@ -1,108 +1,223 @@
-.page { display: grid; min-width: 0; gap: 1.5rem; }
+.page {
+  --cream: #392315;
+  --paper: #f5e7cf;
+  --ink: #34251d;
+  --red: #a82b2d;
+  --red-dark: #812125;
+  --teal: #207a72;
+  --teal-dark: #174b4a;
+  display: grid;
+  min-width: 0;
+  gap: 1.8rem;
+  min-height: 65vh;
+  padding-block: 2rem clamp(4rem, 8vw, 6rem);
+  color: var(--paper);
+  font-family: var(--font-body), "Apple SD Gothic Neo", sans-serif;
+}
 
-.heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; }
-.heading h1 { margin: 0.3rem 0 0.3rem; font-size: clamp(2rem, 4vw, 2.6rem); letter-spacing: -0.045em; }
-.heading p { margin: 0; color: var(--muted); }
+.heading {
+  position: relative;
+  padding: clamp(2rem, 5vw, 3rem) 1.5rem;
+  border: 6px solid #5d3927;
+  outline: 1px solid var(--paper);
+  outline-offset: -15px;
+  background: linear-gradient(0deg, #25150bb8, #25150b70),
+    repeating-linear-gradient(90deg, #70472e 0 48px, #5b3827 48px 96px);
+  color: var(--paper);
+  text-align: center;
+  box-shadow: 7px 8px 0 #2d211c2e;
+}
+.heading::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -12px;
+  width: 100px;
+  height: 12px;
+  background: var(--red);
+  transform: translateX(-50%);
+}
+.eyebrow {
+  margin: 0;
+  color: #efd28d;
+  font-family: Arial, "Apple SD Gothic Neo", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+.title {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-display), "Apple SD Gothic Neo", sans-serif;
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  line-height: 1.2;
+  letter-spacing: -0.06em;
+}
 
+/* 전표 상단: 전체선택 체크박스 + 담긴 개수 */
 .toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.9rem 1.1rem;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
+  padding: 0.9rem 1.2rem;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
 }
 .selectAll { display: flex; align-items: center; gap: 0.6rem; font-weight: 700; }
-.selectAll input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
+.selectAll input { width: 1.15rem; height: 1.15rem; accent-color: var(--red); }
 
-.list { display: grid; gap: 0.75rem; }
+.list { display: grid; gap: 0.9rem; }
 
+/* 메뉴 한 줄이 전표 한 칸처럼 보이게: 이중선 + 점선 라벨 느낌을 재사용 */
 .row {
-  display: grid;
-  grid-template-columns: auto auto 1fr auto auto;
+  display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
+  flex-wrap: nowrap;
+  gap: 0.75rem 1rem;
+  padding: 1rem 1.2rem;
+  border: 3px double var(--ink);
+  background: radial-gradient(circle at 18% 12%, #fffaf080, transparent 45%), var(--paper);
+  color: var(--ink);
+  box-shadow: 5px 6px 0 #74452e;
+  transition: opacity 160ms ease;
 }
-.row[data-selected="false"] { opacity: 0.55; }
-.row input[type="checkbox"] { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
+.row[data-selected="false"] { opacity: 0.5; }
+.row input[type="checkbox"] { width: 1.15rem; height: 1.15rem; accent-color: var(--red); flex-shrink: 0; }
+/* 수량+삭제는 항상 한 덩어리로 움직이고, 공간이 부족할 때만 이 덩어리째로 다음 줄로 내려감 */
+.actions { display: flex; align-items: center; gap: 1rem; margin-left: auto; flex-shrink: 0; }
 
 .thumb {
   position: relative;
-  width: 64px;
-  height: 64px;
-  border-radius: 10px;
+  width: 68px;
+  height: 68px;
+  border: 2px solid var(--ink);
+  outline: 1px solid var(--paper);
+  outline-offset: -5px;
   overflow: hidden;
-  border: 1px solid var(--border);
-  background: var(--surface-soft);
+  background: #e6dbc8;
   flex-shrink: 0;
 }
 .thumb img { object-fit: cover; }
 
-.info { display: grid; gap: 0.25rem; min-width: 0; }
-.info .name { font-weight: 700; }
-.info .price { color: var(--muted); font-size: 0.9rem; }
-.soldOut { color: var(--danger); font-size: 0.85rem; font-weight: 700; }
-
-.qty { display: flex; align-items: center; gap: 0.5rem; }
-.qty button {
-  width: 30px;
-  height: 30px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  cursor: pointer;
+.info { flex: 1 1 160px; display: grid; gap: 0.2rem; min-width: 0; }
+.nameRow { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.info .name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--font-menu-name), var(--font-display), "Apple SD Gothic Neo", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 400;
 }
-.qty button:disabled { opacity: 0.4; cursor: not-allowed; }
+.tempBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  color: #fff;
+  font-family: Arial, "Apple SD Gothic Neo", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+}
+.tempBadge[data-temp="hot"] { background: var(--red); }
+.tempBadge[data-temp="ice"] { background: var(--teal-dark); }
+.info .price { color: var(--red-dark); font-family: Arial, sans-serif; font-weight: 800; font-size: 0.95rem; }
+.soldOut { color: var(--red-dark); font-size: 0.85rem; font-weight: 800; }
+
+.qty { display: inline-flex; align-items: center; gap: 0.5rem; }
+.qty button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: #fff8ec;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 0 var(--ink);
+  transition: transform 120ms ease, box-shadow 120ms ease, background 160ms ease;
+}
+.qty button:hover:not(:disabled) { background: #f0dfc3; }
+.qty button:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 0 0 var(--ink); }
+.qty button:disabled { border-color: #b8aa9b; color: #b8aa9b; box-shadow: 0 2px 0 #b8aa9b; cursor: not-allowed; }
 .qty span { min-width: 1.5rem; text-align: center; font-weight: 700; }
 
 .removeButton {
   border: none;
   background: none;
-  color: var(--muted);
+  color: var(--ink);
   font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
   text-decoration: underline;
+  text-decoration-style: dotted;
   cursor: pointer;
   padding: 0;
+  opacity: 0.75;
 }
-.removeButton:hover { color: var(--danger); }
+.removeButton:hover { color: var(--red-dark); opacity: 1; }
 
 .empty {
   display: grid;
   gap: 0.5rem;
   justify-items: center;
-  padding: 3rem 1rem;
-  border: 1px dashed var(--border);
-  border-radius: 14px;
-  background: var(--surface);
+  padding: 3.5rem 1rem;
+  border: 2px dashed var(--paper);
   text-align: center;
-  color: var(--muted);
 }
+.empty p { margin: 0; }
+.empty p:first-child { font-size: 1.3rem; }
+.empty p:last-child { color: #d6ba95; }
+.empty a { color: #efd28d; font-weight: 700; text-decoration: underline; }
+.empty a:hover { color: #fff3da; }
 
+/* 하단 합계: 주문 전표 마지막 줄처럼 점선 절취선을 위에 둔다 */
 .summary {
   position: sticky;
   bottom: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.1rem 1.3rem;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
-  box-shadow: 0 6px 18px #0000002e;
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.2rem 1.4rem;
+  border: 4px double var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 8px 9px 0 #74452e;
 }
-.summary .label { color: var(--muted); }
-.summary .total { font-size: 1.3rem; font-weight: 700; }
+.summaryRow { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.summary .label { font-weight: 700; }
+.summary .total {
+  color: var(--red-dark);
+  font-family: var(--font-menu-name), Arial, sans-serif;
+  font-size: 1.6rem;
+  font-weight: 400;
+}
 
-@media (max-width: 560px) {
-  .row { grid-template-columns: auto auto 1fr; }
-  .qty, .removeButtonCell { grid-column: 2 / -1; justify-self: start; }
+.orderButton {
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-radius: 6px;
+  outline: 1px solid #f5e7cf99;
+  outline-offset: -7px;
+  background: var(--red);
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--font-menu-name), var(--font-display), sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: 0.1em;
+  box-shadow: 0 5px 0 var(--red-dark), 0 8px 14px #2d211c40;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 160ms ease;
 }
+.orderButton:hover:not(:disabled) { background: #b8353a; }
+.orderButton:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 var(--red-dark), 0 2px 6px #2d211c40; }
+.orderButton:disabled { background: #8a7d70; box-shadow: 0 5px 0 #6e6359; cursor: not-allowed; }
+
+.orderMessage { margin: 0; padding: 0.6rem 0.9rem; border: 1.5px dashed var(--teal-dark); border-radius: 6px; color: var(--teal-dark); font-size: 0.88rem; font-weight: 700; text-align: center; }
+
