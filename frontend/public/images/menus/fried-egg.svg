@@ -1,4 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="계란 후라이">
-  <rect width="400" height="300" fill="#f2e4cc"/>
-  <ellipse cx="200" cy="252" rx="130" ry="12" fill="rgba(0,0,0,0.09)"/><ellipse cx="200" cy="214" rx="140" ry="40" fill="#dbe6e8" stroke="#9db4bf" stroke-width="3"/><ellipse cx="200" cy="212" rx="104" ry="27" fill="none" stroke="#9db4bf" stroke-width="3"/><path d="M130 210c-12-26 16-46 44-40 18-20 62-14 68 10 26 4 26 34 0 42-20 16-74 18-96 4-12-2-20-8-16-16z" fill="#ffffff" stroke="#efe5d4" stroke-width="2"/><circle cx="196" cy="196" r="22" fill="#f2a516"/><ellipse cx="189" cy="188" rx="7" ry="5" fill="rgba(255,255,255,0.55)"/>
-</svg>
