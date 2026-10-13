@@ -1,7 +1,9 @@
+import { requireRole } from "@/app/_lib/session/session";
 import { CartView } from "./_components/CartView";
 import styles from "./cart.module.css";
 
-export default function CartPage() {
+export default async function CartPage() {
+  await requireRole("customer", "/cart");
   return (
     <div className={styles.page}>
       <div className={styles.heading}>

@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 export type Temperature = "hot" | "ice";
+export const MAX_CART_ITEM_QUANTITY = 20;
 
 export type CartItem = {
   id: string;
@@ -28,7 +29,6 @@ type CartContextValue = {
 };
 
 const storageKey = "ncafe_mock_cart";
-const maxQuantity = 10;
 const CartContext = createContext<CartContextValue | null>(null);
 
 function readStoredItems(): CartItem[] {
@@ -66,11 +66,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (existing) {
         return current.map((item) => (
           item === existing
-            ? { ...item, quantity: Math.min(maxQuantity, item.quantity + input.quantity) }
+            ? { ...item, quantity: Math.min(MAX_CART_ITEM_QUANTITY, item.quantity + input.quantity) }
             : item
         ));
       }
-      return [...current, { ...input, id: crypto.randomUUID(), selected: true }];
+      return [...current, { ...input, quantity: Math.min(MAX_CART_ITEM_QUANTITY, input.quantity), id: crypto.randomUUID(), selected: true }];
     });
   }
 
@@ -80,7 +80,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   function setQuantity(id: string, quantity: number) {
     setItems((current) => current.map((item) => (
-      item.id === id ? { ...item, quantity: Math.min(maxQuantity, Math.max(1, quantity)) } : item
+      item.id === id ? { ...item, quantity: Math.min(MAX_CART_ITEM_QUANTITY, Math.max(1, quantity)) } : item
     )));
   }
 

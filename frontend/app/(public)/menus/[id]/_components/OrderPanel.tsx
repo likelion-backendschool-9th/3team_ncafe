@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Temperature } from "@/app/_lib/mock/menus";
-import { useCart } from "@/app/_lib/cart/CartContext";
+import { MAX_CART_ITEM_QUANTITY, useCart } from "@/app/_lib/cart/CartContext";
 import styles from "../../menus.module.css";
 
 const won = new Intl.NumberFormat("ko-KR");
@@ -11,7 +11,6 @@ const temperatureOptions: { value: Temperature; label: string; sub: string }[] =
   { value: "ice", label: "시원하게", sub: "ICE" },
 ];
 const MIN_QUANTITY = 1;
-const MAX_QUANTITY = 20;
 
 type OrderPanelProps = {
   menuId: string;
@@ -47,7 +46,7 @@ export function OrderPanel({ menuId, menuName, imageUrl, price, temperatures, av
   const [message, setMessage] = useState("");
 
   const changeQuantity = (next: number) => {
-    setQuantity(Math.min(MAX_QUANTITY, Math.max(MIN_QUANTITY, next)));
+    setQuantity(Math.min(MAX_CART_ITEM_QUANTITY, Math.max(MIN_QUANTITY, next)));
     setMessage("");
   };
 
@@ -70,8 +69,7 @@ export function OrderPanel({ menuId, menuName, imageUrl, price, temperatures, av
           <div className={styles.orderField}>
             <span className={styles.orderLabel} id="temperature-label">온도</span>
             <div className={styles.tempToggle} role="radiogroup" aria-labelledby="temperature-label">
-              {/* 음료는 등록된 온도와 상관없이 손님이 HOT/ICE를 고를 수 있고, 등록된 첫 온도를 기본값으로 둔다 */}
-              {temperatureOptions.map((option) => (
+              {temperatureOptions.filter((option) => temperatures.includes(option.value)).map((option) => (
                 <button
                   key={option.value}
                   type="button"
@@ -113,7 +111,7 @@ export function OrderPanel({ menuId, menuName, imageUrl, price, temperatures, av
               type="button"
               className={styles.stepperButton}
               aria-label="수량 늘리기"
-              disabled={!available || quantity >= MAX_QUANTITY}
+              disabled={!available || quantity >= MAX_CART_ITEM_QUANTITY}
               onClick={() => changeQuantity(quantity + 1)}
             >
               +
