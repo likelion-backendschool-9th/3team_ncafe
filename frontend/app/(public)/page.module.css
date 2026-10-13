@@ -115,7 +115,7 @@
 .featured {
   position: relative;
   width: min(100% - 2rem, 1120px);
-  margin-block: 0 clamp(4rem, 7vw, 6rem);
+  margin-block: clamp(4rem, 7vw, 6rem);
   padding: clamp(1.8rem, 4vw, 3rem);
   border: 2px solid #63422f;
   background: linear-gradient(140deg, #fcf4e3, var(--paper));
@@ -136,39 +136,6 @@
 }
 .sectionHeading { margin-bottom: 2rem; }
 .featuredGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.25rem; }
-.menuCard { display: flex; min-width: 0; flex-direction: column; border: 1px solid #8e7052; background: #fbf3e4; color: var(--ink); text-decoration: none; transition: transform 160ms ease, box-shadow 160ms ease; }
-.menuCard:hover { transform: translateY(-4px); box-shadow: 4px 5px 0 #6b432c55; }
-.menuCardImageWrap { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #e6dbc8; }
-.menuCardImage { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 220ms ease; }
-.menuCard:hover .menuCardImage { transform: scale(1.05); }
-.badgeNew, .badgeRecommend { position: absolute; top: 0.6rem; padding: 0.28rem 0.48rem; color: #fff; font-family: Arial, sans-serif; font-size: 0.68rem; font-weight: 800; }
-.badgeNew { left: 0.6rem; background: var(--teal-dark); }
-.badgeRecommend { right: 0.6rem; background: var(--red); }
-.menuCardBody { display: grid; flex: 1; align-content: start; gap: 0.2rem; padding: 1rem; border-top: 4px solid var(--red); }
-.menuCardName { margin: 0; font-size: 1.13rem; font-weight: 700; }
-.menuCardNameEn { margin: 0; color: #6e6359; font-family: Arial, sans-serif; font-size: 0.74rem; }
-.menuCardPriceRow { display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.7rem; }
-.leader { flex: 1; border-bottom: 1px dotted #86776a; }
-.menuCardPrice { color: var(--red-dark); font-family: Arial, sans-serif; font-weight: 800; }
-.starburst {
-  position: absolute;
-  right: 0.45rem;
-  bottom: 0.45rem;
-  display: grid;
-  width: 60px;
-  height: 60px;
-  place-content: center;
-  background: var(--gold);
-  color: var(--ink);
-  clip-path: polygon(50% 0, 61% 18%, 82% 10%, 80% 32%, 100% 40%, 84% 55%, 95% 75%, 73% 74%, 68% 96%, 50% 82%, 32% 96%, 27% 74%, 5% 75%, 16% 55%, 0 40%, 20% 32%, 18% 10%, 39% 18%);
-  font-family: Arial, sans-serif;
-  font-weight: 800;
-  line-height: 1;
-  text-align: center;
-  transform: rotate(-8deg);
-}
-.starburst span { font-size: 0.98rem; }
-.starburst small { font-size: 0.62rem; }
 .moreLink { display: flex; width: fit-content; min-height: 46px; align-items: center; margin: 2rem auto 0; padding: 0.6rem 1.1rem; border-bottom: 2px solid var(--red); color: var(--red-dark); font-family: Arial, sans-serif; font-weight: 800; text-decoration: none; }
 .moreLink:hover { background: #8e2d2a12; }
 .empty { padding: 2rem; text-align: center; }
@@ -205,11 +172,6 @@
   font-size: 3.7rem;
 }
 .storyArt::after { content: ""; position: absolute; inset: 34%; border: 5px solid var(--gold); border-radius: 50%; background: var(--red); }
-.info { padding-block: clamp(4rem, 7vw, 6rem); background: repeating-linear-gradient(0deg, #9d684c 0 2px, transparent 2px 40px), repeating-linear-gradient(90deg, #b7825d 0 2px, transparent 2px 86px), #bd8c68; }
-.infoCard { position: relative; max-width: 650px; margin-inline: auto; padding: clamp(2rem, 5vw, 3.5rem); border: 8px solid #5d3927; outline: 2px solid var(--red); outline-offset: -17px; background: var(--paper); box-shadow: 12px 14px 0 #2019159c; text-align: center; }
-.infoMark { display: block; color: var(--teal); font-size: 2rem; }
-.infoCard .sectionTitle { margin-bottom: 1.2rem; }
-.infoCard p { margin: 0.45rem 0; font-family: Arial, "Apple SD Gothic Neo", sans-serif; }
 
 @media (max-width: 950px) {
   .usp { grid-template-columns: repeat(2, 1fr); }
@@ -237,5 +199,4 @@
   .uspItem p { font-size: 0.82rem; }
   .featuredGrid { grid-template-columns: 1fr; }
   .featured { padding-inline: 1.2rem; }
-  .info { padding-inline: 1.5rem; }
 }

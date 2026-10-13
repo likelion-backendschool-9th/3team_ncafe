@@ -1,16 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { BrandLogo } from '@/app/_components/BrandLogo';
-import {
-  mockMenuRepository,
-  MENU_IMAGE_PLACEHOLDER,
-  type Menu,
-} from '@/app/_lib/mock/menus';
+import { MenuCard } from '@/app/_components/MenuCard';
+import { mockMenuRepository, type Menu } from '@/app/_lib/mock/menus';
 import { getCurrentUser } from '@/app/_lib/session/session';
 import { MusicBoxHighlight } from './music-box/_components/MusicBoxHighlight';
 import styles from './page.module.css';
 
-const won = new Intl.NumberFormat('ko-KR');
 // 이미지를 바꿀 때 이 URL에 로컬 경로나 직접 찾은 이미지 URL을 넣으세요.
 const HERO_IMAGE_URL = '/images/hero/dabang-interior-music-box-booth.png';
 
@@ -88,6 +84,34 @@ export default async function HomePage() {
         ))}
       </div>
 
+      <section
+        className={`container ${styles.featured}`}
+        aria-labelledby="featured-heading"
+      >
+        <div className={styles.sectionHeading}>
+          <p className={styles.sectionEyebrow}>오늘의 메뉴판</p>
+          <h2 id="featured-heading" className={styles.sectionTitle}>
+            추천 메뉴
+          </h2>
+        </div>
+        {featuredMenus.length === 0 ? (
+          <p className={styles.empty}>
+            추천 메뉴가 아직 없어요. 전체 메뉴에서 다른 메뉴를 둘러보세요.
+          </p>
+        ) : (
+          <div className={styles.featuredGrid}>
+            {featuredMenus.map((menu) => (
+              <MenuCard key={menu.id} menu={menu} />
+            ))}
+          </div>
+        )}
+        <Link className={styles.moreLink} href="/menus">
+          전체 메뉴 보러 가기 <span aria-hidden="true">→</span>
+        </Link>
+      </section>
+
+      <MusicBoxHighlight />
+
       <section className={`container ${styles.usp}`}>
         <div className={styles.uspHeading}>
           <p>삼다방의 약속</p>
@@ -124,82 +148,6 @@ export default async function HomePage() {
             쌍화차부터 생강차, 율무차까지 — 한의원 저리가라, 매일
             정성껏 달인 보양차로 몸을 다독여요.
           </p>
-        </div>
-      </section>
-
-      <section
-        className={`container ${styles.featured}`}
-        aria-labelledby="featured-heading"
-      >
-        <div className={styles.sectionHeading}>
-          <p className={styles.sectionEyebrow}>오늘의 메뉴판</p>
-          <h2 id="featured-heading" className={styles.sectionTitle}>
-            추천 메뉴
-          </h2>
-        </div>
-        {featuredMenus.length === 0 ? (
-          <p className={styles.empty}>
-            추천 메뉴가 아직 없어요. 전체 메뉴에서 다른 메뉴를 둘러보세요.
-          </p>
-        ) : (
-          <div className={styles.featuredGrid}>
-            {featuredMenus.map((menu, index) => (
-              <Link
-                key={menu.id}
-                href={`/menus/${menu.id}`}
-                className={styles.menuCard}
-              >
-                <div className={styles.menuCardImageWrap}>
-                  <Image
-                    src={menu.imageUrl || MENU_IMAGE_PLACEHOLDER}
-                    alt={`${menu.name} 이미지`}
-                    width={240}
-                    height={180}
-                    unoptimized
-                    className={styles.menuCardImage}
-                  />
-                  {menu.isNew && <span className={styles.badgeNew}>첫 개시</span>}
-                  {menu.recommended && (
-                    <span className={styles.badgeRecommend}>추천</span>
-                  )}
-                  {index === 0 && (
-                    <span className={styles.starburst} aria-hidden="true">
-                      <span>{won.format(menu.price)}</span>
-                      <small>원</small>
-                    </span>
-                  )}
-                </div>
-                <div className={styles.menuCardBody}>
-                  <p className={styles.menuCardName}>{menu.name}</p>
-                  <p className={styles.menuCardNameEn}>{menu.nameEn}</p>
-                  {index !== 0 && (
-                    <div className={styles.menuCardPriceRow}>
-                      <span className={styles.leader} aria-hidden="true" />
-                      <span className={styles.menuCardPrice}>
-                        {won.format(menu.price)}원
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-        <Link className={styles.moreLink} href="/menus">
-          전체 메뉴 보러 가기 <span aria-hidden="true">→</span>
-        </Link>
-      </section>
-
-      <MusicBoxHighlight />
-
-      <section className={`container ${styles.info}`} aria-label="매장 안내">
-        <div className={styles.infoCard}>
-          <span className={styles.infoMark} aria-hidden="true">
-            ✦
-          </span>
-          <h3 className={styles.sectionTitle}>매장 안내</h3>
-          <p>서울 어딘가 카페거리 12길 3 · 매일 09:00 – 22:00</p>
-          <p>전화 문의 02-1234-5678</p>
         </div>
       </section>
     </main>
