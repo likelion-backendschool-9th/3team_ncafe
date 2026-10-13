@@ -120,34 +120,31 @@ export default async function HomePage() {
         </div>
         <div className={styles.uspItem}>
           <span className={styles.uspIcon} aria-hidden="true">
-            🌱
+            ☕
           </span>
-          <h3>매일 로스팅</h3>
-          <p>매장에서 매일 신선하게 로스팅한 원두만 사용해요.</p>
+          <h3>둘둘둘 다방 커피</h3>
+          <p>커피 둘, 설탕 둘, 프림 둘. 주인장이 그 시절 황금 비율 그대로 달달하게 타 드려요.</p>
         </div>
         <div className={styles.uspItem}>
           <span className={styles.uspIcon} aria-hidden="true">
             🛎️
           </span>
-          <h3>빠른 픽업</h3>
-          <p>미리 담아두고 매장에서 바로 픽업할 수 있어요.</p>
+          <h3>기다림 없는 픽업</h3>
+          <p>미리 주문해 두시면 카운터에서 따끈하게 내어 드려요. 바쁜 날에도 한 잔은 챙기셔야지요.</p>
         </div>
         <div className={styles.uspItem}>
           <span className={styles.uspIcon} aria-hidden="true">
-            🧾
+            📻
           </span>
-          <h3>간편한 주문</h3>
-          <p>메뉴를 눌러서 담고, 몇 번의 클릭으로 주문 끝.</p>
+          <h3>사연 실은 신청곡</h3>
+          <p>듣고 싶은 노래에 사연 한 줄 적어 보내시면, 뮤직박스 DJ가 차례대로 틀어 드려요.</p>
         </div>
         <div className={styles.uspItem}>
           <span className={styles.uspIcon} aria-hidden="true">
             🍵
           </span>
-          <h3>정성 가득 보양차</h3>
-          <p>
-            쌍화차부터 생강차, 율무차까지 — 한의원 저리가라, 매일
-            정성껏 달인 보양차로 몸을 다독여요.
-          </p>
+          <h3>주인장표 보양차</h3>
+          <p>노른자 동동 띄운 쌍화차에 생강차, 율무차까지. 매일 정성껏 달여 몸을 따뜻하게 다독여요.</p>
         </div>
       </section>
     </main>

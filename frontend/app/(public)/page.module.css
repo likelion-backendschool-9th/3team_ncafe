@@ -109,7 +109,7 @@
 .uspItem { padding: 1.7rem 1.2rem 1.5rem; border: 1px solid #b69c77; border-top: 4px solid var(--teal); background: linear-gradient(145deg, #fcf5e6, var(--paper)); box-shadow: 4px 4px 0 #6b432c30; }
 .uspItem:nth-child(3), .uspItem:nth-child(5) { border-top-color: var(--red); }
 .uspIcon { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 50%; background: #dfc6a3; font-size: 1.4rem; }
-.uspItem h3 { margin: 0.9rem 0 0.5rem; font-size: 1.25rem; }
+.uspItem h3 { margin: 0.9rem 0 0.5rem; font-family: var(--font-body), "Apple SD Gothic Neo", sans-serif; font-size: 1.15rem; font-weight: 800; letter-spacing: -0.02em; }
 .uspItem p { margin: 0; font-family: Arial, "Apple SD Gothic Neo", sans-serif; font-size: 0.9rem; line-height: 1.7; color: #564d43; }
 
 .featured {
