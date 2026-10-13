@@ -106,7 +106,7 @@ export function OrderPanel({ menuId, menuName, imageUrl, price, temperatures, te
               −
             </button>
             <output className={styles.stepperValue} aria-live="polite">
-              {quantity}<small>잔</small>
+              {quantity}
             </output>
             <button
               type="button"
