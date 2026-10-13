@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MENU_IMAGE_PLACEHOLDER, mockMenuRepository } from "@/app/_lib/mock/menus";
 import styles from "../menus.module.css";
+import { BackButton } from "./_components/BackButton";
 import { OrderPanel } from "./_components/OrderPanel";
 
 const won = new Intl.NumberFormat("ko-KR");
@@ -17,11 +18,14 @@ export default async function MenuDetailPage({ params }: {
   return (
     <main className={styles.page}>
       <div className="container">
-        <nav className={styles.breadcrumb} aria-label="현재 위치">
-          <Link href="/menus">전체 메뉴</Link>
-          <span aria-hidden="true">/</span>
-          <span>{menu.name}</span>
-        </nav>
+        <div className={styles.detailTopBar}>
+          <BackButton />
+          <nav className={styles.breadcrumb} aria-label="현재 위치">
+            <Link href="/menus">전체 메뉴</Link>
+            <span aria-hidden="true">/</span>
+            <span>{menu.name}</span>
+          </nav>
+        </div>
 
         <div className={styles.detail}>
           <div className={styles.detailImageWrap}>
