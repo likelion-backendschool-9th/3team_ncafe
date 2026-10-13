@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Temperature } from "@/app/_lib/mock/menus";
+import { useCart } from "@/app/_lib/cart/CartContext";
 import styles from "../../menus.module.css";
 
 const won = new Intl.NumberFormat("ko-KR");
@@ -13,7 +14,9 @@ const MIN_QUANTITY = 1;
 const MAX_QUANTITY = 20;
 
 type OrderPanelProps = {
+  menuId: string;
   menuName: string;
+  imageUrl: string;
   price: number;
   temperatures: Temperature[];
   available: boolean;
@@ -37,7 +40,8 @@ function TemperatureIcon({ type }: { type: Temperature }) {
   );
 }
 
-export function OrderPanel({ menuName, price, temperatures, available }: OrderPanelProps) {
+export function OrderPanel({ menuId, menuName, imageUrl, price, temperatures, available }: OrderPanelProps) {
+  const { addItem } = useCart();
   const [temperature, setTemperature] = useState<Temperature | null>(temperatures[0] ?? null);
   const [quantity, setQuantity] = useState(MIN_QUANTITY);
   const [message, setMessage] = useState("");
@@ -47,8 +51,8 @@ export function OrderPanel({ menuName, price, temperatures, available }: OrderPa
     setMessage("");
   };
 
-  // 장바구니 API가 붙기 전까지는 담은 내용만 안내한다
   const addToCart = () => {
+    addItem({ menuId, name: menuName, imageUrl, price, quantity, available, temperature });
     const option = temperature ? ` (${temperature === "hot" ? "HOT" : "ICE"})` : "";
     setMessage(`${menuName}${option} ${quantity}잔을 장바구니에 담았습니다.`);
   };
