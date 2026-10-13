@@ -1,18 +1,27 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MENU_IMAGE_PLACEHOLDER, mockMenuRepository } from "@/app/_lib/mock/menus";
+import {
+  MENU_IMAGE_PLACEHOLDER,
+  mockMenuRepository,
+} from "@/app/_lib/mock/menus";
+import { getCurrentUser } from "@/app/_lib/session/session";
 import styles from "../menus.module.css";
 import { BackButton } from "./_components/BackButton";
 import { OrderPanel } from "./_components/OrderPanel";
 
 const won = new Intl.NumberFormat("ko-KR");
 
-export default async function MenuDetailPage({ params }: {
+export default async function MenuDetailPage({
+  params,
+}: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const menu = await mockMenuRepository.get(id);
+  const [menu, user] = await Promise.all([
+    mockMenuRepository.get(id),
+    getCurrentUser(),
+  ]);
   if (!menu) notFound();
 
   return (
@@ -42,9 +51,27 @@ export default async function MenuDetailPage({ params }: {
           <div className={styles.detailBody}>
             <div className={styles.detailInfo}>
               <div className={styles.detailBadges}>
-                {!menu.available && <span className={`${styles.detailBadge} ${styles.detailBadgeSoldOut}`}>품절</span>}
-                {menu.available && menu.recommended && <span className={`${styles.detailBadge} ${styles.detailBadgeRecommend}`}>추천</span>}
-                {menu.available && menu.isNew && <span className={`${styles.detailBadge} ${styles.detailBadgeNew}`}>첫 개시</span>}
+                {!menu.available && (
+                  <span
+                    className={`${styles.detailBadge} ${styles.detailBadgeSoldOut}`}
+                  >
+                    품절
+                  </span>
+                )}
+                {menu.available && menu.recommended && (
+                  <span
+                    className={`${styles.detailBadge} ${styles.detailBadgeRecommend}`}
+                  >
+                    추천
+                  </span>
+                )}
+                {menu.available && menu.isNew && (
+                  <span
+                    className={`${styles.detailBadge} ${styles.detailBadgeNew}`}
+                  >
+                    첫 개시
+                  </span>
+                )}
               </div>
 
               <div>
@@ -59,22 +86,28 @@ export default async function MenuDetailPage({ params }: {
             <div className={styles.detailMeta}>
               <div className={styles.detailMetaRow}>
                 <span className={styles.detailMetaLabel}>카테고리</span>
-                <span className={styles.detailMetaValue}>{menu.categories.join(", ") || "미분류"}</span>
+                <span className={styles.detailMetaValue}>
+                  {menu.categories.join(", ") || "미분류"}
+                </span>
               </div>
               <div className={styles.detailMetaRow}>
                 <span className={styles.detailMetaLabel}>판매 상태</span>
-                <span className={styles.detailMetaValue}>{menu.available ? "판매 중" : "품절"}</span>
+                <span className={styles.detailMetaValue}>
+                  {menu.available ? "판매 중" : "품절"}
+                </span>
               </div>
             </div>
-
             <OrderPanel
               menuId={menu.id}
               menuName={menu.name}
               imageUrl={menu.imageUrl || MENU_IMAGE_PLACEHOLDER}
               price={menu.price}
               temperatures={menu.temperatures}
-              temperatureLabel={menu.categories.includes("세트") ? "음료 온도" : "온도"}
+              temperatureLabel={
+                menu.categories.includes("세트") ? "음료 온도" : "온도"
+              }
               available={menu.available}
+              isLoggedIn={user !== null}
             />
           </div>
         </div>

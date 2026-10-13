@@ -6,6 +6,7 @@ import type { Temperature } from "@/app/_lib/mock/menus";
 import { MAX_CART_ITEM_QUANTITY, useCart } from "@/app/_lib/cart/CartContext";
 import styles from "../../menus.module.css";
 import { CartAddedDialog } from "./CartAddedDialog";
+import { LoginRequiredDialog } from "./LoginRequiredDialog";
 import { useGoBack } from "./useGoBack";
 
 const won = new Intl.NumberFormat("ko-KR");
@@ -24,6 +25,7 @@ type OrderPanelProps = {
   temperatures: Temperature[];
   temperatureLabel: string;
   available: boolean;
+  isLoggedIn: boolean;
 };
 
 function TemperatureIcon({ type }: { type: Temperature }) {
@@ -52,6 +54,7 @@ export function OrderPanel({
   temperatures,
   temperatureLabel,
   available,
+  isLoggedIn,
 }: OrderPanelProps) {
   const { addItem } = useCart();
   const [temperature, setTemperature] = useState<Temperature | null>(
@@ -61,6 +64,7 @@ export function OrderPanel({
   const goBack = useGoBack();
   const [quantity, setQuantity] = useState(MIN_QUANTITY);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
   const changeQuantity = (next: number) => {
     setQuantity(
@@ -69,6 +73,10 @@ export function OrderPanel({
   };
 
   const addToCart = () => {
+    if (!isLoggedIn) {
+      setLoginDialogOpen(true);
+      return;
+    }
     addItem({
       menuId,
       name: menuName,
@@ -186,6 +194,14 @@ export function OrderPanel({
         onClose={() => setDialogOpen(false)}
         onConfirm={() => router.push("/cart")}
         onCancel={goBack}
+      />
+
+      <LoginRequiredDialog
+        open={loginDialogOpen}
+        onClose={() => setLoginDialogOpen(false)}
+        onConfirm={() =>
+          router.push(`/login?next=${encodeURIComponent(`/menus/${menuId}`)}`)
+        }
       />
     </section>
   );
