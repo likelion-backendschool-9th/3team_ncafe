@@ -89,6 +89,12 @@ const seedMenus: SeedMenu[] = [
   { name: "든든 보양 세트", nameEn: "Hearty Boyang Set", image: "set-boyang", description: "계란 후라이 + 깨죽 + 쌍화탕. 속을 든든히 채우는 보양 한 상", categories: ["세트"], price: 9500, isNew: true, temperatures: ["hot"] },
 ];
 
+// 예전 시드로 만들어진 로컬 데이터의 SVG 경로를 같은 이름의 JPG로 바꿔 보여준다
+function rasterImageUrl(imageUrl: string): string {
+  const match = /^\/images\/menus\/([a-z-]+)\.svg$/.exec(imageUrl);
+  return match && rasterMenuImages.has(match[1]) ? `/images/menus/${match[1]}.jpg` : imageUrl;
+}
+
 function menus(): Menu[] {
   const stored = readMockData<Menu[]>(fileName, () => {
     const now = Date.now();
@@ -105,7 +111,7 @@ function menus(): Menu[] {
     return {
       ...menu,
       nameEn: menu.nameEn ?? legacy?.nameEn ?? "",
-      imageUrl: menu.imageUrl ?? legacy?.imageUrl ?? MENU_IMAGE_PLACEHOLDER,
+      imageUrl: rasterImageUrl(menu.imageUrl ?? legacy?.imageUrl ?? MENU_IMAGE_PLACEHOLDER),
       categories: menu.categories ?? (legacyCategory ? [legacyCategory] : legacy?.categories ?? ["미분류"]),
       isNew: menu.isNew ?? false,
       recommended: menu.recommended ?? legacy?.recommended ?? false,
