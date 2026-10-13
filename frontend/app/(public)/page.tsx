@@ -7,6 +7,7 @@ import {
   type Menu,
 } from '@/app/_lib/mock/menus';
 import { getCurrentUser } from '@/app/_lib/session/session';
+import { MusicBoxHighlight } from './music-box/_components/MusicBoxHighlight';
 import styles from './page.module.css';
 
 const won = new Intl.NumberFormat('ko-KR');
@@ -189,41 +190,7 @@ export default async function HomePage() {
         </Link>
       </section>
 
-      <section className={`container ${styles.story}`}>
-        <span
-          className={`${styles.flourish} ${styles.flourishTl}`}
-          aria-hidden="true"
-        />
-        <span
-          className={`${styles.flourish} ${styles.flourishTr}`}
-          aria-hidden="true"
-        />
-        <span
-          className={`${styles.flourish} ${styles.flourishBl}`}
-          aria-hidden="true"
-        />
-        <span
-          className={`${styles.flourish} ${styles.flourishBr}`}
-          aria-hidden="true"
-        />
-        <div className={styles.storyText}>
-          <p className={styles.sectionEyebrow}>다방 이야기 · 뮤직박스</p>
-          <h2 className={styles.sectionTitle}>당신의 사연을 들려주세요</h2>
-          <p>
-            좁은 골목 안, 삐걱이는 나무문을 열고 들어서면{' '}
-            <strong>삼다방</strong>은 늘 그 자리에 있었습니다. 낡은 전축에서
-            흘러나오는 음악과 정성껏 달인 쌍화차 한 잔으로, 단골손님의 하루를
-            다독여온 세월이었지요.
-            <br />
-            이제 뮤직박스에 사연과 신청곡을 남겨 주세요. 당신이 고른 노래를
-            다방의 음악으로 틀어드립니다.
-          </p>
-          <Link className={styles.storyLink} href="/music-box">사연과 신청곡 보내기 →</Link>
-        </div>
-        <div className={styles.storyArt} aria-hidden="true">
-          <span>♪</span>
-        </div>
-      </section>
+      <MusicBoxHighlight />
 
       <section className={`container ${styles.info}`} aria-label="매장 안내">
         <div className={styles.infoCard}>
