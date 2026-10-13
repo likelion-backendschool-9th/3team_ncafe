@@ -1,15 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Temperature } from "@/app/_lib/mock/menus";
 import { MAX_CART_ITEM_QUANTITY, useCart } from "@/app/_lib/cart/CartContext";
 import styles from "../../menus.module.css";
+import { CartAddedDialog } from "./CartAddedDialog";
+import { useGoBack } from "./useGoBack";
 
 const won = new Intl.NumberFormat("ko-KR");
-const temperatureOptions: { value: Temperature; label: string; sub: string }[] = [
-  { value: "hot", label: "따뜻하게", sub: "HOT" },
-  { value: "ice", label: "시원하게", sub: "ICE" },
-];
+const temperatureOptions: { value: Temperature; label: string; sub: string }[] =
+  [
+    { value: "hot", label: "따뜻하게", sub: "HOT" },
+    { value: "ice", label: "시원하게", sub: "ICE" },
+  ];
 const MIN_QUANTITY = 1;
 
 type OrderPanelProps = {
@@ -18,6 +22,7 @@ type OrderPanelProps = {
   imageUrl: string;
   price: number;
   temperatures: Temperature[];
+  temperatureLabel: string;
   available: boolean;
 };
 
@@ -39,62 +44,98 @@ function TemperatureIcon({ type }: { type: Temperature }) {
   );
 }
 
-export function OrderPanel({ menuId, menuName, imageUrl, price, temperatures, available }: OrderPanelProps) {
+export function OrderPanel({
+  menuId,
+  menuName,
+  imageUrl,
+  price,
+  temperatures,
+  temperatureLabel,
+  available,
+}: OrderPanelProps) {
   const { addItem } = useCart();
-  const [temperature, setTemperature] = useState<Temperature | null>(temperatures[0] ?? null);
+  const [temperature, setTemperature] = useState<Temperature | null>(
+    temperatures[0] ?? null,
+  );
+  const router = useRouter();
+  const goBack = useGoBack();
   const [quantity, setQuantity] = useState(MIN_QUANTITY);
-  const [message, setMessage] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const changeQuantity = (next: number) => {
-    setQuantity(Math.min(MAX_CART_ITEM_QUANTITY, Math.max(MIN_QUANTITY, next)));
-    setMessage("");
+    setQuantity(
+      Math.min(MAX_CART_ITEM_QUANTITY, Math.max(MIN_QUANTITY, next)),
+    );
   };
 
   const addToCart = () => {
-    addItem({ menuId, name: menuName, imageUrl, price, quantity, available, temperature });
-    const option = temperature ? ` (${temperature === "hot" ? "HOT" : "ICE"})` : "";
-    setMessage(`${menuName}${option} ${quantity}잔을 장바구니에 담았습니다.`);
+    addItem({
+      menuId,
+      name: menuName,
+      imageUrl,
+      price,
+      quantity,
+      available,
+      temperature,
+    });
+    setDialogOpen(true);
   };
 
   return (
     <section className={styles.orderPanel} aria-labelledby="order-panel-title">
       <header className={styles.orderHeader}>
         <span className={styles.orderHeaderRule} aria-hidden="true" />
-        <h2 className={styles.orderTitle} id="order-panel-title">주문서</h2>
+        <h2 className={styles.orderTitle} id="order-panel-title">
+          주문서
+        </h2>
         <span className={styles.orderHeaderRule} aria-hidden="true" />
       </header>
 
       <div className={styles.orderFields}>
         {temperatures.length > 0 && (
           <div className={styles.orderField}>
-            <span className={styles.orderLabel} id="temperature-label">온도</span>
-            <div className={styles.tempToggle} role="radiogroup" aria-labelledby="temperature-label">
-              {temperatureOptions.filter((option) => temperatures.includes(option.value)).map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={temperature === option.value}
-                  disabled={!available}
-                  data-temp={option.value}
-                  className={styles.tempOption}
-                  onClick={() => { setTemperature(option.value); setMessage(""); }}
-                >
-                  <TemperatureIcon type={option.value} />
-                  <span className={styles.tempText}>
-                    <span>{option.label}</span>
-                    <small>{option.sub}</small>
-                  </span>
-                </button>
-              ))}
+            <span className={styles.orderLabel} id="temperature-label">
+              {temperatureLabel}
+            </span>
+            <div
+              className={styles.tempToggle}
+              role="radiogroup"
+              aria-labelledby="temperature-label"
+            >
+              {temperatureOptions
+                .filter((option) => temperatures.includes(option.value))
+                .map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={temperature === option.value}
+                    disabled={!available}
+                    data-temp={option.value}
+                    className={styles.tempOption}
+                    onClick={() => setTemperature(option.value)}
+                  >
+                    <TemperatureIcon type={option.value} />
+                    <span className={styles.tempText}>
+                      <span>{option.label}</span>
+                      <small>{option.sub}</small>
+                    </span>
+                  </button>
+                ))}
             </div>
           </div>
         )}
 
         <div className={`${styles.orderField} ${styles.orderFieldInline}`}>
-          <span className={styles.orderLabel} id="quantity-label">수량</span>
+          <span className={styles.orderLabel} id="quantity-label">
+            수량
+          </span>
           <span className={styles.orderLeader} aria-hidden="true" />
-          <div className={styles.stepper} role="group" aria-labelledby="quantity-label">
+          <div
+            className={styles.stepper}
+            role="group"
+            aria-labelledby="quantity-label"
+          >
             <button
               type="button"
               className={styles.stepperButton}
@@ -105,7 +146,7 @@ export function OrderPanel({ menuId, menuName, imageUrl, price, temperatures, av
               −
             </button>
             <output className={styles.stepperValue} aria-live="polite">
-              {quantity}<small>잔</small>
+              {quantity}
             </output>
             <button
               type="button"
@@ -126,14 +167,26 @@ export function OrderPanel({ menuId, menuName, imageUrl, price, temperatures, av
         <span className={styles.orderLabel}>합계</span>
         <span className={styles.orderLeader} aria-hidden="true" />
         <strong className={styles.orderTotalPrice}>
-          <span className={styles.wonSign}>₩</span>{won.format(price * quantity)}
+          <span className={styles.wonSign}>₩</span>
+          {won.format(price * quantity)}
         </strong>
       </div>
 
-      <button type="button" className={styles.cartButton} disabled={!available} onClick={addToCart}>
+      <button
+        type="button"
+        className={styles.cartButton}
+        disabled={!available}
+        onClick={addToCart}
+      >
         {available ? "장바구니에 담기" : "오늘은 품절입니다"}
       </button>
-      <p className={styles.orderMessage} role="status">{message}</p>
+
+      <CartAddedDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onConfirm={() => router.push("/cart")}
+        onCancel={goBack}
+      />
     </section>
   );
 }
