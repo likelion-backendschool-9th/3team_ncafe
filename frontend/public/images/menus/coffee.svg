@@ -1,4 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="커피">
-  <rect width="400" height="300" fill="#efe2d0"/>
-  <ellipse cx="200" cy="250" rx="118" ry="12" fill="rgba(0,0,0,0.09)"/><ellipse cx="200" cy="232" rx="122" ry="18" fill="#fffdf8" stroke="#e2d4c0" stroke-width="3"/><path d="M268 128h16a24 24 0 0 1 0 48h-16" fill="none" stroke="#fffdf8" stroke-width="13"/><path d="M130 110h140v76c0 26-21 46-46 46h-48c-25 0-46-20-46-46z" fill="#fffdf8"/><path d="M131 142h138v8H131z" fill="#b5432f"/><ellipse cx="200" cy="110" rx="70" ry="13" fill="#fffdf8"/><ellipse cx="200" cy="111" rx="61" ry="9" fill="#c08552"/><ellipse cx="186" cy="109" rx="20" ry="3" fill="rgba(255,255,255,0.35)"/><path d="M178 92c0-12 10-12 10-24M200 88c0-12 10-12 10-24M222 92c0-12 10-12 10-24" fill="none" stroke="rgba(0,0,0,0.16)" stroke-width="5" stroke-linecap="round"/>
-</svg>
