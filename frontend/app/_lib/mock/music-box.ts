@@ -5,6 +5,8 @@ export type MusicRequestStatus = "pending" | "playing" | "played";
 
 export type MusicRequest = {
   id: string;
+  // 신청한 회원. 회원 전용 신청 이전에 쌓인 목 데이터에는 없을 수 있다.
+  userId: string | null;
   requesterName: string;
   songTitle: string;
   artist: string;
@@ -15,7 +17,7 @@ export type MusicRequest = {
   playedAt: string | null;
 };
 
-export type MusicRequestInput = Pick<MusicRequest, "requesterName" | "songTitle" | "artist" | "story">;
+export type MusicRequestInput = Pick<MusicRequest, "userId" | "requesterName" | "songTitle" | "artist" | "story">;
 
 const fileName = "music-requests.json";
 
