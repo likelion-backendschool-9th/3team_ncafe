@@ -219,5 +219,7 @@
 .orderButton:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 var(--red-dark), 0 2px 6px #2d211c40; }
 .orderButton:disabled { background: #8a7d70; box-shadow: 0 5px 0 #6e6359; cursor: not-allowed; }
 
-.orderMessage { margin: 0; padding: 0.6rem 0.9rem; border: 1.5px dashed var(--teal-dark); border-radius: 6px; color: var(--teal-dark); font-size: 0.88rem; font-weight: 700; text-align: center; }
+.orderMessage { margin: 0; padding: 0.6rem 0.9rem; border: 1.5px dashed var(--teal-dark); border-radius: 6px; background: var(--paper); color: var(--teal-dark); font-size: 0.88rem; font-weight: 700; text-align: center; overflow-wrap: anywhere; }
+.orderMessage[data-kind="error"] { border-color: var(--red-dark); color: var(--red-dark); }
+.orderMessage a { margin-left: 0.35rem; font-weight: 800; text-underline-offset: 3px; }
 
