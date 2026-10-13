@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { mockMenuRepository } from "@/app/_lib/mock/menus";
 import { mockMusicBoxRepository } from "@/app/_lib/mock/music-box";
+import { mockOrderRepository } from "@/app/_lib/mock/orders";
 import { requireRole } from "@/app/_lib/session/session";
 import styles from "./admin.module.css";
 
 export default async function AdminPage() {
   await requireRole("admin", "/admin");
-  const [menus, musicRequests] = await Promise.all([mockMenuRepository.list(), mockMusicBoxRepository.list()]);
+  const [menus, musicRequests, orders] = await Promise.all([mockMenuRepository.list(), mockMusicBoxRepository.list(), mockOrderRepository.listAll()]);
   const availableCount = menus.filter((menu) => menu.available).length;
   const pendingMusicCount = musicRequests.filter((request) => request.status === "pending").length;
 
@@ -40,6 +41,15 @@ export default async function AdminPage() {
           <p>메뉴 등록 폼에서 선택할 카테고리를 추가·수정·삭제합니다.</p>
         </div>
         <Link className="button" href="/admin/categories">카테고리 관리</Link>
+      </section>
+
+      <section className={styles.card} aria-labelledby="order-management-title">
+        <div>
+          <p className="eyebrow">주문 관리</p>
+          <h2 id="order-management-title">처리할 주문 {orders.filter((order) => order.status === "received" || order.status === "preparing").length}건</h2>
+          <p>리스트에서 상태를 처리하거나 명세표 보기로 주문 품목을 확인합니다.</p>
+        </div>
+        <Link className="button" href="/admin/orders">주문 목록 보기</Link>
       </section>
 
       <section className={styles.card} aria-labelledby="music-management-title">

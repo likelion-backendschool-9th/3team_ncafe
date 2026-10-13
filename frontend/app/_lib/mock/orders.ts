@@ -7,15 +7,9 @@ const fileName = "orders.json";
 const maxItems = 50;
 const maxQuantity = 99;
 
-const adminTransitions: Record<OrderStatus, OrderStatus[]> = {
-  received: ["preparing", "canceled"],
-  preparing: ["ready", "canceled"],
-  ready: ["completed"],
-  completed: [],
-  canceled: [],
-};
+const progress: OrderStatus[] = ["received", "preparing", "ready", "completed"];
 
-export type OrderErrorCode = "INVALID_INPUT" | "MENU_UNAVAILABLE" | "PRICE_CHANGED" | "NOT_FOUND" | "INVALID_STATUS";
+export type OrderErrorCode = "INVALID_INPUT" | "MENU_UNAVAILABLE" | "PRICE_CHANGED" | "NOT_FOUND" | "INVALID_STATUS" | "STALE_STATUS";
 
 export class OrderError extends Error {
   constructor(public readonly code: OrderErrorCode, message: string) {
@@ -33,7 +27,13 @@ function newestFirst(items: Order[]): Order[] {
 }
 
 export function allowedAdminOrderStatuses(status: OrderStatus): OrderStatus[] {
-  return adminTransitions[status];
+  const index = progress.indexOf(status);
+  if (index < 0) return [];
+  return [
+    ...(index > 0 ? [progress[index - 1]] : []),
+    ...(index < progress.length - 1 ? [progress[index + 1]] : []),
+    ...(["received", "preparing"].includes(status) ? (["canceled"] as OrderStatus[]) : []),
+  ];
 }
 
 export const mockOrderRepository = {
@@ -111,11 +111,14 @@ export const mockOrderRepository = {
     return orders().find((order) => order.id === id) ?? null;
   },
 
-  async changeStatus(id: string, nextStatus: OrderStatus): Promise<Order> {
+  async changeStatus(id: string, expectedStatus: OrderStatus, nextStatus: OrderStatus): Promise<Order> {
     const all = orders();
     const order = all.find((item) => item.id === id);
     if (!order) throw new OrderError("NOT_FOUND", "주문을 찾을 수 없습니다.");
-    if (!adminTransitions[order.status].includes(nextStatus)) {
+    if (order.status !== expectedStatus) {
+      throw new OrderError("STALE_STATUS", "주문 상태가 이미 변경되었습니다. 목록을 새로고침해 주세요.");
+    }
+    if (!allowedAdminOrderStatuses(order.status).includes(nextStatus)) {
       throw new OrderError("INVALID_STATUS", "현재 상태에서 선택할 수 없는 주문 상태입니다.");
     }
     order.status = nextStatus;
