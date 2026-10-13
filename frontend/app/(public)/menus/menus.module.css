@@ -148,6 +148,112 @@
 .detailMetaLabel { flex: 0 0 75px; color: #6e6359; font-weight: 700; }
 .detailMetaValue { color: var(--ink); }
 
+/* 상세 오른쪽 하단 주문 패널: 옛 다방 주문 전표처럼 이중선 테두리 + 점선 리더 + 절취선 */
+.orderPanel {
+  position: relative;
+  display: grid;
+  gap: 1.6rem;
+  margin-top: 1.2rem;
+  padding: 1.8rem clamp(1.25rem, 3vw, 2rem) 1.6rem;
+  border: 4px double var(--ink);
+  background: radial-gradient(circle at 18% 12%, #fffaf080, transparent 45%),
+    repeating-linear-gradient(0deg, #8a5a3410 0 1px, transparent 1px 5px),
+    var(--paper);
+  color: var(--ink);
+  box-shadow: 8px 9px 0 #74452e;
+}
+.orderHeader { display: flex; align-items: center; gap: 0.9rem; }
+.orderHeaderRule { flex: 1; height: 5px; border-block: 1px solid var(--ink); }
+.orderTitle { margin: 0; font-family: var(--font-menu-name), var(--font-display), sans-serif; font-size: 1.35rem; letter-spacing: 0.3em; text-indent: 0.3em; line-height: 1; }
+.orderFields { display: grid; gap: 1.6rem; }
+.orderField { display: grid; gap: 0.75rem; }
+.orderFieldInline { display: flex; align-items: center; gap: 0.9rem; }
+.orderLabel { flex: 0 0 auto; color: var(--ink); font-family: var(--font-menu-name), var(--font-display), sans-serif; font-size: 1.1rem; letter-spacing: 0.08em; }
+/* 메뉴판의 가격 점선처럼 라벨과 값 사이를 이어 준다 */
+.orderLeader { flex: 1; min-width: 1.5rem; align-self: center; border-bottom: 2px dotted #a77c57; }
+
+.tempToggle { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.tempOption {
+  display: flex;
+  min-height: 60px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.9rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  background: #fff8ec;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+.tempOption:hover:not(:disabled):not([aria-checked="true"]) { background: #f0dfc3; transform: translateY(-2px); box-shadow: 0 3px 0 #a77c57; }
+.tempIcon { width: 1.5rem; height: 1.5rem; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tempText { display: grid; justify-items: start; line-height: 1.15; }
+.tempText > span { font-weight: 700; font-size: 0.98rem; }
+.tempText small { font-family: Arial, sans-serif; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.18em; opacity: 0.75; }
+/* 선택된 칸은 성냥갑 라벨처럼 안쪽 크림 선을 한 줄 더 두르고, 색과 함께 모양으로도 구분한다 */
+.tempOption[aria-checked="true"] { color: #fff; box-shadow: inset 0 0 0 3px #fff8ec, inset 0 0 0 4px #ffffff99, 3px 3px 0 var(--ink); }
+.tempOption[data-temp="hot"][aria-checked="true"] { border-color: var(--red-dark); background: var(--red); }
+.tempOption[data-temp="ice"][aria-checked="true"] { border-color: var(--teal-dark); background: var(--teal-dark); }
+.tempOption:disabled { border-style: dashed; background: transparent; color: #a3978b; cursor: not-allowed; }
+.tempOption:disabled .tempText > span { text-decoration: line-through; }
+
+.stepper { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 0.5rem; }
+.stepperButton {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: #fff8ec;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 1.35rem;
+  line-height: 1;
+  box-shadow: 0 3px 0 var(--ink);
+  transition: transform 120ms ease, box-shadow 120ms ease, background 160ms ease;
+}
+.stepperButton:hover:not(:disabled) { background: #f0dfc3; }
+.stepperButton:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
+.stepperButton:disabled { border-color: #b8aa9b; color: #b8aa9b; box-shadow: 0 3px 0 #b8aa9b; cursor: not-allowed; }
+.stepperValue { min-width: 3.4rem; font-family: var(--font-menu-name), Arial, sans-serif; font-size: 1.6rem; line-height: 1; text-align: center; }
+.stepperValue small { margin-left: 0.15em; font-family: var(--font-body), sans-serif; font-size: 0.8rem; color: #6e6359; }
+.tempOption:focus-visible, .stepperButton:focus-visible, .cartButton:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+
+/* 전표를 뜯어내는 절취선: 양끝은 반원으로 파낸다 */
+.orderPerforation { position: relative; margin-inline: calc(-1 * clamp(1.25rem, 3vw, 2rem)); border-top: 2px dashed #a77c57; }
+.orderPerforation::before, .orderPerforation::after { content: ""; position: absolute; top: -12px; width: 22px; height: 22px; border-radius: 50%; background: var(--cream); }
+.orderPerforation::before { left: -15px; border-right: 4px double var(--ink); }
+.orderPerforation::after { right: -15px; border-left: 4px double var(--ink); }
+
+.orderTotal { display: flex; align-items: baseline; gap: 0.9rem; margin-top: -0.2rem; }
+.orderTotalPrice { color: var(--red-dark); font-family: var(--font-menu-name), Arial, sans-serif; font-size: 2rem; font-weight: 400; line-height: 1; white-space: nowrap; }
+
+.cartButton {
+  width: 100%;
+  min-height: 58px;
+  border: 0;
+  border-radius: 6px;
+  outline: 1px solid #f5e7cf99;
+  outline-offset: -7px;
+  background: var(--red);
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--font-menu-name), var(--font-display), sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: 0.12em;
+  box-shadow: 0 5px 0 var(--red-dark), 0 8px 14px #2d211c40;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 160ms ease;
+}
+.cartButton:hover:not(:disabled) { background: #b8353a; }
+.cartButton:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 var(--red-dark), 0 2px 6px #2d211c40; }
+.cartButton:disabled { background: #8a7d70; box-shadow: 0 5px 0 #6e6359; cursor: not-allowed; }
+.orderMessage { margin: -0.4rem 0 0; padding: 0.7rem 0.9rem; border: 1.5px dashed var(--teal-dark); border-radius: 6px; color: var(--teal-dark); font-size: 0.9rem; font-weight: 700; text-align: center; }
+.orderMessage:empty { display: none; }
+
 @media (max-width: 1000px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 760px) {
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
