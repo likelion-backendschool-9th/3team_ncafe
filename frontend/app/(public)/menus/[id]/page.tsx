@@ -3,9 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MENU_IMAGE_PLACEHOLDER, mockMenuRepository } from "@/app/_lib/mock/menus";
 import styles from "../menus.module.css";
+import { OrderPanel } from "./_components/OrderPanel";
 
 const won = new Intl.NumberFormat("ko-KR");
-const temperatureLabel: Record<string, string> = { hot: "핫", ice: "아이스" };
 
 export default async function MenuDetailPage({ params }: {
   params: Promise<{ id: string }>;
@@ -55,19 +55,18 @@ export default async function MenuDetailPage({ params }: {
                 <span className={styles.detailMetaLabel}>카테고리</span>
                 <span className={styles.detailMetaValue}>{menu.categories.join(", ") || "미분류"}</span>
               </div>
-              {menu.temperatures.length > 0 && (
-                <div className={styles.detailMetaRow}>
-                  <span className={styles.detailMetaLabel}>온도</span>
-                  <span className={styles.detailMetaValue}>
-                    {menu.temperatures.map((t) => temperatureLabel[t] ?? t).join(" · ")}
-                  </span>
-                </div>
-              )}
               <div className={styles.detailMetaRow}>
                 <span className={styles.detailMetaLabel}>판매 상태</span>
                 <span className={styles.detailMetaValue}>{menu.available ? "판매 중" : "품절"}</span>
               </div>
             </div>
+
+            <OrderPanel
+              menuName={menu.name}
+              price={menu.price}
+              temperatures={menu.temperatures}
+              available={menu.available}
+            />
           </div>
         </div>
       </div>
