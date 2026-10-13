@@ -93,16 +93,15 @@ h1, h2, h3 { font-family: var(--font-display), "Apple SD Gothic Neo", sans-serif
   background: #c99a4f;
   transform: translateY(-50%) rotate(45deg);
 }
-/* 호버·현재 페이지: 금색 글자 + 빨강·금 이중 밑줄 */
+/* 호버·현재 페이지: 금색 글자 + 붉은 밑줄 */
 .site-header__nav a::after {
   content: "";
   position: absolute;
   right: 0;
-  bottom: -0.1rem;
+  bottom: 0.1rem;
   left: 0;
-  height: 4px;
-  border-top: 2px solid #a82b2d;
-  border-bottom: 1px solid #efca70;
+  height: 2px;
+  background: var(--accent);
   transform: scaleX(0);
   transition: transform 0.2s;
 }
