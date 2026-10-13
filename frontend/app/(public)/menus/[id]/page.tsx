@@ -36,19 +36,21 @@ export default async function MenuDetailPage({ params }: {
           </div>
 
           <div className={styles.detailBody}>
-            <div className={styles.detailBadges}>
-              {!menu.available && <span className={`${styles.detailBadge} ${styles.detailBadgeSoldOut}`}>품절</span>}
-              {menu.available && menu.recommended && <span className={`${styles.detailBadge} ${styles.detailBadgeRecommend}`}>추천</span>}
-              {menu.available && menu.isNew && <span className={`${styles.detailBadge} ${styles.detailBadgeNew}`}>첫 개시</span>}
-            </div>
+            <div className={styles.detailInfo}>
+              <div className={styles.detailBadges}>
+                {!menu.available && <span className={`${styles.detailBadge} ${styles.detailBadgeSoldOut}`}>품절</span>}
+                {menu.available && menu.recommended && <span className={`${styles.detailBadge} ${styles.detailBadgeRecommend}`}>추천</span>}
+                {menu.available && menu.isNew && <span className={`${styles.detailBadge} ${styles.detailBadgeNew}`}>첫 개시</span>}
+              </div>
 
-            <div>
-              <h1 className={styles.detailName}>{menu.name}</h1>
-              <p className={styles.detailNameEn}>{menu.nameEn}</p>
-            </div>
+              <div>
+                <h1 className={styles.detailName}>{menu.name}</h1>
+                <p className={styles.detailNameEn}>{menu.nameEn}</p>
+              </div>
 
-            <p className={styles.detailPrice}>{won.format(menu.price)}원</p>
-            <p className={styles.detailDescription}>{menu.description}</p>
+              <p className={styles.detailPrice}>{won.format(menu.price)}원</p>
+              <p className={styles.detailDescription}>{menu.description}</p>
+            </div>
 
             <div className={styles.detailMeta}>
               <div className={styles.detailMetaRow}>
