@@ -1,16 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { BrandLogo } from '@/app/_components/BrandLogo';
-import {
-  mockMenuRepository,
-  MENU_IMAGE_PLACEHOLDER,
-  type Menu,
-} from '@/app/_lib/mock/menus';
+import { MenuCard } from '@/app/_components/MenuCard';
+import { mockMenuRepository, type Menu } from '@/app/_lib/mock/menus';
 import { getCurrentUser } from '@/app/_lib/session/session';
 import { MusicBoxHighlight } from './music-box/_components/MusicBoxHighlight';
 import styles from './page.module.css';
 
-const won = new Intl.NumberFormat('ko-KR');
 // 이미지를 바꿀 때 이 URL에 로컬 경로나 직접 찾은 이미지 URL을 넣으세요.
 const HERO_IMAGE_URL = '/images/hero/dabang-interior-music-box-booth.png';
 
@@ -88,45 +84,6 @@ export default async function HomePage() {
         ))}
       </div>
 
-      <section className={`container ${styles.usp}`}>
-        <div className={styles.uspHeading}>
-          <p>삼다방의 약속</p>
-          <h2>매일 정성껏 준비합니다</h2>
-          <span aria-hidden="true">✦ · ✦ · ✦</span>
-        </div>
-        <div className={styles.uspItem}>
-          <span className={styles.uspIcon} aria-hidden="true">
-            🌱
-          </span>
-          <h3>매일 로스팅</h3>
-          <p>매장에서 매일 신선하게 로스팅한 원두만 사용해요.</p>
-        </div>
-        <div className={styles.uspItem}>
-          <span className={styles.uspIcon} aria-hidden="true">
-            🛎️
-          </span>
-          <h3>빠른 픽업</h3>
-          <p>미리 담아두고 매장에서 바로 픽업할 수 있어요.</p>
-        </div>
-        <div className={styles.uspItem}>
-          <span className={styles.uspIcon} aria-hidden="true">
-            🧾
-          </span>
-          <h3>간편한 주문</h3>
-          <p>메뉴를 눌러서 담고, 몇 번의 클릭으로 주문 끝.</p>
-        </div>
-        <div className={styles.uspItem}>
-          <span className={styles.uspIcon} aria-hidden="true">
-            🍵
-          </span>
-          <h3>정성 가득 보양차</h3>
-          <p>
-            쌍화차부터 생강차, 율무차까지 — 한의원 저리가라, 매일
-            정성껏 달인 보양차로 몸을 다독여요.
-          </p>
-        </div>
-      </section>
-
       <section
         className={`container ${styles.featured}`}
         aria-labelledby="featured-heading"
@@ -143,45 +100,8 @@ export default async function HomePage() {
           </p>
         ) : (
           <div className={styles.featuredGrid}>
-            {featuredMenus.map((menu, index) => (
-              <Link
-                key={menu.id}
-                href={`/menus/${menu.id}`}
-                className={styles.menuCard}
-              >
-                <div className={styles.menuCardImageWrap}>
-                  <Image
-                    src={menu.imageUrl || MENU_IMAGE_PLACEHOLDER}
-                    alt={`${menu.name} 이미지`}
-                    width={240}
-                    height={180}
-                    unoptimized
-                    className={styles.menuCardImage}
-                  />
-                  {menu.isNew && <span className={styles.badgeNew}>첫 개시</span>}
-                  {menu.recommended && (
-                    <span className={styles.badgeRecommend}>추천</span>
-                  )}
-                  {index === 0 && (
-                    <span className={styles.starburst} aria-hidden="true">
-                      <span>{won.format(menu.price)}</span>
-                      <small>원</small>
-                    </span>
-                  )}
-                </div>
-                <div className={styles.menuCardBody}>
-                  <p className={styles.menuCardName}>{menu.name}</p>
-                  <p className={styles.menuCardNameEn}>{menu.nameEn}</p>
-                  {index !== 0 && (
-                    <div className={styles.menuCardPriceRow}>
-                      <span className={styles.leader} aria-hidden="true" />
-                      <span className={styles.menuCardPrice}>
-                        {won.format(menu.price)}원
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </Link>
+            {featuredMenus.map((menu) => (
+              <MenuCard key={menu.id} menu={menu} />
             ))}
           </div>
         )}
@@ -192,14 +112,39 @@ export default async function HomePage() {
 
       <MusicBoxHighlight />
 
-      <section className={`container ${styles.info}`} aria-label="매장 안내">
-        <div className={styles.infoCard}>
-          <span className={styles.infoMark} aria-hidden="true">
-            ✦
+      <section className={`container ${styles.usp}`}>
+        <div className={styles.uspHeading}>
+          <p>삼다방의 약속</p>
+          <h2>매일 정성껏 준비합니다</h2>
+          <span aria-hidden="true">✦ · ✦ · ✦</span>
+        </div>
+        <div className={styles.uspItem}>
+          <span className={styles.uspIcon} aria-hidden="true">
+            ☕
           </span>
-          <h3 className={styles.sectionTitle}>매장 안내</h3>
-          <p>서울 어딘가 카페거리 12길 3 · 매일 09:00 – 22:00</p>
-          <p>전화 문의 02-1234-5678</p>
+          <h3>둘둘둘 다방 커피</h3>
+          <p>커피 둘, 설탕 둘, 프림 둘. 주인장이 그 시절 황금 비율 그대로 달달하게 타 드려요.</p>
+        </div>
+        <div className={styles.uspItem}>
+          <span className={styles.uspIcon} aria-hidden="true">
+            🛎️
+          </span>
+          <h3>기다림 없는 픽업</h3>
+          <p>미리 주문해 두시면 카운터에서 따끈하게 내어 드려요. 바쁜 날에도 한 잔은 챙기셔야지요.</p>
+        </div>
+        <div className={styles.uspItem}>
+          <span className={styles.uspIcon} aria-hidden="true">
+            📻
+          </span>
+          <h3>사연 실은 신청곡</h3>
+          <p>듣고 싶은 노래에 사연 한 줄 적어 보내시면, 뮤직박스 DJ가 차례대로 틀어 드려요.</p>
+        </div>
+        <div className={styles.uspItem}>
+          <span className={styles.uspIcon} aria-hidden="true">
+            🍵
+          </span>
+          <h3>주인장표 보양차</h3>
+          <p>노른자 동동 띄운 쌍화차에 생강차, 율무차까지. 매일 정성껏 달여 몸을 따뜻하게 다독여요.</p>
         </div>
       </section>
     </main>
