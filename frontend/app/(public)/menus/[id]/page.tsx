@@ -69,6 +69,7 @@ export default async function MenuDetailPage({ params }: {
               imageUrl={menu.imageUrl || MENU_IMAGE_PLACEHOLDER}
               price={menu.price}
               temperatures={menu.temperatures}
+              temperatureLabel={menu.categories.includes("세트") ? "음료 온도" : "온도"}
               available={menu.available}
             />
           </div>

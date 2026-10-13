@@ -18,6 +18,7 @@ type OrderPanelProps = {
   imageUrl: string;
   price: number;
   temperatures: Temperature[];
+  temperatureLabel: string;
   available: boolean;
 };
 
@@ -39,7 +40,7 @@ function TemperatureIcon({ type }: { type: Temperature }) {
   );
 }
 
-export function OrderPanel({ menuId, menuName, imageUrl, price, temperatures, available }: OrderPanelProps) {
+export function OrderPanel({ menuId, menuName, imageUrl, price, temperatures, temperatureLabel, available }: OrderPanelProps) {
   const { addItem } = useCart();
   const [temperature, setTemperature] = useState<Temperature | null>(temperatures[0] ?? null);
   const [quantity, setQuantity] = useState(MIN_QUANTITY);
@@ -67,7 +68,7 @@ export function OrderPanel({ menuId, menuName, imageUrl, price, temperatures, av
       <div className={styles.orderFields}>
         {temperatures.length > 0 && (
           <div className={styles.orderField}>
-            <span className={styles.orderLabel} id="temperature-label">온도</span>
+            <span className={styles.orderLabel} id="temperature-label">{temperatureLabel}</span>
             <div className={styles.tempToggle} role="radiogroup" aria-labelledby="temperature-label">
               {temperatureOptions.filter((option) => temperatures.includes(option.value)).map((option) => (
                 <button
