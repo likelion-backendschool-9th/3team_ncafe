@@ -7,19 +7,21 @@ export function OrderSectionAccordion({
   title,
   description,
   count,
+  tone,
   defaultOpen,
   children,
 }: {
   title: string;
   description: string;
   count: number;
+  tone: "active" | "completed" | "canceled";
   defaultOpen: boolean;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <section className={styles.orderSection}>
+    <section className={`${styles.orderSection} ${styles[`${tone}Section`]}`}>
       <h2 className={styles.sectionHeading}>
         <button
           type="button"
