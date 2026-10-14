@@ -235,21 +235,25 @@
 .slipTitle { width: fit-content; margin: 0 auto 0.6rem; padding: 0 6px 2px; border-bottom: 4px double var(--ink); font-size: 1.5rem; font-weight: 700; letter-spacing: 0.12em; }
 .slipLine { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: end; gap: 8px; min-height: 38px; margin: 0; padding-bottom: 3px; border-bottom: 1px solid #c9b08c; }
 .slipLine strong { color: #1f2a5a; font-size: 1.3rem; font-weight: 400; overflow-wrap: anywhere; }
-.slipStory { flex: 1; min-height: 0; padding-top: 10px; overflow: hidden; }
+.slipStory { flex: 1; min-height: 0; padding-top: 10px; overflow-y: auto; }
 /* 사연은 메모지의 대부분을 차지하도록 크게, 메모지 밑줄에 맞춰 적는다. */
 .slipStory p {
-  display: -webkit-box;
   margin: 4px 0 0;
-  overflow: hidden;
   background: repeating-linear-gradient(180deg, transparent 0 31px, #c9b08c 31px 32px);
   color: #1f2a5a;
   font-size: 1.25rem;
   line-height: 32px;
   word-break: keep-all;
   overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 6;
 }
+.speechControls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.55rem; margin-top: 0.4rem; }
+.speechButton { min-height: 36px; padding: 0.3rem 0.65rem; border: 1px solid var(--teal); background: #e8eee6; color: #155e57; font: 700 0.8rem var(--font-body), sans-serif; cursor: pointer; }
+.speechButton:hover { background: #d5e6dc; }
+.speechButton:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.speechButton:disabled { opacity: 0.55; cursor: not-allowed; }
+.speechMessage { color: var(--red-dark); font-size: 0.75rem; line-height: 1.35; }
+.speechLoading { color: var(--muted); font-size: 0.75rem; line-height: 1.35; }
+.speechCredit { display: block; color: var(--muted); font-size: 0.7rem; line-height: 1.5; text-align: left; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
 .slipEmpty { flex: 1; margin: 1rem 0 0; color: var(--muted); }
 .slipFoot { margin-top: 8px; padding-top: 6px; border-top: 2px solid var(--ink); color: var(--muted); text-align: center; }
 .slipFoot p { margin: 0; font-size: 0.75rem; }
