@@ -1,5 +1,6 @@
 /* 홈 하단 뮤직박스 칸: 나무 판벽 위 DJ 부스(유리창) + 아래 신청곡 메모 꽂이 */
-.section {
+/* DJ 부스는 마이페이지에서도 .frame만 따로 쓰므로 색 변수를 둘 다에 둔다. */
+.section, .frame {
   --paper: #f5e7cf;
   --ink: #34251d;
   --muted: #6b5847;
@@ -8,6 +9,8 @@
   --teal: #207a72;
   --gold: #e7bd63;
   --cream-text: #f4ead6;
+}
+.section {
   position: relative;
   padding: clamp(2rem, 5vw, 3.4rem) clamp(1rem, 4vw, 3.6rem) clamp(2rem, 5vw, 3.6rem);
   background: linear-gradient(0deg, #21150fd9, #21150f26),
@@ -32,45 +35,41 @@
   background: linear-gradient(180deg, #6b4126, #4a2b18);
   box-shadow: inset 0 0 0 2px #8a5a36, inset 0 0 0 6px #3a2112;
 }
-.window { position: relative; height: 520px; overflow: hidden; border: 6px solid #2b1a10; background: #1c120c; color: var(--cream-text); }
-/* 유리 반사와 가장자리 그늘 */
+.window { position: relative; height: 640px; overflow: hidden; border: 6px solid #2b1a10; background: #1c120c; color: var(--cream-text); }
+/* 유리 반사와 가장자리 그늘. 턴테이블·메모지(.stage)보다 아래에 두어 영상을 가리지 않는다. */
 .window::after {
   content: "";
   position: absolute;
-  z-index: 20;
+  z-index: 6;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(112deg, transparent 0 30%, #ffffff1c 34%, transparent 41%, transparent 63%, #ffffff12 66%, transparent 71%),
-    radial-gradient(ellipse at 50% 55%, transparent 55%, #000a 100%);
+  background: linear-gradient(112deg, transparent 0 30%, #ffffff14 34%, transparent 41%, transparent 63%, #ffffff0d 66%, transparent 71%);
 }
 
-/* 뒤 벽: 짙은 판벽 + LP 진열장 4칸 */
-.shelves { position: absolute; inset: 0 0 80px; padding: 118px 26px 0; background: repeating-linear-gradient(90deg, #3b2416 0 46px, #2f1c10 46px 48px), #3b2416; }
-.shelfRow {
-  position: relative;
-  height: 72px;
-  border-bottom: 9px solid #6b4226;
-  box-shadow: 0 3px 0 #2a170c;
+/* 뒤 벽: LP가 빽빽이 꽂힌 진열장. 선반 → 머리 위 빈칸 → LP 등판 순서로 한 칸(118px)이 반복된다. */
+.shelves {
+  position: absolute;
+  inset: 0 0 80px;
   background:
-    repeating-linear-gradient(90deg, #1a0f09 0 13px, transparent 13px 20px, #1a0f09 20px 27px, transparent 27px 47px, #1a0f09 47px 54px, transparent 54px 61px, #1a0f09 61px 67px, transparent 67px 80px) var(--shift) 0 / 100% 10px no-repeat,
-    repeating-linear-gradient(90deg, #8c4a35 0 6px, #1a0f09 6px 7px, #b38a46 7px 12px, #1a0f09 12px 13px, #2f5d6b 13px 20px, #1a0f09 20px 21px, #7a2f2b 21px 26px, #1a0f09 26px 27px, #c9b896 27px 33px, #1a0f09 33px 34px, #4a6b3a 34px 39px, #1a0f09 39px 40px, #a8452f 40px 47px, #1a0f09 47px 48px, #5e4a7a 48px 53px, #1a0f09 53px 54px, #b97a36 54px 60px, #1a0f09 60px 61px, #24405e 61px 66px, #1a0f09 66px 67px, #8f3550 67px 73px, #1a0f09 73px 74px, #b8ac88 74px 79px, #1a0f09 79px 80px) var(--shift) 0;
-  filter: saturate(0.6) brightness(0.72);
+    repeating-linear-gradient(180deg, #3a2213 0 10px, #0b0604 10px 22px, transparent 22px 118px),
+    repeating-linear-gradient(90deg, #3a2213 0 10px, transparent 10px 214px),
+    repeating-linear-gradient(90deg, #5b3b2e 0 4px, #15100c 4px 5px, #7c6a48 5px 9px, #15100c 9px 10px, #3c4656 10px 13px, #15100c 13px 14px, #8a3a2e 14px 18px, #15100c 18px 19px, #b9a27a 19px 21px, #15100c 21px 22px, #2f3a2c 22px 27px, #15100c 27px 28px, #6a5a7a 28px 31px, #15100c 31px 32px, #a07a3a 32px 36px, #15100c 36px 37px, #4a2a22 37px 42px, #15100c 42px 43px, #d0c2a0 43px 45px, #15100c 45px 46px, #2a2a3a 46px 51px, #15100c 51px 52px, #7a4a2a 52px 57px, #15100c 57px 58px, #3d5a5a 58px 61px, #15100c 61px 62px, #9a6a5a 62px 66px, #15100c 66px 67px),
+    #1a0f08;
 }
-.faceOut { position: absolute; bottom: 0; width: 60px; height: 62px; background: var(--cover); box-shadow: 2px 0 0 #0006, -2px 0 0 #0006; }
-.faceOut::after { content: ""; position: absolute; inset: 15px; border-radius: 50%; background: #120c08; box-shadow: inset 0 0 0 9px #1f1612, inset 0 0 0 11px #d9b25c99; }
-.faceOutLeft { left: 2%; }
-.faceOutRight { right: 2%; }
-/* 따뜻한 조명과 옅은 필름 질감 */
-.warmLight {
+/* 앞면이 보이게 세워 둔 LP 재킷 두 장 */
+.faceOut { position: absolute; width: 86px; height: 86px; box-shadow: 0 0 0 2px #0b0604; }
+.faceOut::after { content: ""; position: absolute; inset: 18px; border-radius: 50%; background: #111; box-shadow: inset 0 0 0 14px #1d1d1d; }
+.faceOutLeft { top: 258px; left: 40px; background: linear-gradient(135deg, #2f5d6b, #6b4a8c); }
+.faceOutRight { top: 140px; right: 46px; background: linear-gradient(135deg, #b5552f, #e7bd63 140%); }
+/* 진열장은 갈색으로 눌러 두고, 턴테이블과 메모지 뒤만 따뜻하게 밝힌다. */
+.dim {
   position: absolute;
   z-index: 3;
-  inset: 0;
+  inset: 0 0 80px;
   pointer-events: none;
-  mix-blend-mode: screen;
-  background: radial-gradient(ellipse 320px 240px at 84% 78%, #ffb24a55, transparent 70%),
-    radial-gradient(ellipse 520px 220px at 50% 0%, #ffcf7a30, transparent 75%),
-    repeating-linear-gradient(0deg, #ffffff05 0 1px, transparent 1px 3px),
-    linear-gradient(180deg, #2a160a40, #3a1f0a66);
+  background: radial-gradient(ellipse 34% 46% at 33% 62%, #ffb24a24, transparent 100%),
+    radial-gradient(ellipse 22% 44% at 81% 62%, #ffb24a1f, transparent 100%),
+    radial-gradient(ellipse 80% 70% at 52% 62%, #2a140840, #2a1408b3 85%);
 }
 
 /* 전구 줄 */
@@ -98,95 +97,10 @@
 .bulbsRight .bulb { margin-left: 8px; transform: rotate(90deg); }
 
 /* 유리에 붙인 MUSIC BOX 글자 */
-.arc { position: absolute; z-index: 5; top: 16px; left: 50%; width: min(760px, 82%); transform: translateX(-50%); overflow: visible; }
+.arc { position: absolute; z-index: 5; top: 36px; left: 50%; width: min(600px, 82%); transform: translateX(-50%); overflow: visible; }
 .arc text { fill: #f3dfb4; stroke: #2a170c; stroke-width: 1.5px; paint-order: stroke; font-family: Georgia, "Times New Roman", serif; font-size: 64px; font-weight: 700; letter-spacing: 14px; }
 
-/* ON AIR 레터보드 */
-.board {
-  position: absolute;
-  z-index: 8;
-  top: 150px;
-  left: 17%;
-  width: 59%;
-  padding: 1.1rem 1.4rem 1rem;
-  border: 9px solid #7a4a2a;
-  border-radius: 3px;
-  background: repeating-linear-gradient(180deg, #2b1f19 0 6px, #1d1511 6px 8px);
-  box-shadow: 0 0 0 2px #3a2112, 6px 8px 12px #000a;
-}
-.onAir {
-  position: absolute;
-  top: -26px;
-  right: 18px;
-  padding: 0.25rem 0.7rem;
-  border: 2px solid #3a0d0d;
-  border-radius: 4px;
-  background: #e8392f;
-  color: #fff4e0;
-  font-family: Arial, sans-serif;
-  font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0.18em;
-  box-shadow: 0 0 14px 4px #ff3b2f88, inset 0 0 6px #fff8;
-}
-/* 영상이 있으면 칠판 왼쪽에 YouTube 화면을 두고 오른쪽에 곡 정보를 둔다. 화면은 가리지 않고 높이 200px 이상을 지킨다. */
-.boardWithVideo { top: 118px; left: 50%; display: grid; grid-template-columns: 356px minmax(0, 1fr); align-items: center; gap: 1.2rem; width: min(860px, 88%); transform: translateX(-50%); }
-.video { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #000; box-shadow: 0 0 0 3px #3a2112; }
-.video iframe { display: block; width: 100%; height: 100%; border: 0; }
-.boardText { min-width: 0; }
-.boardLabel { margin: 0; color: var(--gold); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.14em; }
-.boardTitle { margin: 0.3rem 0 0; font-size: 1.75rem; line-height: 1.25; overflow-wrap: anywhere; }
-.boardTitle span { color: var(--gold); font-family: var(--font-body), sans-serif; font-size: 0.9rem; }
-.boardStory {
-  display: -webkit-box;
-  margin: 0.5rem 0 0;
-  padding-left: 0.8rem;
-  overflow: hidden;
-  border-left: 3px solid var(--gold);
-  color: #f4ead6e6;
-  font-family: var(--font-serif), serif;
-  font-size: 0.88rem;
-  line-height: 1.7;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-.boardStory cite { display: block; color: #cdb48e; font-family: var(--font-body), sans-serif; font-size: 0.74rem; font-style: normal; }
-.boardNote { margin: 0.6rem 0 0; color: #d9c2a0; font-size: 0.86rem; }
-.player { display: flex; align-items: center; gap: 0.7rem; margin-top: 0.7rem; }
-.playButton {
-  display: grid;
-  flex: 0 0 40px;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border: 0;
-  border-radius: 50%;
-  background: var(--red);
-  color: #fff;
-  cursor: pointer;
-  font-size: 0.85rem;
-  box-shadow: 2px 3px 0 var(--red-dark);
-}
-.playButton:hover { background: #812125; }
-.playButton:disabled { opacity: 0.55; cursor: wait; }
-.playButton:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-.progress {
-  flex: 1;
-  min-width: 0;
-  height: 4px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, var(--gold) var(--progress, 0%), #4a3a2e var(--progress, 0%));
-  cursor: pointer;
-  appearance: none;
-}
-.progress::-webkit-slider-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--gold); appearance: none; }
-.progress::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--gold); }
-.progress:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
-.time { color: #d9c2a0; font-size: 0.72rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-
-/* DJ 책상과 장비 */
+/* 책상 */
 .desk {
   position: absolute;
   z-index: 4;
@@ -198,97 +112,10 @@
   background: repeating-linear-gradient(90deg, #00000012 0 3px, transparent 3px 22px), linear-gradient(180deg, #8a5532, #5e3720);
   box-shadow: 0 -4px 10px #0007;
 }
-.turntable {
-  position: absolute;
-  z-index: 5;
-  bottom: 50px;
-  left: 7.4%;
-  width: 150px;
-  height: 44px;
-  border-radius: 4px;
-  background: linear-gradient(180deg, #a06a3c, #6e4224);
-  box-shadow: inset 0 3px 0 #c9c3b6, inset 0 4px 0 #8f8a80, 0 6px 0 #0007;
-}
-/* 판은 동그랗게 그려 돌리고, 바깥에서 위아래로 눌러 비스듬히 놓인 것처럼 보이게 한다 */
-.platter { position: absolute; top: -54px; left: 14px; width: 94px; height: 94px; transform: scaleY(0.36); }
-.platter::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 200deg, transparent 0 10%, #ffffff26 16%, transparent 24% 60%, #ffffff18 66%, transparent 74%); pointer-events: none; }
-.record {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: radial-gradient(circle, #1a1a1a 0 3%, #d14a3b 3.5% 22%, transparent 22.5%),
-    repeating-radial-gradient(circle, #141414 0 2px, #222 2px 3px);
-  box-shadow: inset 0 0 0 3px #2a2a2a, 0 3px 0 #000;
-  animation: spin 1.8s linear infinite;
-  animation-play-state: paused;
-}
-/* 라벨 위의 흰 줄: 판이 도는 게 눈에 보이게 한다 */
-.record::after { content: ""; position: absolute; top: 34%; left: 47%; width: 6%; height: 10%; border-radius: 2px; background: #f4ead6; }
-.window[data-playing="true"] .record { animation-play-state: running; }
-.tonearm {
-  position: absolute;
-  top: -22px;
-  right: 12px;
-  width: 4px;
-  height: 40px;
-  border-radius: 2px;
-  background: linear-gradient(#eee, #999);
-  transform: rotate(30deg);
-  transform-origin: bottom;
-  transition: transform 600ms ease;
-}
-.window[data-playing="true"] .tonearm { transform: rotate(14deg); }
-.deckKnob { position: absolute; right: 10px; bottom: 8px; width: 10px; height: 10px; border-radius: 50%; background: #ddd; box-shadow: inset -1px -1px 0 #888; }
-.amp {
-  position: absolute;
-  z-index: 5;
-  bottom: 50px;
-  left: 25.7%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr auto;
-  gap: 4px 8px;
-  width: 220px;
-  height: 62px;
-  padding: 7px 10px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, #d8d2c4, #a9a294);
-  box-shadow: inset 0 0 0 2px #7d776b, 0 6px 0 #0007;
-}
-.vu { position: relative; overflow: hidden; border-radius: 3px; background: radial-gradient(ellipse at 50% 120%, #ffe7a3, #f2c36a); box-shadow: inset 0 0 0 2px #3a2a1a, 0 0 8px #ffcf6a88; }
-.vu::before { content: ""; position: absolute; right: 10%; bottom: 4px; left: 10%; height: 70%; border-top: 2px solid #3a2a1a55; border-radius: 50% 50% 0 0; }
-.vu i { position: absolute; bottom: 2px; left: 50%; width: 2px; height: 22px; background: #8b1d14; transform: rotate(-30deg); transform-origin: bottom; transition: transform 400ms ease; }
-.window[data-playing="true"] .vu i { animation: needle 0.9s ease-in-out infinite alternate; }
-.window[data-playing="true"] .vu + .vu i { animation-duration: 0.7s; }
-.ampKnobs { display: flex; grid-column: 1 / -1; justify-content: space-around; }
-.ampKnobs b { width: 11px; height: 11px; border-radius: 50%; background: #2a2a2a; box-shadow: inset 1px 1px 0 #666; }
-.headphones { position: absolute; z-index: 6; bottom: 54px; left: 57%; width: 64px; height: 40px; border: 6px solid #1a1a1a; border-bottom: 0; border-radius: 34px 34px 0 0; }
-.headphones::before, .headphones::after { content: ""; position: absolute; bottom: -10px; width: 16px; height: 22px; border-radius: 6px; background: #2b2b2b; box-shadow: inset 0 0 0 2px #444; }
-.headphones::before { left: -12px; }
-.headphones::after { right: -12px; }
-.mic { position: absolute; z-index: 6; bottom: 56px; left: 77.8%; width: 60px; height: 120px; }
-.mic i { position: absolute; bottom: 6px; left: 28px; width: 4px; height: 70px; border-radius: 2px; background: linear-gradient(90deg, #888, #ddd, #888); }
-.mic b { position: absolute; bottom: 0; left: 10px; width: 40px; height: 10px; border-radius: 50%; background: radial-gradient(ellipse at 40% 30%, #555, #1a1a1a); }
-.mic span {
-  position: absolute;
-  top: 4px;
-  left: 14px;
-  width: 32px;
-  height: 44px;
-  border-radius: 16px 16px 12px 12px;
-  background: repeating-linear-gradient(90deg, #d9d9d9 0 2px, #8c8c8c 2px 4px);
-  box-shadow: inset 0 0 0 3px #c9c9c9, inset 0 -8px 0 #9a9a9a, 2px 4px 6px #0008;
-  transform: rotate(-12deg);
-}
-.lamp { position: absolute; z-index: 6; right: 7.4%; bottom: 60px; width: 90px; height: 120px; }
-.lamp i { position: absolute; top: 0; left: 18px; width: 64px; height: 34px; border-radius: 32px 32px 4px 4px; background: linear-gradient(180deg, #2f5d3a, #1f3d27); box-shadow: 0 14px 22px 6px #ffb24a44; }
-.lamp i::after { content: ""; position: absolute; right: 6px; bottom: -4px; left: 6px; height: 6px; border-radius: 50%; background: #ffe2a0; box-shadow: 0 0 16px 6px #ffcf7a; }
-.lamp b { position: absolute; top: 32px; left: 46px; width: 4px; height: 80px; background: #b89350; }
-.lamp span { position: absolute; bottom: 0; left: 28px; width: 40px; height: 10px; border-radius: 50%; background: #b89350; }
 .deskLabel {
   position: absolute;
   z-index: 7;
-  bottom: 14px;
+  bottom: 18px;
   left: 50%;
   padding: 0.2rem 0.9rem;
   border: 1px solid #e7bd6388;
@@ -301,28 +128,158 @@
   transform: translateX(-50%);
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes needle { from { transform: rotate(-22deg); } to { transform: rotate(18deg); } }
+/* 책상 윗면 위에 턴테이블과 메모지를 같은 높이로 나란히 올린다. */
+.stage { position: absolute; z-index: 8; top: 156px; right: 28px; left: 28px; display: flex; gap: 28px; height: 400px; }
 
-/* 좁은 화면: 장비는 턴테이블만 남기고 레터보드를 흐름에 둔다 */
-@media (max-width: 900px) {
-  .window { height: auto; padding: 96px 1rem 128px; }
-  .bulbsTop .bulb:nth-child(even) { display: none; }
-  .board { position: relative; top: auto; left: auto; width: auto; }
-  .boardWithVideo { grid-template-columns: minmax(0, 1fr); transform: none; }
-  .bulbsLeft, .bulbsRight, .faceOut, .amp, .headphones, .mic, .lamp { display: none; }
-  .arc { top: 22px; width: 92%; }
-  .turntable { left: 1rem; }
-  .deskLabel { right: 1rem; left: auto; font-size: 0.8rem; transform: none; }
+/* 턴테이블: 나무 데크 위 은색 판, 재킷 뒤에서 반쯤 나온 LP, 오른쪽 위 톤암 */
+.deck {
+  position: relative;
+  flex: 0 0 580px;
+  border-radius: 8px;
+  background: repeating-linear-gradient(90deg, #00000010 0 2px, transparent 2px 14px), linear-gradient(135deg, #8a5532, #6e4224);
+  box-shadow: inset 0 0 0 3px #c9a45c, inset 0 0 0 7px #4a2b18, inset 0 0 0 10px #7a4a2a, 8px 12px 16px #000b;
 }
-@media (max-width: 560px) {
+.platter { position: absolute; top: 45px; left: 236px; width: 310px; height: 310px; border-radius: 50%; background: radial-gradient(circle, #9a958c, #c9c3b6 70%, #7d786f); box-shadow: 0 4px 10px #0009; }
+.record {
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: conic-gradient(from 200deg, transparent 0 10%, #ffffff2e 15%, transparent 22% 58%, #ffffff1f 64%, transparent 72%),
+    radial-gradient(circle, #c9c3b6 0 4px, #a82b2d 4.5px 46px, #e7bd63 46px 49px, transparent 49.5px),
+    repeating-radial-gradient(circle, #101010 0 2px, #1c1c1c 2px 4px);
+  animation: spin 3.2s linear infinite;
+  animation-play-state: paused;
+}
+.record span { position: absolute; top: 112px; right: 0; left: 0; color: #f3dfb4; font-family: Georgia, serif; font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-align: center; }
+.window[data-playing="true"] .record { animation-play-state: running; }
+.tonearm {
+  position: absolute;
+  z-index: 1;
+  top: 67px;
+  left: 548px;
+  width: 6px;
+  height: 200px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #8f8a80, #f1ede4, #8f8a80);
+  box-shadow: 2px 3px 4px #0007;
+  /* 멈춰 있을 때는 판 바깥에 걸쳐 두고, 재생하면 판 위로 내려온다. */
+  transform: rotate(5deg);
+  transform-origin: 3px 0;
+  transition: transform 600ms ease;
+}
+.tonearm::before { content: ""; position: absolute; top: -17px; left: -14px; width: 34px; height: 34px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #f4f1ea, #8f8a80); box-shadow: 0 3px 4px #0008; }
+.tonearm::after { content: ""; position: absolute; bottom: -14px; left: -7px; width: 20px; height: 24px; border-radius: 3px; background: #2b2b2b; box-shadow: inset 0 0 0 2px #555; }
+.window[data-playing="true"] .tonearm { transform: rotate(22deg); }
+.speed { position: absolute; right: 18px; bottom: 20px; display: flex; gap: 2px; padding: 2px; border-radius: 3px; background: #2b1a10; font-size: 9px; font-weight: 800; }
+.speed b { padding: 1px 4px; background: var(--gold); color: #2b1a10; }
+.speed i { padding: 1px 4px; color: var(--gold); font-style: normal; }
+
+/* LP 재킷: 앞면이 곧 YouTube 화면이다. */
+.sleeve {
+  position: absolute;
+  z-index: 2;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 384px;
+  height: 360px;
+  padding: 14px;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #f3e3c3, #e2c99d);
+  box-shadow: inset 0 0 0 1px #c9a77066, inset 0 0 40px #a8783b44, 8px 10px 14px #000b;
+  color: var(--ink);
+}
+.sleeveHead { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; min-height: 44px; border-bottom: 3px double var(--red); }
+.sleeveHead h3 { margin: 1px 0 5px; font-size: 1.35rem; line-height: 1.1; overflow-wrap: anywhere; }
+.sleeveLabel { margin: 0; color: var(--red); font-family: Arial, sans-serif; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.2em; }
+.sleeveArtist { flex-shrink: 0; margin: 0 0 6px; font-family: var(--font-serif), serif; font-size: 0.9rem; font-weight: 700; }
+/* YouTube 화면은 정책상 가리지 않고 높이 200px 이상으로 보여 준다. */
+.video { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #000; box-shadow: 0 0 0 2px var(--ink); }
+.video iframe { display: block; width: 100%; height: 100%; border: 0; }
+.videoEmpty { display: grid; width: 100%; aspect-ratio: 16 / 9; place-items: center; margin: 0; padding: 1rem; box-sizing: border-box; background: linear-gradient(135deg, #2b3a44, #141b21 55%, #2a1f18); color: #f4ead6cc; font-size: 0.86rem; text-align: center; }
+.player { display: flex; align-items: center; gap: 10px; }
+.playButton { display: grid; flex: 0 0 34px; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 50%; background: var(--red); color: #fff; cursor: pointer; font-size: 0.7rem; }
+.playButton:hover { background: #812125; }
+.playButton:disabled { opacity: 0.55; cursor: wait; }
+.playButton:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.progress { flex: 1; min-width: 0; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--red) var(--progress, 0%), #c9b08c var(--progress, 0%)); cursor: pointer; appearance: none; }
+.progress::-webkit-slider-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--red); appearance: none; }
+.progress::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--red); }
+.progress:focus-visible { outline: 2px solid var(--teal); outline-offset: 4px; }
+.time { color: var(--muted); font-size: 0.7rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sleeveFoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; font-family: Georgia, serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.2em; }
+.sleeveFoot b { padding: 1px 6px; border: 1.5px solid var(--ink); font-family: Arial, sans-serif; font-size: 0.62rem; letter-spacing: 0.1em; }
+.sleeveError { color: var(--red); font-family: var(--font-body), sans-serif; font-size: 0.78rem; letter-spacing: 0; }
+
+/* 신청곡 메모지: 뮤직박스 페이지의 신청서와 같은 양식에 지금 곡의 신청인과 사연을 적어 둔다. */
+.slip {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding: 22px 22px 12px;
+  box-sizing: border-box;
+  border: 1px solid #b38d61;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-serif), serif;
+  box-shadow: 6px 8px 0 #1b110b, 8px 12px 16px #000a;
+  transform: rotate(1deg);
+}
+.tape { position: absolute; z-index: 1; top: -12px; width: 84px; height: 24px; background: #d9c29acc; box-shadow: 0 1px 2px #0003; }
+.tapeLeft { left: 30px; transform: rotate(-6deg); }
+.tapeRight { right: 30px; transform: rotate(5deg); }
+.slipTitle { width: fit-content; margin: 0 auto 0.6rem; padding: 0 6px 2px; border-bottom: 4px double var(--ink); font-size: 1.5rem; font-weight: 700; letter-spacing: 0.12em; }
+.slipLine { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: end; gap: 8px; min-height: 38px; margin: 0; padding-bottom: 3px; border-bottom: 1px solid #c9b08c; }
+.slipLine strong { color: #1f2a5a; font-size: 1.3rem; font-weight: 400; overflow-wrap: anywhere; }
+.slipStory { flex: 1; min-height: 0; padding-top: 10px; overflow: hidden; }
+/* 사연은 메모지의 대부분을 차지하도록 크게, 메모지 밑줄에 맞춰 적는다. */
+.slipStory p {
+  display: -webkit-box;
+  margin: 4px 0 0;
+  overflow: hidden;
+  background: repeating-linear-gradient(180deg, transparent 0 31px, #c9b08c 31px 32px);
+  color: #1f2a5a;
+  font-size: 1.25rem;
+  line-height: 32px;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+}
+.slipEmpty { flex: 1; margin: 1rem 0 0; color: var(--muted); }
+.slipFoot { margin-top: 8px; padding-top: 6px; border-top: 2px solid var(--ink); color: var(--muted); text-align: center; }
+.slipFoot p { margin: 0; font-size: 0.75rem; }
+.slipFoot .shopName { color: var(--ink); font-family: var(--font-display), sans-serif; font-size: 1.1rem; letter-spacing: 0.25em; }
+.shopName span { font-family: var(--font-serif), serif; font-size: 0.75rem; letter-spacing: 0.02em; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 부스가 좁아지면 턴테이블과 메모지를 위아래로 쌓는다. */
+@media (max-width: 1100px) {
+  .window { height: auto; padding: 130px 1rem 104px; }
+  .stage { position: relative; inset: auto; flex-direction: column; align-items: center; height: auto; }
+  .deck { flex: none; width: min(580px, 100%); height: 400px; }
+  .slip { flex: none; width: min(480px, 100%); min-height: 320px; transform: none; }
+  .faceOut { display: none; }
+}
+/* 휴대폰: LP판·톤암을 빼고 재킷(영상)을 데크 폭에 맞춘다. */
+@media (max-width: 680px) {
   .frame { padding: 12px 12px 0; }
-  .board { padding: 1rem; }
-  .boardTitle { font-size: 1.4rem; }
+  .window { padding: 96px 0.6rem 100px; }
+  .bulbsLeft, .bulbsRight, .bulbsTop .bulb:nth-child(even) { display: none; }
+  .arc { top: 26px; width: 92%; }
+  .deck { height: auto; padding: 12px; box-sizing: border-box; }
+  .platter, .tonearm, .speed { display: none; }
+  .sleeve { position: relative; inset: auto; width: 100%; height: auto; }
+  .sleeveFoot { margin-top: 4px; }
   .deskLabel { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .record, .window[data-playing="true"] .vu i { animation: none; }
-  .tonearm, .vu i { transition: none; }
+  .record { animation: none; }
+  .tonearm { transition: none; }
 }

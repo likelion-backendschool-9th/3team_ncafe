@@ -2,6 +2,7 @@ import Link from "next/link";
 import { mockMusicBoxRepository, waitingQueueOf, type MusicRequest } from "@/app/_lib/mock/music-box";
 import { requireRole } from "@/app/_lib/session/session";
 import { DjBooth } from "@/app/(public)/music-box/_components/DjBooth";
+import { handwritingSequence } from "@/app/(public)/music-box/_components/handwriting";
 import boothStyles from "@/app/(public)/music-box/_components/music-box-highlight.module.css";
 import { RequestMemo, RequestMemoBoard } from "@/app/(public)/music-box/_components/RequestMemo";
 import styles from "../mypage.module.css";
@@ -37,6 +38,8 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
       statusOrder[a.status] - statusOrder[b.status] ||
       (queuePosition.get(a.id) ?? 0) - (queuePosition.get(b.id) ?? 0),
     );
+  // 내 메모는 모두 내 글씨 하나로, 다른 손님의 곡이 재생 중이면 메모지는 다른 글씨로 적는다.
+  const [myHand, otherHand] = handwritingSequence(user.id, 2);
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
@@ -64,6 +67,7 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
               story: playing.story,
               requesterName: playing.requesterName,
               youtubeVideoId: playing.youtubeVideoId,
+              handwriting: playing.userId === user.id ? myHand : otherHand,
             } : null}
             repeatOne={repeat === "one"}
           />
@@ -79,6 +83,7 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
             <RequestMemo
               key={request.id}
               request={request}
+              handwriting={myHand}
               badge={statusBadge(request, queuePosition.get(request.id))}
               badgeTone={request.status === "playing" ? "accent" : request.status === "played" || request.status === "cancelled" ? "muted" : "default"}
               action={request.status !== "playing" && (

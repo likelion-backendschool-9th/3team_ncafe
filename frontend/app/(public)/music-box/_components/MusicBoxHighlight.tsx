@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { mockMusicBoxRepository, waitingQueueOf } from "@/app/_lib/mock/music-box";
 import { DjBooth } from "./DjBooth";
+import { handwritingSequence } from "./handwriting";
 import styles from "./music-box-highlight.module.css";
 import { RequestMemo, RequestMemoBoard } from "./RequestMemo";
 
@@ -10,6 +11,8 @@ export async function MusicBoxHighlight() {
   const playing = requests.find((request) => request.status === "playing");
   const queue = waitingQueueOf(requests);
   const nextUp = queue.slice(0, 3);
+  // 턴테이블 옆 메모지와 다음 차례 메모 3장이 모두 다른 손글씨가 되게 한 번에 고른다.
+  const [playingHand, ...memoHands] = handwritingSequence(playing?.id ?? nextUp[0]?.id ?? "", nextUp.length + 1);
 
   return (
     <section className={`container ${styles.section}`} aria-labelledby="home-music-box-title">
@@ -32,6 +35,7 @@ export async function MusicBoxHighlight() {
             story: playing.story,
             requesterName: playing.requesterName,
             youtubeVideoId: playing.youtubeVideoId,
+            handwriting: playingHand,
           } : null}
           repeatOne={repeat === "one"}
         />
@@ -43,12 +47,7 @@ export async function MusicBoxHighlight() {
         empty="아직 기다리는 신청곡이 없어요. 첫 사연을 보내 주세요."
       >
         {nextUp.map((request, index) => (
-          <RequestMemo
-            key={request.id}
-            request={request}
-            badge={`대기 ${index + 1}`}
-            badgeTone={index === 0 ? "accent" : "default"}
-          />
+          <RequestMemo key={request.id} request={request} handwriting={memoHands[index]} showTime={false} />
         ))}
       </RequestMemoBoard>
     </section>
