@@ -41,8 +41,8 @@ export default async function MenuDetailPage({ params, searchParams }: {
         <div><dt>설명</dt><dd>{menu.description}</dd></div>
         <div><dt>가격</dt><dd>{won.format(menu.price)}원</dd></div>
         <div><dt>판매 상태</dt><dd>{menu.available ? "판매 중" : "판매 중지"}</dd></div>
-        <div><dt>NEW</dt><dd>{menu.isNew ? "표시" : "표시 안 함"}</dd></div>
-        <div><dt>추천 메뉴</dt><dd>{menu.recommended ? "추천" : "추천 안 함"}</dd></div>
+        <div><dt id="first-release-label">첫 개시</dt><dd><input className={styles.detailCheckbox} type="checkbox" checked={menu.isNew} disabled aria-labelledby="first-release-label" /></dd></div>
+        <div><dt id="recommended-label">추천 메뉴</dt><dd><input className={styles.detailCheckbox} type="checkbox" checked={menu.recommended} disabled aria-labelledby="recommended-label" /></dd></div>
         <div><dt>등록일</dt><dd>{date.format(new Date(menu.createdAt))}</dd></div>
         <div><dt>최근 수정</dt><dd>{date.format(new Date(menu.updatedAt))}</dd></div>
       </dl>

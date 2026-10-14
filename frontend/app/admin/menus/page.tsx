@@ -3,6 +3,7 @@ import { EmptyState } from "@/app/_components/ui/EmptyState";
 import { mockCategoryRepository } from "@/app/_lib/mock/categories";
 import { mockMenuRepository } from "@/app/_lib/mock/menus";
 import { requireRole } from "@/app/_lib/session/session";
+import { MenuFilterSelect } from "./_components/MenuFilterSelect";
 import { MenuTable } from "./_components/MenuTable";
 import styles from "./menus.module.css";
 
@@ -66,52 +67,44 @@ export default async function AdminMenusPage({ searchParams }: { searchParams: M
       {single(deleted) === "1" && <p className={styles.notice} role="status">메뉴를 삭제했습니다.</p>}
       {single(missing) === "1" && <p className={styles.notice} role="status">이미 삭제되었거나 존재하지 않는 메뉴입니다.</p>}
 
-      <form className={styles.filters} method="get" role="search">
-        <div className={styles.searchField}>
-          <label htmlFor="menu-query">메뉴명</label>
-          <input id="menu-query" name="q" type="search" defaultValue={query} placeholder="한글 또는 영어 메뉴명" />
-        </div>
-        <div className={styles.filterField}>
-          <label htmlFor="menu-category">카테고리</label>
-          <select id="menu-category" name="category" defaultValue={selectedCategory}>
-            <option value="">전체</option>
-            {categories.map((item) => <option key={item} value={item}>{item}</option>)}
-          </select>
-        </div>
-        <div className={styles.filterField}>
-          <label htmlFor="menu-status">상태</label>
-          <select id="menu-status" name="status" defaultValue={selectedStatus}>
-            <option value="">전체</option>
-            <option value="available">판매 중</option>
-            <option value="unavailable">판매 중지</option>
-          </select>
-        </div>
-        <div className={styles.filterField}>
-          <label htmlFor="menu-sort">정렬</label>
-          <select id="menu-sort" name="sort" defaultValue={selectedSort}>
-            <option value="newest">등록일 최신순</option>
-            <option value="oldest">등록일 오래된순</option>
-            <option value="name">메뉴명순</option>
-            <option value="price-low">가격 낮은순</option>
-            <option value="price-high">가격 높은순</option>
-          </select>
-        </div>
-        <button className="button" type="submit">검색</button>
-      </form>
+      <section className={styles.section} aria-labelledby="menu-filter-title">
+        <div className={styles.sectionHeading}><h2 id="menu-filter-title">메뉴 찾기</h2></div>
+        <form className={styles.filters} method="get" role="search">
+          <div className={styles.searchField}>
+            <label htmlFor="menu-query">메뉴명</label>
+            <input id="menu-query" name="q" type="search" defaultValue={query} placeholder="한글 또는 영어 메뉴명" />
+          </div>
+          <div className={styles.filterField}>
+            <label htmlFor="menu-category">카테고리</label>
+            <MenuFilterSelect key={`category-${selectedCategory}`} id="menu-category" name="category" defaultValue={selectedCategory} options={[{ value: "", label: "전체" }, ...categories.map((item) => ({ value: item, label: item }))]} />
+          </div>
+          <div className={styles.filterField}>
+            <label htmlFor="menu-status">상태</label>
+            <MenuFilterSelect key={`status-${selectedStatus}`} id="menu-status" name="status" defaultValue={selectedStatus} options={[{ value: "", label: "전체" }, { value: "available", label: "판매 중" }, { value: "unavailable", label: "판매 중지" }]} />
+          </div>
+          <div className={styles.filterField}>
+            <label htmlFor="menu-sort">정렬</label>
+            <MenuFilterSelect key={`sort-${selectedSort}`} id="menu-sort" name="sort" defaultValue={selectedSort} options={[{ value: "newest", label: "최신순" }, { value: "oldest", label: "오래된순" }, { value: "name", label: "메뉴명순" }, { value: "price-low", label: "가격 낮은순" }, { value: "price-high", label: "가격 높은순" }]} />
+          </div>
+          <button className="button" type="submit">검색</button>
+        </form>
+      </section>
 
-      <section className={styles.results} aria-label="메뉴 조회 결과">
-        <div className={styles.resultsHeader}>
-          <h2>조회 결과</h2>
-          <span>총 {visibleMenus.length}개</span>
+      <section className={styles.section} aria-labelledby="menu-results-title">
+        <div className={styles.sectionHeading}>
+          <h2 id="menu-results-title">등록된 메뉴</h2>
+          <span className={styles.count}>{visibleMenus.length}개</span>
         </div>
-        <MenuTable menus={visibleMenus} createdId={createdId} />
-        {visibleMenus.length === 0 && (
-          <EmptyState
-            title={allMenus.length === 0 ? "등록된 메뉴가 없습니다" : "조건에 맞는 메뉴가 없습니다"}
-            description={allMenus.length === 0 ? "메뉴 등록 버튼에서 새 메뉴를 추가해 주세요." : "검색어와 필터 조건을 바꿔 다시 검색해 주세요."}
-            action={allMenus.length > 0 ? <Link className="button" href="/admin/menus">전체 메뉴 보기</Link> : <Link className="button" href="/admin/menus/new">메뉴 등록</Link>}
-          />
-        )}
+        <div className={styles.results}>
+          <MenuTable menus={visibleMenus} createdId={createdId} />
+          {visibleMenus.length === 0 && (
+            <EmptyState
+              title={allMenus.length === 0 ? "등록된 메뉴가 없습니다" : "조건에 맞는 메뉴가 없습니다"}
+              description={allMenus.length === 0 ? "메뉴 등록 버튼에서 새 메뉴를 추가해 주세요." : "검색어와 필터 조건을 바꿔 다시 검색해 주세요."}
+              action={allMenus.length > 0 ? <Link className="button" href="/admin/menus">전체 메뉴 보기</Link> : <Link className="button" href="/admin/menus/new">메뉴 등록</Link>}
+            />
+          )}
+        </div>
       </section>
     </div>
   );

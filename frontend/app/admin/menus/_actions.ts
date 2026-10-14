@@ -15,7 +15,7 @@ export type MenuFormState = {
   message?: string;
 };
 
-async function validate(formData: FormData, existingCategories: string[] = []): Promise<{ state: MenuFormState; input?: MenuInput }> {
+async function validate(formData: FormData, existingCategories: string[] = [], singleCategory = false): Promise<{ state: MenuFormState; input?: MenuInput }> {
   const selectedCategories = formData.getAll("categories").map((value) => String(value).trim()).filter(Boolean);
   const values = {
     name: String(formData.get("name") ?? "").trim(),
@@ -38,7 +38,9 @@ async function validate(formData: FormData, existingCategories: string[] = []): 
   }
   if (!values.description || values.description.length > 500) errors.description = "설명은 1~500자로 입력해 주세요.";
   if (selectedCategories.length === 0) {
-    errors.categories = "카테고리를 하나 이상 선택해 주세요.";
+    errors.categories = singleCategory ? "카테고리를 하나 선택해 주세요." : "카테고리를 하나 이상 선택해 주세요.";
+  } else if (singleCategory && selectedCategories.length > 1) {
+    errors.categories = "카테고리는 하나만 선택해 주세요.";
   } else {
     const availableCategories = (await mockCategoryRepository.list()).map((category) => category.name);
     const hasInvalidCategory = selectedCategories.some(
@@ -134,7 +136,7 @@ export async function updateMenu(id: string, _previous: MenuFormState, formData:
   } catch {
     return { ..._previous, message: "메뉴를 수정하지 못했습니다. 다시 시도해 주세요." };
   }
-  const { state, input } = await validate(formData, existingCategories);
+  const { state, input } = await validate(formData, existingCategories, true);
   if (!input) return state;
 
   let updated;

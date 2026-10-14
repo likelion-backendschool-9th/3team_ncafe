@@ -7,12 +7,13 @@ import styles from "../menus.module.css";
 
 type MenuAction = (state: MenuFormState, data: FormData) => Promise<MenuFormState>;
 
-export function MenuForm({ action, initialState, cancelHref, submitLabel, categoryOptions }: {
+export function MenuForm({ action, initialState, cancelHref, submitLabel, categoryOptions, singleCategory = false }: {
   action: MenuAction;
   initialState: MenuFormState;
   cancelHref: string;
   submitLabel: string;
   categoryOptions: string[];
+  singleCategory?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const selectedCategories = state.values.categories ? state.values.categories.split(",") : [];
@@ -49,10 +50,10 @@ export function MenuForm({ action, initialState, cancelHref, submitLabel, catego
           <select
             id="categories"
             name="categories"
-            multiple
+            multiple={!singleCategory}
             required
-            size={Math.min(6, Math.max(3, allCategoryOptions.length))}
-            defaultValue={selectedCategories}
+            size={singleCategory ? undefined : Math.min(6, Math.max(3, allCategoryOptions.length))}
+            defaultValue={singleCategory ? (selectedCategories[0] ?? "") : selectedCategories}
             aria-invalid={!!state.errors.categories}
             aria-describedby={state.errors.categories ? "categories-error categories-hint" : "categories-hint"}
           >
@@ -65,7 +66,9 @@ export function MenuForm({ action, initialState, cancelHref, submitLabel, catego
           <span id="categories-hint" className={styles.fieldHint}>
             {allCategoryOptions.length === 0
               ? "등록된 카테고리가 없습니다. 카테고리 관리에서 먼저 추가해 주세요."
-              : "Ctrl(또는 Cmd) 키를 누른 채 클릭하면 여러 카테고리를 선택할 수 있습니다."}
+              : singleCategory
+                ? "카테고리 하나를 선택해 주세요."
+                : "Ctrl(또는 Cmd) 키를 누른 채 클릭하면 여러 카테고리를 선택할 수 있습니다."}
           </span>
           {state.errors.categories && <span id="categories-error" className={styles.fieldError}>{state.errors.categories}</span>}
         </div>
@@ -96,7 +99,7 @@ export function MenuForm({ action, initialState, cancelHref, submitLabel, catego
           {state.errors.tempHot && <span id="temperature-error" className={styles.fieldError}>{state.errors.tempHot}</span>}
         </div>
         <div className={styles.checkboxFields}>
-          <label><input name="isNew" type="checkbox" defaultChecked={state.values.isNew === "true"} /> NEW 메뉴</label>
+          <label><input name="isNew" type="checkbox" defaultChecked={state.values.isNew === "true"} /> 첫 개시</label>
           <label><input name="recommended" type="checkbox" defaultChecked={state.values.recommended === "true"} /> 추천 메뉴</label>
         </div>
       </div>
