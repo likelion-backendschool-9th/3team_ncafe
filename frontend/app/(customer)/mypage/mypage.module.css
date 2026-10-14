@@ -125,30 +125,10 @@
 
 .shortcut:focus-visible, .logoutButton:focus-visible { outline: 3px solid #f8d986; outline-offset: 3px; }
 
-/* 나의 신청곡 */
-.requestList { display: grid; gap: 0.9rem; margin: 0; padding: 0; list-style: none; }
-.requestCard {
-  display: grid;
-  gap: 0.75rem;
-  padding: 1.15rem clamp(1rem, 3vw, 1.5rem);
-  border: 3px double var(--ink);
-  background: var(--paper);
-  color: var(--ink);
-  box-shadow: 5px 6px 0 #74452e;
-}
-.requestTop { display: flex; align-items: start; justify-content: space-between; gap: 1rem; padding-bottom: 0.7rem; border-bottom: 1px dashed var(--line); }
-.requestTop > div { display: grid; gap: 0.1rem; min-width: 0; }
-.requestTop strong { font-family: var(--font-menu-name), var(--font-display), sans-serif; font-size: 1.3rem; font-weight: 400; }
-.requestTop > div span { color: var(--muted-ink); font-size: 0.9rem; font-weight: 700; }
-.requestStatus { display: inline-flex; flex: none; align-items: center; min-height: 2rem; padding: 0.25rem 0.7rem; border-radius: 999px; background: #e8d2a8; color: #6e4515; font-size: 0.82rem; font-weight: 800; }
-.requestStatus[data-status="playing"] { background: #f2d3cf; color: var(--red-dark); }
-.requestStatus[data-status="played"] { background: #d8ded0; color: #405247; }
-.requestStory { margin: 0; white-space: pre-line; word-break: keep-all; }
-.requestCard time { color: var(--muted-ink); font-size: 0.85rem; }
-
-.empty { display: grid; justify-items: center; gap: 0.65rem; margin: 0; padding: 3rem 1rem; border: 1px dashed #d5b58b; color: #e9cfaa; text-align: center; }
-.empty h2, .empty p { margin: 0; }
-.empty a { margin-top: 0.5rem; color: #fff0d2; font-weight: 800; text-underline-offset: 3px; }
+/* 나의 신청곡: DJ 부스가 들어가므로 홈과 같은 넓은 폭을 쓴다 */
+.pageWide { width: 100%; }
+.notice, .error { margin: 0; padding: 0.8rem 1rem; border: 1px solid #7aa696; background: #e1efe7; color: #175d52; font-weight: 800; }
+.error { border-color: #d69b9a; background: #f7e4df; color: #8d272b; }
 
 @media (max-width: 520px) {
   .memberFields { padding-right: 0; padding-bottom: 4.5rem; }
