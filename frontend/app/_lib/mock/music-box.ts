@@ -64,10 +64,6 @@ export const mockMusicBoxRepository = {
     return requests().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
 
-  async listByUser(userId: string): Promise<MusicRequest[]> {
-    return (await this.list()).filter((request) => request.userId === userId);
-  },
-
   async create(input: MusicRequestInput): Promise<MusicRequest> {
     const request: MusicRequest = {
       ...input,
@@ -79,6 +75,15 @@ export const mockMusicBoxRepository = {
     };
     writeMockData(fileName, [...requests(), request]);
     return request;
+  },
+
+  // 본인 신청곡만 지울 수 있다. 지금 재생 중인 곡은 DJ 부스가 끊기지 않도록 지우지 않는다.
+  async removeByUser(id: string, userId: string): Promise<boolean> {
+    const all = requests();
+    const target = all.find((request) => request.id === id && request.userId === userId);
+    if (!target || target.status === "playing") return false;
+    writeMockData(fileName, all.filter((request) => request.id !== id));
+    return true;
   },
 
   async start(id: string, audioUrl: string): Promise<boolean> {

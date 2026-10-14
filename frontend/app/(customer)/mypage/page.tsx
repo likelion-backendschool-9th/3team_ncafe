@@ -8,7 +8,7 @@ const shortcuts = [
     href: "/mypage/music-box",
     no: "01",
     title: "신청곡 · 사연 관리",
-    description: "뮤직박스에 보낸 신청곡과 사연을 확인합니다.",
+    description: "뮤직박스에 보낸 신청곡과 사연을 확인하고 삭제합니다.",
   },
   {
     href: "/cart",

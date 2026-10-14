@@ -295,54 +295,6 @@
   transform: translateX(-50%);
 }
 
-/* ── 부스 아래: 다음 차례 신청곡 메모 꽂이 ── */
-.frontBoard {
-  position: relative;
-  padding: 1.6rem 2.4rem 2.2rem;
-  background: repeating-linear-gradient(0deg, #00000022 0 2px, transparent 2px 34px),
-    repeating-linear-gradient(90deg, #00000018 0 2px, transparent 2px 68px),
-    linear-gradient(180deg, #8a5a38, #6e4428);
-  box-shadow: inset 0 6px 10px #0005;
-}
-.frontHead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.8rem; margin-bottom: 1.4rem; }
-.frontHead h3 { margin: 0; color: var(--paper); font-size: 1.5rem; text-shadow: 2px 2px 0 #3a2112; }
-.frontHead span { color: #f3d9a8; font-size: 0.85rem; }
-.memos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.4rem; margin: 0; padding: 0; list-style: none; }
-.memo { position: relative; min-width: 0; padding: 1.4rem 1.2rem 1rem; background: var(--paper); color: var(--ink); font-family: var(--font-serif), serif; box-shadow: 5px 6px 0 #2a170c; }
-.memo:nth-child(1) { transform: rotate(-1.4deg); }
-.memo:nth-child(2) { transform: rotate(0.9deg); }
-.memo:nth-child(3) { transform: rotate(-0.7deg); }
-.memo::before {
-  content: "";
-  position: absolute;
-  top: -9px;
-  left: 50%;
-  width: 14px;
-  height: 14px;
-  margin-left: -7px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #e46a5c, #a82b2d 60%, #6d1d25);
-  box-shadow: 1px 2px 2px #0006;
-}
-.queueBadge { position: absolute; top: 1rem; right: 1rem; padding: 0.12rem 0.5rem; border: 1px solid var(--teal); border-radius: 999px; color: var(--teal); font-family: var(--font-body), sans-serif; font-size: 0.68rem; font-weight: 800; }
-.queueBadgeNext { background: var(--teal); color: #fff; }
-.memoSong { margin: 0; padding: 0 4rem 0.45rem 0; border-bottom: 2px solid var(--ink); font-family: var(--font-display), sans-serif; font-size: 1.12rem; overflow-wrap: anywhere; }
-.memoSong small { color: var(--muted); font-family: var(--font-body), sans-serif; font-size: 0.76rem; }
-.memoStory {
-  display: -webkit-box;
-  margin: 0.6rem 0 0;
-  overflow: hidden;
-  font-size: 0.88rem;
-  line-height: 1.7;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-.memoMeta { display: flex; justify-content: space-between; gap: 0.5rem; margin: 0.7rem 0 0; color: var(--muted); font-family: var(--font-body), sans-serif; font-size: 0.75rem; }
-.memoMeta span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.emptyMemo { margin: 0; padding: 1.2rem; background: var(--paper); color: var(--muted); font-family: var(--font-serif), serif; }
-
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes needle { from { transform: rotate(-22deg); } to { transform: rotate(18deg); } }
 
@@ -355,12 +307,9 @@
   .arc { top: 22px; width: 92%; }
   .turntable { left: 1rem; }
   .deskLabel { right: 1rem; left: auto; font-size: 0.8rem; transform: none; }
-  .memos { grid-template-columns: 1fr; }
-  .memo:nth-child(n) { transform: none; }
 }
 @media (max-width: 560px) {
   .frame { padding: 12px 12px 0; }
-  .frontBoard { padding: 1.4rem 1rem 1.6rem; }
   .board { padding: 1rem; }
   .boardTitle { font-size: 1.4rem; }
   .deskLabel { display: none; }
