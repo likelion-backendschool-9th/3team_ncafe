@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import type { MusicRequest } from "@/app/_lib/mock/music-box";
 import styles from "./music-box-highlight.module.css";
 import { clock, useYouTubePlayback } from "./useYouTubePlayback";
+import { VolumeControl } from "./VolumeControl";
 
 type NowPlaying = Pick<MusicRequest, "songTitle" | "artist" | "story" | "requesterName" | "youtubeVideoId"> & {
   // 메모지에 적을 손글씨 폰트 클래스 (handwritingSequence)
@@ -30,7 +31,7 @@ function Bulbs({ side }: { side: "top" | "left" | "right" }) {
 // YouTube 화면은 정책상 가리지 않아야 해서 재킷 앞면에 그대로 보이고, LP판은 재킷 뒤에서 반쯤 나와 돈다.
 export function DjBooth({ nowPlaying, repeatOne = false }: { nowPlaying: NowPlaying | null; repeatOne?: boolean }) {
   const videoId = nowPlaying?.youtubeVideoId ?? null;
-  const { frameRef, ready, playing, current, duration, progress, error, toggle, seek } = useYouTubePlayback(videoId, { loop: repeatOne });
+  const { frameRef, ready, playing, current, duration, progress, error, toggle, seek, volume } = useYouTubePlayback(videoId, { loop: repeatOne });
 
   return (
     // 판과 톤암은 음악이 실제로 재생 중일 때만 움직인다. 일시정지하면 그 각도에서 멈춘다.
@@ -94,6 +95,13 @@ export function DjBooth({ nowPlaying, repeatOne = false }: { nowPlaying: NowPlay
                   style={{ "--progress": `${progress}%` } as CSSProperties}
                 />
                 <span className={styles.time}>{clock(current)} / {clock(duration)}</span>
+                <VolumeControl
+                  title={nowPlaying.songTitle}
+                  level={volume.level}
+                  disabled={!ready}
+                  onChange={volume.change}
+                  onToggleMute={volume.toggleMute}
+                />
               </div>
             )}
             <footer className={styles.sleeveFoot}>

@@ -1,0 +1,17 @@
+.volume { display: flex; flex: 0 0 auto; align-items: center; gap: 4px; }
+.muteButton { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--ink, #34251d); cursor: pointer; }
+.muteButton:hover { background: rgb(0 0 0 / 8%); }
+.muteButton:disabled { opacity: 0.45; cursor: wait; }
+.muteButton:focus-visible { outline: 2px solid var(--teal, #207a72); outline-offset: 2px; }
+.muteButton svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.muteButton[aria-pressed="true"] { color: var(--red, #a82b2d); }
+.slider { width: 64px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--ink, #34251d) var(--level, 0%), #c9b08c var(--level, 0%)); cursor: pointer; appearance: none; }
+.slider::-webkit-slider-thumb { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--ink, #34251d); appearance: none; }
+.slider::-moz-range-thumb { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--ink, #34251d); }
+.slider:disabled { opacity: 0.45; cursor: wait; }
+.slider:focus-visible { outline: 2px solid var(--teal, #207a72); outline-offset: 4px; }
+
+/* 휴대폰은 기기 볼륨 버튼을 쓰는 게 자연스럽고 재생바 자리도 좁아서 음소거만 둔다. */
+@media (max-width: 480px) {
+  .slider { display: none; }
+}

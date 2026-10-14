@@ -9,6 +9,9 @@ type YouTubePlayer = {
   seekTo(seconds: number, allowSeekAhead: boolean): void;
   getCurrentTime(): number;
   getDuration(): number;
+  setVolume(volume: number): void;
+  mute(): void;
+  unMute(): void;
   destroy(): void;
 };
 
@@ -59,6 +62,36 @@ function loadYouTubeApi(): Promise<YouTubeNamespace> {
   return apiReady;
 }
 
+// 손님이 맞춘 볼륨은 브라우저에 기억해 두고, 다음 곡과 새로고침 뒤에도 그대로 쓴다.
+const VOLUME_KEY = "music-box-volume";
+const DEFAULT_SOUND = { volume: 80, muted: false };
+
+type Sound = typeof DEFAULT_SOUND;
+
+function readSound(): Sound {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(VOLUME_KEY) ?? "null") as Partial<Sound> | null;
+    if (typeof saved?.volume !== "number") return DEFAULT_SOUND;
+    return { volume: Math.min(100, Math.max(0, saved.volume)), muted: saved.muted === true };
+  } catch {
+    return DEFAULT_SOUND;
+  }
+}
+
+function saveSound(sound: Sound) {
+  try {
+    window.localStorage.setItem(VOLUME_KEY, JSON.stringify(sound));
+  } catch {
+    // 저장소를 쓸 수 없으면 이번 화면에서만 적용한다.
+  }
+}
+
+function applySound(player: YouTubePlayer, { volume, muted }: Sound) {
+  player.setVolume(volume);
+  if (muted) player.mute();
+  else player.unMute();
+}
+
 export function clock(seconds: number): string {
   if (!Number.isFinite(seconds)) return "00:00";
   const whole = Math.floor(seconds);
@@ -78,6 +111,7 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [sound, setSound] = useState<Sound>(DEFAULT_SOUND);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -97,6 +131,9 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
         playerVars: { controls: controls ? 1 : 0, playsinline: 1, rel: 0 },
         events: {
           onReady: ({ target }) => {
+            const saved = readSound();
+            applySound(target, saved);
+            setSound(saved);
             setReady(true);
             setDuration(target.getDuration());
           },
@@ -161,7 +198,31 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
     setCurrent(Number(value));
   }
 
-  const progress = duration ? (current / duration) * 100 : 0;
+  function changeSound(next: Sound) {
+    const player = playerRef.current;
+    if (!player || !ready) return;
+    applySound(player, next);
+    setSound(next);
+    saveSound(next);
+  }
 
-  return { frameRef, ready, playing, current, duration, progress, error, toggle, seek };
+  // 슬라이더를 움직이면 음소거는 풀고, 0까지 내리면 음소거와 같게 본다.
+  function changeVolume(value: string) {
+    const volume = Number(value);
+    changeSound({ volume, muted: volume === 0 });
+  }
+
+  // 볼륨 0에서 음소거를 풀면 들리지 않으니 기본 볼륨으로 되돌린다.
+  function toggleMute() {
+    if (sound.muted || sound.volume === 0) {
+      changeSound({ volume: sound.volume || DEFAULT_SOUND.volume, muted: false });
+    } else {
+      changeSound({ ...sound, muted: true });
+    }
+  }
+
+  const progress = duration ? (current / duration) * 100 : 0;
+  const volume = { level: sound.muted ? 0 : sound.volume, change: changeVolume, toggleMute };
+
+  return { frameRef, ready, playing, current, duration, progress, error, toggle, seek, volume };
 }

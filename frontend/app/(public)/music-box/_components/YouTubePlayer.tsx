@@ -3,10 +3,11 @@
 import type { CSSProperties } from "react";
 import styles from "../music-box.module.css";
 import { clock, useYouTubePlayback } from "./useYouTubePlayback";
+import { VolumeControl } from "./VolumeControl";
 
 // LP 재킷 안에 들어가는 영상과 재생바. 재킷 틀은 NowPlaying이 그린다.
 export function YouTubePlayer({ videoId, title, loop = false }: { videoId: string; title: string; loop?: boolean }) {
-  const { frameRef, ready, playing, current, duration, progress, error, toggle, seek } = useYouTubePlayback(videoId, { loop });
+  const { frameRef, ready, playing, current, duration, progress, error, toggle, seek, volume } = useYouTubePlayback(videoId, { loop });
 
   return (
     <>
@@ -29,6 +30,7 @@ export function YouTubePlayer({ videoId, title, loop = false }: { videoId: strin
           style={{ "--progress": `${progress}%` } as CSSProperties}
         />
         <span className={styles.time}>{clock(current)} / {clock(duration)}</span>
+        <VolumeControl title={title} level={volume.level} disabled={!ready} onChange={volume.change} onToggleMute={volume.toggleMute} />
       </div>
     </>
   );
