@@ -16,7 +16,7 @@
   padding: 1rem;
   border: 1px solid var(--border);
   border-radius: 14px;
-  background: var(--surface);
+  background: #fff;
 }
 .searchField, .filterField { display: grid; gap: 0.35rem; min-width: 0; }
 .searchField { flex: 2 1 240px; }
@@ -29,17 +29,17 @@
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--surface);
+  background: #fff;
   color: var(--text);
   font: inherit;
 }
 .filters :global(.button) { min-height: 44px; }
 
-.results { min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.results { min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: #fff; }
 .resultsHeader { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.8rem 1.25rem; border-bottom: 1px solid var(--border); }
 .resultsHeader h2 { margin: 0; font-size: 1.1rem; }
 .resultsHeader span { color: var(--muted); font-size: 0.9rem; }
-.results :global(.state-panel) { max-width: none; border: 0; border-radius: 0; box-shadow: none; }
+.results :global(.state-panel) { max-width: none; border: 0; border-radius: 0; background: #fff; box-shadow: none; }
 
 .tableWrap { width: 100%; max-width: 100%; overflow-x: auto; }
 .tableWrap:focus-visible { outline: 3px solid #b99279; outline-offset: -3px; }
@@ -58,7 +58,7 @@
 .secondaryName { display: block; margin-top: 0.15rem; color: var(--muted); font-size: 0.85rem; }
 .rowActions { display: flex; align-items: center; justify-content: flex-end; gap: 0.6rem; }
 .rowActions .editButton, .rowActions .deleteButton { min-height: 36px; padding: 0.35rem 0.65rem; }
-.editButton { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--accent); border-radius: 9px; background: var(--surface); color: var(--accent); font-weight: 700; text-decoration: none; }
+.editButton { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--accent); border-radius: 9px; background: #fff; color: var(--accent); font-weight: 700; text-decoration: none; }
 .editButton:hover { background: var(--surface-soft); }
 .status { display: inline-flex; padding: 0.25rem 0.65rem; border-radius: 999px; font-size: 0.82rem; font-weight: 700; }
 .statusAvailable { background: #e8f4e8; color: #266032; }
@@ -70,11 +70,11 @@
 .menuLink { color: var(--accent); font-weight: 700; }
 .notice { margin: 0; padding: 0.85rem 1rem; border-radius: 10px; background: #e8f4e8; color: #266032; }
 .notice a { font-weight: 700; }
-.menuForm { display: grid; gap: 1.3rem; max-width: 640px; padding: clamp(1.3rem, 4vw, 2rem); border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.menuForm { display: grid; gap: 1.3rem; max-width: 640px; padding: clamp(1.3rem, 4vw, 2rem); border: 1px solid var(--border); border-radius: 16px; background: #fff; }
 .formFields { display: grid; gap: 1.2rem; min-width: 0; margin: 0; padding: 0; border: 0; }
 .formField { display: grid; gap: 0.4rem; }
 .formField label { font-weight: 700; }
-.formField input, .formField textarea, .formField select { width: 100%; min-height: 44px; padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; }
+.formField input, .formField textarea, .formField select { width: 100%; min-height: 44px; padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--text); font: inherit; }
 .formField textarea { resize: vertical; }
 .fieldHint { color: var(--muted); font-size: 0.82rem; }
 .checkboxFields { display: flex; flex-wrap: wrap; gap: 1.2rem; }
@@ -83,13 +83,13 @@
 .fieldError { color: var(--danger); font-size: 0.85rem; }
 .formActions, .detailActions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
 .formActions a, .detailActions a { color: var(--accent); font-weight: 700; }
-.detailCard { display: grid; margin: 0; padding: 1.2rem 1.5rem; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.detailCard { display: grid; margin: 0; padding: 1.2rem 1.5rem; border: 1px solid var(--border); border-radius: 14px; background: #fff; }
 .detailCard div { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
 .detailCard div:last-child { border-bottom: 0; }
 .detailCard dt { color: var(--muted); }
 .detailCard dd { margin: 0; font-weight: 700; }
 .detailImage { display: block; width: 200px; max-width: 100%; height: auto; aspect-ratio: 4 / 3; border: 1px solid var(--border); border-radius: 10px; object-fit: cover; background: var(--surface-soft); }
-.deleteButton { min-height: 44px; padding: 0.6rem 1rem; border: 1px solid var(--danger); border-radius: 9px; background: var(--surface); color: var(--danger); cursor: pointer; font: inherit; font-weight: 700; }
+.deleteButton { min-height: 44px; padding: 0.6rem 1rem; border: 1px solid var(--danger); border-radius: 9px; background: #fff; color: var(--danger); cursor: pointer; font: inherit; font-weight: 700; }
 .deleteButton:hover { background: #fce9e9; }
 .visuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 
