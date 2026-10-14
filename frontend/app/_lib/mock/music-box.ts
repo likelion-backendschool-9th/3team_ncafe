@@ -64,6 +64,10 @@ export const mockMusicBoxRepository = {
     return requests().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
 
+  async listByUser(userId: string): Promise<MusicRequest[]> {
+    return (await this.list()).filter((request) => request.userId === userId);
+  },
+
   async create(input: MusicRequestInput): Promise<MusicRequest> {
     const request: MusicRequest = {
       ...input,

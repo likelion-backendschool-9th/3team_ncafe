@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { getCurrentUser } from '@/app/_lib/session/session';
-import { logout } from '@/app/_lib/session/logout';
 import { BrandLogo } from './BrandLogo';
 import { SiteNav } from './SiteNav';
+import { UserMenu } from './UserMenu';
 
 export async function SiteHeader() {
   const user = await getCurrentUser();
@@ -16,11 +16,11 @@ export async function SiteHeader() {
         <SiteNav />
         <div className="site-header__auth">
           {user ? (
-            <form action={logout}>
-              <button className="text-button" type="submit">
-                로그아웃
-              </button>
-            </form>
+            <UserMenu
+              name={user.name}
+              email={user.email}
+              isAdmin={user.role === 'admin'}
+            />
           ) : (
             <>
               <Link href="/login">로그인</Link>
