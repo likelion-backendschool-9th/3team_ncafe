@@ -29,7 +29,9 @@ export async function MusicBoxHighlight() {
 
       <div className={styles.frame}>
         <DjBooth
+          key={playing?.id ?? "empty"}
           nowPlaying={playing ? {
+            id: playing.id,
             songTitle: playing.songTitle,
             artist: playing.artist,
             story: playing.story,
@@ -38,6 +40,7 @@ export async function MusicBoxHighlight() {
             handwriting: playingHand,
           } : null}
           repeatOne={repeat === "one"}
+          storySpeech
         />
       </div>
 

@@ -3,10 +3,12 @@
 import type { CSSProperties } from "react";
 import type { MusicRequest } from "@/app/_lib/mock/music-box";
 import styles from "./music-box-highlight.module.css";
+import { useStorySpeech } from "./useStorySpeech";
 import { clock, useYouTubePlayback } from "./useYouTubePlayback";
 import { VolumeControl } from "./VolumeControl";
 
 type NowPlaying = Pick<MusicRequest, "songTitle" | "artist" | "story" | "requesterName" | "youtubeVideoId"> & {
+  id?: string;
   // 메모지에 적을 손글씨 폰트 클래스 (handwritingSequence)
   handwriting?: string;
 };
@@ -29,9 +31,10 @@ function Bulbs({ side }: { side: "top" | "left" | "right" }) {
 
 // DJ 부스: 책상 위 턴테이블에 LP 재킷(영상)을 얹고, 옆에 지금 곡의 신청곡 메모지를 둔다.
 // YouTube 화면은 정책상 가리지 않아야 해서 재킷 앞면에 그대로 보이고, LP판은 재킷 뒤에서 반쯤 나와 돈다.
-export function DjBooth({ nowPlaying, repeatOne = false }: { nowPlaying: NowPlaying | null; repeatOne?: boolean }) {
+export function DjBooth({ nowPlaying, repeatOne = false, storySpeech = false }: { nowPlaying: NowPlaying | null; repeatOne?: boolean; storySpeech?: boolean }) {
   const videoId = nowPlaying?.youtubeVideoId ?? null;
   const { frameRef, ready, playing, current, duration, progress, error, toggle, seek, volume } = useYouTubePlayback(videoId, { loop: repeatOne });
+  const speech = useStorySpeech(storySpeech ? nowPlaying?.id ?? null : null, volume.level);
 
   return (
     // 판과 톤암은 음악이 실제로 재생 중일 때만 움직인다. 일시정지하면 그 각도에서 멈춘다.
@@ -131,14 +134,33 @@ export function DjBooth({ nowPlaying, repeatOne = false }: { nowPlaying: NowPlay
                 <span>사 연</span>
                 <p className={nowPlaying.handwriting}>{nowPlaying.story}</p>
               </div>
+              {storySpeech && (
+                <div className={styles.speechControls}>
+                  <button className={styles.speechButton} type="button" onClick={speech.toggle}>
+                    {speech.status === "loading" ? "읽기 취소" : speech.status === "speaking" ? "읽기 중지" : "사연 읽기"}
+                  </button>
+                  {speech.status === "loading" && <span className={styles.speechLoading} role="status">음성을 준비하고 있어요.</span>}
+                  {speech.status === "error" && <span className={styles.speechMessage} role="alert">{speech.errorMessage}</span>}
+                </div>
+              )}
             </>
           ) : (
             <p className={styles.slipEmpty}>아직 도착한 사연이 없어요.</p>
           )}
-          <footer className={styles.slipFoot}>
-            <p>차와 음악이 있는~</p>
-            <p className={styles.shopName}>삼 다 방 <span>☎ SINCE 1987</span></p>
-          </footer>
+          {storySpeech ? (
+            nowPlaying && (
+              <footer className={styles.slipFoot}>
+                <a className={styles.speechCredit} href="https://typecast.ai" target="_blank" rel="noopener noreferrer">
+                  이 사연 음성은 AI 음성 서비스 Typecast의 필재로 제작되었습니다.
+                </a>
+              </footer>
+            )
+          ) : (
+            <footer className={styles.slipFoot}>
+              <p>차와 음악이 있는~</p>
+              <p className={styles.shopName}>삼 다 방 <span>☎ SINCE 1987</span></p>
+            </footer>
+          )}
         </article>
       </div>
 
