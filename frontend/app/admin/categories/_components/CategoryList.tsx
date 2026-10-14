@@ -6,9 +6,10 @@ import { moveCategory, reorderCategories } from "../_actions";
 import { CategoryRow } from "./CategoryRow";
 import styles from "../categories.module.css";
 
-export function CategoryList({ categories, menuCounts }: {
+export function CategoryList({ categories, menuCounts, fallbackCategoryName }: {
   categories: Category[];
   menuCounts: Record<string, number>;
+  fallbackCategoryName: string;
 }) {
   const [order, setOrder] = useState(categories);
   const [syncedCategories, setSyncedCategories] = useState(categories);
@@ -75,6 +76,7 @@ export function CategoryList({ categories, menuCounts }: {
             category={category}
             menuCount={menuCounts[category.name] ?? 0}
             position={index + 1}
+            locked={category.name === fallbackCategoryName}
             isFirst={index === 0}
             isLast={index === order.length - 1}
             onMoveUp={() => handleMove(category.id, "up")}

@@ -8,10 +8,12 @@ import styles from "../categories.module.css";
 
 const initialState: CategoryFormState = {};
 
-export function CategoryRow({ category, menuCount, position, isFirst, isLast, onMoveUp, onMoveDown }: {
+export function CategoryRow({ category, menuCount, position, locked, isFirst, isLast, onMoveUp, onMoveDown }: {
   category: Category;
   menuCount: number;
   position: number;
+  // 삭제된 카테고리의 메뉴가 옮겨 가는 기타 카테고리는 수정·삭제를 막는다.
+  locked: boolean;
   isFirst: boolean;
   isLast: boolean;
   onMoveUp: () => void;
@@ -26,6 +28,7 @@ export function CategoryRow({ category, menuCount, position, isFirst, isLast, on
     return result;
   }, initialState);
   const error = editing ? state.error : undefined;
+  const lockedHint = "삭제된 카테고리의 메뉴가 옮겨 가는 기본 카테고리라 수정·삭제할 수 없어요.";
 
   function startEditing() {
     setEditing(true);
@@ -67,11 +70,11 @@ export function CategoryRow({ category, menuCount, position, isFirst, isLast, on
         {editing ? (
           <button key="save" className={styles.primaryButton} type="submit" disabled={pending}>{pending ? "저장 중" : "저장"}</button>
         ) : (
-          <button key="edit" className={styles.outlineButton} type="button" onClick={startEditing}>수정</button>
+          <button key="edit" className={styles.outlineButton} type="button" onClick={startEditing} disabled={locked} title={locked ? lockedHint : undefined}>수정</button>
         )}
       </form>
       <div className={styles.deleteCell}>
-        <button className={styles.dangerButton} type="button" onClick={() => setDeleting(true)}>삭제</button>
+        <button className={styles.dangerButton} type="button" onClick={() => setDeleting(true)} disabled={locked} title={locked ? lockedHint : undefined}>삭제</button>
       </div>
       <span className={`${styles.usage} ${menuCount === 0 ? styles.usageEmpty : ""}`}>메뉴 {menuCount}개에서 사용 중</span>
       {error && <span id={`category-${category.id}-error`} className={styles.fieldError}>{error}</span>}

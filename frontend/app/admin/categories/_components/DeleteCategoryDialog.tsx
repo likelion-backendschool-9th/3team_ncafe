@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useTransition, type MouseEvent } from "react";
+import { useEffect, useRef, useState, useTransition, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { deleteCategory } from "../_actions";
 import styles from "../categories.module.css";
@@ -14,6 +14,7 @@ export function DeleteCategoryDialog({ categoryId, categoryName, onClose }: {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string>();
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -30,7 +31,8 @@ export function DeleteCategoryDialog({ categoryId, categoryName, onClose }: {
 
   function handleConfirm() {
     startTransition(async () => {
-      await deleteCategory(categoryId);
+      const result = await deleteCategory(categoryId);
+      if (result.error) setError(result.error);
     });
   }
 
@@ -53,9 +55,8 @@ export function DeleteCategoryDialog({ categoryId, categoryName, onClose }: {
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
           </button>
         </div>
-        <p id={`delete-${categoryId}-message`} className={styles.dialogMessage}>
-          {categoryName} 카테고리 전체를 삭제하면 카테고리 안의 모든 메뉴가 삭제됩니다. 삭제하시겠습니까?
-        </p>
+        <p id={`delete-${categoryId}-message`} className={styles.dialogMessage}>카테고리를 삭제 하시겠습니까?</p>
+        {error && <p className={styles.fieldError} role="alert">{error}</p>}
         <div className={styles.dialogActions}>
           <button ref={cancelRef} type="button" className={styles.outlineButton} onClick={onClose} disabled={pending}>취소</button>
           <button type="button" className={styles.primaryButton} onClick={handleConfirm} disabled={pending}>{pending ? "삭제 중..." : "삭제"}</button>

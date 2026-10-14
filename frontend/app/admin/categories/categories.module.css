@@ -37,7 +37,8 @@
 .outlineButton:hover:not(:disabled) { background: #dfeee9; }
 .dangerButton { border: 1px solid #9b2924; background: transparent; color: #9b2924; font-weight: 700; }
 .dangerButton:hover { background: #f6dcd8; }
-.primaryButton:disabled, .outlineButton:disabled { opacity: 0.5; cursor: not-allowed; }
+.primaryButton:disabled, .outlineButton:disabled, .dangerButton:disabled { opacity: 0.5; cursor: not-allowed; }
+.dangerButton:disabled:hover { background: transparent; }
 .input:focus-visible, .primaryButton:focus-visible, .outlineButton:focus-visible, .dangerButton:focus-visible, .orderButton:focus-visible {
   outline: 3px solid #207a72;
   outline-offset: 2px;
@@ -117,7 +118,7 @@
 .usageEmpty { background: #efe0c4; color: var(--muted); }
 
 .fieldError { grid-column: 4 / -1; margin: 0; color: #9b2924; font-size: 0.85rem; font-weight: 700; }
-.createForm .fieldError { grid-column: auto; }
+.createForm .fieldError, .dialogPanel .fieldError { grid-column: auto; }
 
 .dragHandle {
   color: #9a7a55;
