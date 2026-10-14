@@ -67,9 +67,12 @@ export function clock(seconds: number): string {
 
 // 뮤직박스 페이지와 DJ 부스가 같은 YouTube 재생 동작(재생/일시정지, 위치 이동)을 쓰도록 묶는다.
 // 플레이어 화면은 YouTube 정책상 가리거나 숨기면 안 되므로, frameRef를 붙인 칸을 그대로 보여 줘야 한다.
-export function useYouTubePlayback(videoId: string | null, { controls = false } = {}) {
+// loop: 관리자가 한 곡 반복을 켜면 영상이 끝날 때 처음부터 다시 튼다.
+export function useYouTubePlayback(videoId: string | null, { controls = false, loop = false } = {}) {
   const frameRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YouTubePlayer | null>(null);
+  // 반복 설정이 바뀌어도 플레이어를 새로 만들지 않도록 최신 값만 따로 들고 있는다.
+  const loopRef = useRef(loop);
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
@@ -98,6 +101,11 @@ export function useYouTubePlayback(videoId: string | null, { controls = false } 
             setDuration(target.getDuration());
           },
           onStateChange: ({ data, target }) => {
+            if (data === ENDED && loopRef.current) {
+              target.seekTo(0, true);
+              target.playVideo();
+              return;
+            }
             setPlaying(data === PLAYING);
             setDuration(target.getDuration());
             // 마지막으로 읽은 시간은 곡 끝보다 조금 앞일 수 있어, 끝나면 재생 막대를 끝까지 채운다.
@@ -124,6 +132,10 @@ export function useYouTubePlayback(videoId: string | null, { controls = false } 
       setError(null);
     };
   }, [videoId, controls]);
+
+  useEffect(() => {
+    loopRef.current = loop;
+  }, [loop]);
 
   // IFrame API는 재생 시간 변화를 알려 주지 않아서, 재생 중에만 0.5초마다 읽어 온다.
   useEffect(() => {

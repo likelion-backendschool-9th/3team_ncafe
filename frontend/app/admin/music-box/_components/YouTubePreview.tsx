@@ -12,8 +12,8 @@ export function YouTubePreview({ videoId, title }: { videoId: string; title: str
     <figure className={styles.preview}>
       <div ref={frameRef} className={styles.previewFrame} aria-label={`${title} 영상`} />
       <figcaption>
-        {error ? <span className={styles.formError} role="alert">{error}</span> : "손님 화면에 나가는 영상이에요."}
-        {" "}<a href={youtubeWatchUrl(videoId)} target="_blank" rel="noreferrer">YouTube에서 열기</a>
+        {error && <span className={styles.formError} role="alert">{error} </span>}
+        <a href={youtubeWatchUrl(videoId)} target="_blank" rel="noreferrer">YouTube에서 열기</a>
       </figcaption>
     </figure>
   );

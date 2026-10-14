@@ -33,7 +33,7 @@ function requestedAt(value: string): string {
 
 function StatusBadge({ row }: { row: RequestRow }) {
   if (row.request.status === "playing") return <span className={`${styles.status} ${styles.statusPlaying}`}>재생 중</span>;
-  if (row.request.status === "pending") return <span className={`${styles.status} ${styles.statusPending}`}>대기 {row.queuePosition}</span>;
+  if (row.queuePosition !== null) return <span className={`${styles.status} ${styles.statusPending}`}>대기 {row.queuePosition}</span>;
   return <span className={`${styles.status} ${styles.statusPlayed}`}>재생 완료</span>;
 }
 

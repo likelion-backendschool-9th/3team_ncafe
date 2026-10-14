@@ -1,14 +1,14 @@
 import Link from "next/link";
-import { mockMusicBoxRepository } from "@/app/_lib/mock/music-box";
+import { mockMusicBoxRepository, waitingQueueOf } from "@/app/_lib/mock/music-box";
 import { DjBooth } from "./DjBooth";
 import styles from "./music-box-highlight.module.css";
 import { RequestMemo, RequestMemoBoard } from "./RequestMemo";
 
 // 홈 하단 뮤직박스 칸: 지금 흐르는 노래(DJ 부스)와 다음 차례 신청곡 3곡을 사연과 함께 보여 준다.
 export async function MusicBoxHighlight() {
-  const requests = await mockMusicBoxRepository.list();
+  const [requests, repeat] = await Promise.all([mockMusicBoxRepository.list(), mockMusicBoxRepository.getRepeatMode()]);
   const playing = requests.find((request) => request.status === "playing");
-  const queue = requests.filter((request) => request.status === "pending").reverse();
+  const queue = waitingQueueOf(requests);
   const nextUp = queue.slice(0, 3);
 
   return (
@@ -33,6 +33,7 @@ export async function MusicBoxHighlight() {
             requesterName: playing.requesterName,
             youtubeVideoId: playing.youtubeVideoId,
           } : null}
+          repeatOne={repeat === "one"}
         />
       </div>
 
