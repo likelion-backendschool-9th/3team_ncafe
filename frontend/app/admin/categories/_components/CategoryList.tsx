@@ -74,6 +74,7 @@ export function CategoryList({ categories, menuCounts }: {
           <CategoryRow
             category={category}
             menuCount={menuCounts[category.name] ?? 0}
+            position={index + 1}
             isFirst={index === 0}
             isLast={index === order.length - 1}
             onMoveUp={() => handleMove(category.id, "up")}

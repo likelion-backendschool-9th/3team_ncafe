@@ -7,9 +7,10 @@ import styles from "../categories.module.css";
 
 const initialState: CategoryFormState = {};
 
-export function CategoryRow({ category, menuCount, isFirst, isLast, onMoveUp, onMoveDown }: {
+export function CategoryRow({ category, menuCount, position, isFirst, isLast, onMoveUp, onMoveDown }: {
   category: Category;
   menuCount: number;
+  position: number;
   isFirst: boolean;
   isLast: boolean;
   onMoveUp: () => void;
@@ -35,14 +36,15 @@ export function CategoryRow({ category, menuCount, isFirst, isLast, onMoveUp, on
         <button type="button" className={styles.orderButton} onClick={onMoveUp} disabled={isFirst} aria-label={`${category.name} 위로 이동`}>▲</button>
         <button type="button" className={styles.orderButton} onClick={onMoveDown} disabled={isLast} aria-label={`${category.name} 아래로 이동`}>▼</button>
       </div>
+      <span className={styles.number} aria-hidden="true">{String(position).padStart(2, "0")}</span>
       <form action={formAction} className={styles.rowForm}>
-        <input name="name" type="text" maxLength={40} required defaultValue={category.name} aria-invalid={!!state.error} aria-describedby={state.error ? `category-${category.id}-error` : undefined} />
-        <button className={styles.saveButton} type="submit" disabled={pending}>{pending ? "수정 중..." : "수정"}</button>
+        <input className={styles.input} name="name" type="text" maxLength={40} required defaultValue={category.name} aria-label={`${category.name} 카테고리명`} aria-invalid={!!state.error} aria-describedby={state.error ? `category-${category.id}-error` : undefined} />
+        <button className={styles.outlineButton} type="submit" disabled={pending}>{pending ? "수정 중" : "수정"}</button>
       </form>
-      <form action={deleteCategory.bind(null, category.id)} onSubmit={confirmDelete}>
-        <button className={styles.deleteButton} type="submit">삭제</button>
+      <span className={`${styles.usage} ${menuCount === 0 ? styles.usageEmpty : ""}`}>메뉴 {menuCount}개에서 사용 중</span>
+      <form action={deleteCategory.bind(null, category.id)} onSubmit={confirmDelete} className={styles.deleteForm}>
+        <button className={styles.dangerButton} type="submit">삭제</button>
       </form>
-      <span className={styles.meta}>메뉴 {menuCount}개에서 사용 중</span>
       {state.error && <span id={`category-${category.id}-error`} className={styles.fieldError}>{state.error}</span>}
     </div>
   );
