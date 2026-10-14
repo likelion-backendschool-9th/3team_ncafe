@@ -41,10 +41,10 @@ export function CategoryRow({ category, menuCount, position, isFirst, isLast, on
         <input className={styles.input} name="name" type="text" maxLength={40} required defaultValue={category.name} aria-label={`${category.name} 카테고리명`} aria-invalid={!!state.error} aria-describedby={state.error ? `category-${category.id}-error` : undefined} />
         <button className={styles.outlineButton} type="submit" disabled={pending}>{pending ? "수정 중" : "수정"}</button>
       </form>
-      <span className={`${styles.usage} ${menuCount === 0 ? styles.usageEmpty : ""}`}>메뉴 {menuCount}개에서 사용 중</span>
       <form action={deleteCategory.bind(null, category.id)} onSubmit={confirmDelete} className={styles.deleteForm}>
         <button className={styles.dangerButton} type="submit">삭제</button>
       </form>
+      <span className={`${styles.usage} ${menuCount === 0 ? styles.usageEmpty : ""}`}>메뉴 {menuCount}개에서 사용 중</span>
       {state.error && <span id={`category-${category.id}-error`} className={styles.fieldError}>{state.error}</span>}
     </div>
   );
