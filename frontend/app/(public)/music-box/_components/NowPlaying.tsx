@@ -5,9 +5,10 @@ import { YouTubePlayer } from "./YouTubePlayer";
 type NowPlayingProps = {
   playing: MusicRequest | undefined;
   next: MusicRequest | undefined;
+  repeatOne?: boolean;
 };
 
-export function NowPlaying({ playing, next }: NowPlayingProps) {
+export function NowPlaying({ playing, next, repeatOne = false }: NowPlayingProps) {
   return (
     <section className={`${styles.panel} ${styles.nowPanel}`} aria-labelledby="playing-title">
       <h2 id="playing-title" className={styles.panelTitle}>
@@ -26,7 +27,7 @@ export function NowPlaying({ playing, next }: NowPlayingProps) {
             </div>
           </div>
           {playing.youtubeVideoId ? (
-            <YouTubePlayer videoId={playing.youtubeVideoId} title={playing.songTitle} />
+            <YouTubePlayer videoId={playing.youtubeVideoId} title={playing.songTitle} loop={repeatOne} />
           ) : (
             <p className={styles.empty}>영상을 준비하고 있어요.</p>
           )}

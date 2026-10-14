@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { mockMusicBoxRepository, type MusicRequest } from "@/app/_lib/mock/music-box";
+import { mockMusicBoxRepository, waitingQueueOf, type MusicRequest } from "@/app/_lib/mock/music-box";
 import { requireRole } from "@/app/_lib/session/session";
 import { DjBooth } from "@/app/(public)/music-box/_components/DjBooth";
 import boothStyles from "@/app/(public)/music-box/_components/music-box-highlight.module.css";
@@ -10,19 +10,27 @@ import { DeleteRequestForm } from "./_components/DeleteRequestForm";
 
 type SearchParams = Promise<{ deleted?: string; error?: string }>;
 
-const statusOrder: Record<MusicRequest["status"], number> = { playing: 0, pending: 1, played: 2 };
+const statusOrder: Record<MusicRequest["status"], number> = { playing: 0, queued: 1, pending: 1, played: 2, cancelled: 3 };
+
+function statusBadge(request: MusicRequest, position: number | undefined): string {
+  if (request.status === "playing") return "재생 중";
+  if (request.status === "played") return "재생 완료";
+  if (request.status === "cancelled") return "취소됨";
+  return `대기 ${position}`;
+}
 
 export default async function MyMusicRequestsPage({ searchParams }: { searchParams: SearchParams }) {
-  const [user, { deleted, error }, requests] = await Promise.all([
+  const [user, { deleted, error }, requests, repeat] = await Promise.all([
     requireRole("customer", "/mypage/music-box"),
     searchParams,
     mockMusicBoxRepository.list(),
+    mockMusicBoxRepository.getRepeatMode(),
   ]);
 
   const playing = requests.find((request) => request.status === "playing");
-  const queue = requests.filter((request) => request.status === "pending").reverse();
+  const queue = waitingQueueOf(requests);
   const queuePosition = new Map(queue.map((request, index) => [request.id, index + 1]));
-  // 내 신청곡은 재생 중 → 대기(차례 순) → 재생 완료(최근 신청 순)로 보여 준다.
+  // 내 신청곡은 재생 중 → 대기(차례 순) → 재생 완료(최근 신청 순) → 취소됨으로 보여 준다.
   const mine = requests
     .filter((request) => request.userId === user.id)
     .sort((a, b) =>
@@ -57,6 +65,7 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
               requesterName: playing.requesterName,
               youtubeVideoId: playing.youtubeVideoId,
             } : null}
+            repeatOne={repeat === "one"}
           />
         </div>
 
@@ -70,8 +79,8 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
             <RequestMemo
               key={request.id}
               request={request}
-              badge={request.status === "playing" ? "재생 중" : request.status === "pending" ? `대기 ${queuePosition.get(request.id)}` : "재생 완료"}
-              badgeTone={request.status === "playing" ? "accent" : request.status === "played" ? "muted" : "default"}
+              badge={statusBadge(request, queuePosition.get(request.id))}
+              badgeTone={request.status === "playing" ? "accent" : request.status === "played" || request.status === "cancelled" ? "muted" : "default"}
               action={request.status !== "playing" && (
                 <DeleteRequestForm action={deleteMyMusicRequest.bind(null, request.id)} songTitle={request.songTitle} />
               )}

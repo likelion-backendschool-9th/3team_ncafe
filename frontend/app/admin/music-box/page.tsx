@@ -1,36 +1,54 @@
-import { mockMusicBoxRepository } from "@/app/_lib/mock/music-box";
+import { inboxOf, mockMusicBoxRepository, playlistOf, type MusicRequest, type RepeatMode } from "@/app/_lib/mock/music-box";
 import { requireRole } from "@/app/_lib/session/session";
-import { finishMusicRequest } from "./_actions";
-import { PlaybackForm } from "./_components/PlaybackForm";
+import { cancelCurrent, cancelRequest, finishCurrent, moveInPlaylist, playNow, removeFromPlaylist, setRepeatMode } from "./_actions";
+import { AddToPlaylistForm } from "./_components/AddToPlaylistForm";
+import { CancelRequestForm } from "./_components/CancelRequestForm";
+import { RequestCard } from "./_components/RequestCard";
 import { YouTubePreview } from "./_components/YouTubePreview";
 import styles from "./music-box.module.css";
 
-type SearchParams = Promise<{ started?: string }>;
+const requestedAtFormat = new Intl.DateTimeFormat("ko-KR", {
+  timeZone: "Asia/Seoul",
+  month: "numeric",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
 
-function requestedAt(value: string): string {
-  return new Intl.DateTimeFormat("ko-KR", {
-    timeZone: "Asia/Seoul",
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
+function requester(request: MusicRequest): string {
+  return `${request.requesterName} · ${requestedAtFormat.format(new Date(request.createdAt))}`;
 }
 
-export default async function AdminMusicBoxPage({ searchParams }: { searchParams: SearchParams }) {
+const repeatLabels: Record<RepeatMode, string> = { off: "반복 끔", one: "한 곡 반복", all: "전체 반복" };
+
+function Story({ request }: { request: MusicRequest }) {
+  return <blockquote className={styles.story}>{request.story}</blockquote>;
+}
+
+function MediaPreview({ request }: { request: MusicRequest }) {
+  return request.youtubeVideoId
+    ? <YouTubePreview videoId={request.youtubeVideoId} title={request.songTitle} />
+    : <div className={styles.previewEmpty}>연결된 영상이 없어요.</div>;
+}
+
+export default async function AdminMusicBoxPage() {
   await requireRole("admin", "/admin/music-box");
-  const [{ started }, requests] = await Promise.all([searchParams, mockMusicBoxRepository.list()]);
+  const [requests, repeat] = await Promise.all([mockMusicBoxRepository.list(), mockMusicBoxRepository.getRepeatMode()]);
   const playing = requests.find((request) => request.status === "playing");
-  const pending = requests.filter((request) => request.status === "pending").reverse();
-  const played = requests.filter((request) => request.status === "played").slice(0, 10);
+  const playlist = playlistOf(requests);
+  const inbox = inboxOf(requests);
+  const played = requests
+    .filter((request) => request.status === "played")
+    .sort((a, b) => (b.playedAt ?? "").localeCompare(a.playedAt ?? ""))
+    .slice(0, 10);
 
   return (
     <div className={styles.page}>
       <header className={styles.heading}>
         <p className="eyebrow">MUSIC BOX</p>
         <h1>뮤직박스 운영</h1>
-        <p>접수된 사연을 읽고 YouTube 링크를 연결해 선곡하세요.</p>
+        <p>접수된 사연에 YouTube 링크를 붙여 플레이리스트에 담고, 플레이리스트 순서대로 틀어 주세요.</p>
       </header>
-
-      {started === "1" && <p className={styles.notice} role="status">신청곡을 선곡했습니다. 아래 플레이어에서 재생할 수 있습니다.</p>}
 
       <section className={styles.section} aria-labelledby="on-air-title">
         <div className={styles.sectionHeading}>
@@ -38,40 +56,123 @@ export default async function AdminMusicBoxPage({ searchParams }: { searchParams
           <span className={styles.count}>{playing ? "1곡" : "없음"}</span>
         </div>
         {playing ? (
-          <article className={styles.currentCard}>
-            <div>
-              <strong>{playing.songTitle}</strong><span> · {playing.artist}</span>
-              <p>{playing.requesterName}님의 사연: {playing.story}</p>
+          <RequestCard
+            tone="playing"
+            badge="재생 중"
+            songTitle={playing.songTitle}
+            artist={playing.artist}
+            requester={requester(playing)}
+            chip={repeat === "off" ? undefined : { label: repeatLabels[repeat], tone: "accent" }}
+            defaultOpen
+          >
+            <Story request={playing} />
+            <div className={styles.mediaRow}>
+              <MediaPreview request={playing} />
+              <div className={styles.mediaSide}>
+                <div>
+                  <p>지금 손님 화면에서 나오는 곡이에요.</p>
+                  <p className={styles.hint}>재생 완료를 누르면 플레이리스트의 다음 곡이 이어서 나와요.</p>
+                  <div className={styles.repeat} role="group" aria-label="반복">
+                    {(Object.keys(repeatLabels) as RepeatMode[]).map((mode) => (
+                      <form key={mode} action={setRepeatMode.bind(null, mode)}>
+                        <button type="submit" aria-pressed={repeat === mode}>{repeatLabels[mode]}</button>
+                      </form>
+                    ))}
+                  </div>
+                </div>
+                <div className={styles.actions}>
+                  <form action={finishCurrent}>
+                    <button className={styles.primaryButton} type="submit">재생 완료</button>
+                  </form>
+                  <form action={cancelCurrent} className={styles.pushEnd}>
+                    <button className={styles.dangerButton} type="submit">선곡 취소</button>
+                  </form>
+                </div>
+              </div>
             </div>
-            {playing.youtubeVideoId ? (
-              <YouTubePreview videoId={playing.youtubeVideoId} title={playing.songTitle} />
-            ) : (
-              <p className={styles.fileHint}>연결된 영상이 없어요. 재생 완료로 표시한 뒤 YouTube 링크를 붙여 다시 선곡해 주세요.</p>
-            )}
-            <form action={finishMusicRequest.bind(null, playing.id)}>
-              <button className={styles.finishButton} type="submit">재생 완료로 표시</button>
-            </form>
-          </article>
-        ) : <p className={styles.empty}>선곡된 노래가 없습니다. 아래 신청 목록에서 한 곡을 선택해 주세요.</p>}
+          </RequestCard>
+        ) : <p className={styles.empty}>선곡된 노래가 없습니다. 플레이리스트에서 한 곡을 틀어 주세요.</p>}
       </section>
 
-      <section className={styles.section} aria-labelledby="pending-title">
+      <section className={styles.section} aria-labelledby="playlist-title">
         <div className={styles.sectionHeading}>
-          <h2 id="pending-title">접수된 신청곡</h2>
-          <span className={styles.count}>{pending.length}곡</span>
+          <h2 id="playlist-title">플레이리스트</h2>
+          <span className={styles.count}>{playlist.length}곡</span>
+          <span className={styles.sectionHint}>위에서부터 차례로 재생돼요. ▲▼로 순서를 바꿀 수 있어요.</span>
         </div>
-        {pending.length > 0 ? (
-          <div className={styles.requestList}>
-            {pending.map((request) => (
-              <article className={styles.requestCard} key={request.id}>
-                <div className={styles.requestMeta}>
-                  <span>{request.requesterName} · {requestedAt(request.createdAt)}</span>
-                  <span>접수 대기</span>
+        {playlist.length > 0 ? (
+          <div className={styles.cardList}>
+            {playlist.map((request, index) => (
+              <RequestCard
+                key={request.id}
+                tone="queued"
+                badge={index === 0 ? "다음 곡" : `${index + 1}번`}
+                songTitle={request.songTitle}
+                artist={request.artist}
+                requester={requester(request)}
+                chip={{ label: "영상 연결됨", tone: "ok" }}
+                side={(
+                  <div className={styles.reorder}>
+                    <form action={moveInPlaylist.bind(null, request.id, "up")}>
+                      <button type="submit" disabled={index === 0} aria-label={`${request.songTitle} 위로 올리기`}>▲</button>
+                    </form>
+                    <form action={moveInPlaylist.bind(null, request.id, "down")}>
+                      <button type="submit" disabled={index === playlist.length - 1} aria-label={`${request.songTitle} 아래로 내리기`}>▼</button>
+                    </form>
+                  </div>
+                )}
+              >
+                <Story request={request} />
+                <div className={styles.mediaRow}>
+                  <MediaPreview request={request} />
+                  <div className={styles.mediaSide}>
+                    <div>
+                      <p>{index === 0 ? "다음 차례로 재생돼요." : `${index + 1}번째로 재생돼요.`}</p>
+                      <p className={styles.hint}>지금 재생하면 듣던 곡은 플레이리스트 맨 앞으로 돌아가요.</p>
+                    </div>
+                    <div className={styles.actions}>
+                      <form action={playNow.bind(null, request.id)}>
+                        <button className={styles.primaryButton} type="submit">지금 재생</button>
+                      </form>
+                      <form action={removeFromPlaylist.bind(null, request.id)} className={styles.pushEnd}>
+                        <button className={styles.outlineButton} type="submit">플레이리스트에서 빼기</button>
+                      </form>
+                    </div>
+                  </div>
                 </div>
-                <h3>{request.songTitle} <small>— {request.artist}</small></h3>
-                <blockquote>{request.story}</blockquote>
-                <PlaybackForm requestId={request.id} />
-              </article>
+              </RequestCard>
+            ))}
+          </div>
+        ) : <p className={styles.empty}>플레이리스트가 비어 있어요. 아래 접수된 신청곡을 담아 주세요.</p>}
+      </section>
+
+      <section className={styles.section} aria-labelledby="inbox-title">
+        <div className={styles.sectionHeading}>
+          <h2 id="inbox-title">접수된 신청곡</h2>
+          <span className={styles.count}>{inbox.length}곡</span>
+          <span className={styles.sectionHint}>들어온 순서예요. 링크를 확인하고 플레이리스트에 담아 주세요.</span>
+        </div>
+        {inbox.length > 0 ? (
+          <div className={styles.cardList}>
+            {inbox.map((request, index) => (
+              <RequestCard
+                key={request.id}
+                tone="pending"
+                badge="접수"
+                songTitle={request.songTitle}
+                artist={request.artist}
+                requester={requester(request)}
+                chip={request.youtubeVideoId ? { label: "영상 연결됨", tone: "ok" } : { label: "링크 없음", tone: "muted" }}
+                defaultOpen={index === 0}
+              >
+                <Story request={request} />
+                <AddToPlaylistForm
+                  requestId={request.id}
+                  songTitle={request.songTitle}
+                  initialVideoId={request.youtubeVideoId}
+                  cancelSlot={<CancelRequestForm action={cancelRequest.bind(null, request.id)} songTitle={request.songTitle} />}
+                />
+              </RequestCard>
             ))}
           </div>
         ) : <p className={styles.empty}>새 신청곡이 없습니다.</p>}
@@ -81,7 +182,12 @@ export default async function AdminMusicBoxPage({ searchParams }: { searchParams
         <section className={styles.section} aria-labelledby="played-title">
           <div className={styles.sectionHeading}><h2 id="played-title">지난 선곡</h2></div>
           <ul className={styles.history}>
-            {played.map((request) => <li key={request.id}>{request.songTitle} · {request.artist}<span>{request.playedAt && requestedAt(request.playedAt)}</span></li>)}
+            {played.map((request) => (
+              <li key={request.id}>
+                {request.songTitle} · {request.artist}
+                <span>{request.playedAt && requestedAtFormat.format(new Date(request.playedAt))}</span>
+              </li>
+            ))}
           </ul>
         </section>
       )}

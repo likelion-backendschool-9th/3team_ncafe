@@ -4,8 +4,8 @@ import type { CSSProperties } from "react";
 import styles from "../music-box.module.css";
 import { clock, useYouTubePlayback } from "./useYouTubePlayback";
 
-export function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
-  const { frameRef, ready, playing, current, duration, progress, error, toggle, seek } = useYouTubePlayback(videoId);
+export function YouTubePlayer({ videoId, title, loop = false }: { videoId: string; title: string; loop?: boolean }) {
+  const { frameRef, ready, playing, current, duration, progress, error, toggle, seek } = useYouTubePlayback(videoId, { loop });
 
   return (
     <div className={styles.player}>

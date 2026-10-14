@@ -29,10 +29,10 @@ function Bulbs({ side }: { side: "top" | "left" | "right" }) {
   );
 }
 
-export function DjBooth({ nowPlaying }: { nowPlaying: NowPlaying | null }) {
+export function DjBooth({ nowPlaying, repeatOne = false }: { nowPlaying: NowPlaying | null; repeatOne?: boolean }) {
   // 판은 음악이 실제로 재생 중일 때만 돈다. 일시정지하면 그 각도에서 멈춘다.
   const videoId = nowPlaying?.youtubeVideoId ?? null;
-  const { frameRef, ready, playing, current, duration, progress, error, toggle, seek } = useYouTubePlayback(videoId);
+  const { frameRef, ready, playing, current, duration, progress, error, toggle, seek } = useYouTubePlayback(videoId, { loop: repeatOne });
 
   return (
     <div className={styles.window} data-playing={playing}>
