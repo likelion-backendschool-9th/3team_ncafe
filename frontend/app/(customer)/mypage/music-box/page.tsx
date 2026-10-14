@@ -55,7 +55,7 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
               artist: playing.artist,
               story: playing.story,
               requesterName: playing.requesterName,
-              audioUrl: playing.audioUrl,
+              youtubeVideoId: playing.youtubeVideoId,
             } : null}
           />
         </div>

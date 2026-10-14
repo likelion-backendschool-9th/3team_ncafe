@@ -2,6 +2,7 @@ import { mockMusicBoxRepository } from "@/app/_lib/mock/music-box";
 import { requireRole } from "@/app/_lib/session/session";
 import { finishMusicRequest } from "./_actions";
 import { PlaybackForm } from "./_components/PlaybackForm";
+import { YouTubePreview } from "./_components/YouTubePreview";
 import styles from "./music-box.module.css";
 
 type SearchParams = Promise<{ started?: string }>;
@@ -26,7 +27,7 @@ export default async function AdminMusicBoxPage({ searchParams }: { searchParams
       <header className={styles.heading}>
         <p className="eyebrow">MUSIC BOX</p>
         <h1>뮤직박스 운영</h1>
-        <p>접수된 사연을 읽고 음원을 연결해 선곡하세요.</p>
+        <p>접수된 사연을 읽고 YouTube 링크를 연결해 선곡하세요.</p>
       </header>
 
       {started === "1" && <p className={styles.notice} role="status">신청곡을 선곡했습니다. 아래 플레이어에서 재생할 수 있습니다.</p>}
@@ -42,10 +43,10 @@ export default async function AdminMusicBoxPage({ searchParams }: { searchParams
               <strong>{playing.songTitle}</strong><span> · {playing.artist}</span>
               <p>{playing.requesterName}님의 사연: {playing.story}</p>
             </div>
-            {playing.audioUrl && (
-              <audio controls preload="none" src={playing.audioUrl} aria-label={`${playing.songTitle} 재생`}>
-                브라우저가 오디오 재생을 지원하지 않습니다.
-              </audio>
+            {playing.youtubeVideoId ? (
+              <YouTubePreview videoId={playing.youtubeVideoId} title={playing.songTitle} />
+            ) : (
+              <p className={styles.fileHint}>연결된 영상이 없어요. 재생 완료로 표시한 뒤 YouTube 링크를 붙여 다시 선곡해 주세요.</p>
             )}
             <form action={finishMusicRequest.bind(null, playing.id)}>
               <button className={styles.finishButton} type="submit">재생 완료로 표시</button>

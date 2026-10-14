@@ -129,6 +129,11 @@
   letter-spacing: 0.18em;
   box-shadow: 0 0 14px 4px #ff3b2f88, inset 0 0 6px #fff8;
 }
+/* 영상이 있으면 칠판 왼쪽에 YouTube 화면을 두고 오른쪽에 곡 정보를 둔다. 화면은 가리지 않고 높이 200px 이상을 지킨다. */
+.boardWithVideo { top: 118px; left: 50%; display: grid; grid-template-columns: 356px minmax(0, 1fr); align-items: center; gap: 1.2rem; width: min(860px, 88%); transform: translateX(-50%); }
+.video { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #000; box-shadow: 0 0 0 3px #3a2112; }
+.video iframe { display: block; width: 100%; height: 100%; border: 0; }
+.boardText { min-width: 0; }
 .boardLabel { margin: 0; color: var(--gold); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.14em; }
 .boardTitle { margin: 0.3rem 0 0; font-size: 1.75rem; line-height: 1.25; overflow-wrap: anywhere; }
 .boardTitle span { color: var(--gold); font-family: var(--font-body), sans-serif; font-size: 0.9rem; }
@@ -165,6 +170,7 @@
   box-shadow: 2px 3px 0 var(--red-dark);
 }
 .playButton:hover { background: #812125; }
+.playButton:disabled { opacity: 0.55; cursor: wait; }
 .playButton:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .progress {
   flex: 1;
@@ -303,6 +309,7 @@
   .window { height: auto; padding: 96px 1rem 128px; }
   .bulbsTop .bulb:nth-child(even) { display: none; }
   .board { position: relative; top: auto; left: auto; width: auto; }
+  .boardWithVideo { grid-template-columns: minmax(0, 1fr); transform: none; }
   .bulbsLeft, .bulbsRight, .faceOut, .amp, .headphones, .mic, .lamp { display: none; }
   .arc { top: 22px; width: 92%; }
   .turntable { left: 1rem; }

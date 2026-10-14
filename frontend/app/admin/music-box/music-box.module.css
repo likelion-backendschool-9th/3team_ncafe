@@ -10,7 +10,11 @@
 .currentCard { display: grid; gap: 1rem; border-left: 5px solid #a82b2d; }
 .currentCard strong { font-size: 1.25rem; }
 .currentCard p { margin: 0.65rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-.currentCard audio { width: min(100%, 520px); }
+.preview { display: grid; gap: 0.4rem; width: min(100%, 420px); margin: 0; }
+.previewFrame { aspect-ratio: 16 / 9; min-height: 200px; overflow: hidden; border-radius: 6px; background: #000; }
+.previewFrame iframe { display: block; width: 100%; height: 100%; border: 0; }
+.preview figcaption { color: var(--muted); font-size: 0.82rem; }
+.preview .formError { color: #9b2924; font-weight: 700; }
 .finishButton { min-height: 44px; padding: 0.65rem 1rem; border: 1px solid #6f452f; border-radius: 2px; background: transparent; color: #583524; cursor: pointer; font: inherit; font-weight: 700; }
 .finishButton:hover { background: #ead5b7; }
 .empty { color: var(--muted); }
@@ -25,7 +29,6 @@
 .playbackForm label { font-weight: 700; font-size: 0.87rem; }
 .playbackForm > div { display: flex; flex-wrap: wrap; gap: 0.6rem; }
 .playbackForm input { flex: 1 1 250px; min-width: 0; min-height: 44px; padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: 2px; background: #fff8ec; color: var(--text); font: inherit; }
-.playbackForm input[type="file"] { width: 100%; padding: 0.45rem; }
 .fileHint { margin: 0; color: var(--muted); font-size: 0.8rem; }
 .playbackForm input:focus-visible, .finishButton:focus-visible { outline: 3px solid #207a72; outline-offset: 2px; }
 .playbackForm .formError { margin: 0; color: #9b2924; font-size: 0.87rem; }
