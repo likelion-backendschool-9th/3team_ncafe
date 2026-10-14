@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, type FormEvent } from "react";
+import { useActionState, useRef, useState, type KeyboardEvent } from "react";
 import type { Category } from "@/app/_lib/mock/categories";
-import { deleteCategory, renameCategory, type CategoryFormState } from "../_actions";
+import { renameCategory, type CategoryFormState } from "../_actions";
+import { DeleteCategoryDialog } from "./DeleteCategoryDialog";
 import styles from "../categories.module.css";
 
 const initialState: CategoryFormState = {};
@@ -16,17 +17,27 @@ export function CategoryRow({ category, menuCount, position, isFirst, isLast, on
   onMoveUp: () => void;
   onMoveDown: () => void;
 }) {
-  const boundRename = renameCategory.bind(null, category.id);
-  const [state, formAction, pending] = useActionState(boundRename, initialState);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [state, formAction, pending] = useActionState(async (previous: CategoryFormState, formData: FormData) => {
+    const result = await renameCategory(category.id, previous, formData);
+    if (!result.error) setEditing(false);
+    return result;
+  }, initialState);
+  const error = editing ? state.error : undefined;
 
-  function confirmDelete(event: FormEvent<HTMLFormElement>) {
-    if (menuCount > 0) {
-      if (!window.confirm(`'${category.name}' 카테고리를 쓰는 메뉴가 ${menuCount}개 있습니다. 그래도 삭제할까요?`)) {
-        event.preventDefault();
-      }
-      return;
-    }
-    if (!window.confirm(`'${category.name}' 카테고리를 삭제할까요?`)) event.preventDefault();
+  function startEditing() {
+    setEditing(true);
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }
+
+  // Esc로 수정을 취소하면 입력값을 원래 이름으로 되돌린다.
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== "Escape" || !editing) return;
+    event.currentTarget.value = category.name;
+    setEditing(false);
   }
 
   return (
@@ -38,14 +49,33 @@ export function CategoryRow({ category, menuCount, position, isFirst, isLast, on
       </div>
       <span className={styles.number} aria-hidden="true">{String(position).padStart(2, "0")}</span>
       <form action={formAction} className={styles.rowForm}>
-        <input className={styles.input} name="name" type="text" maxLength={40} required defaultValue={category.name} aria-label={`${category.name} 카테고리명`} aria-invalid={!!state.error} aria-describedby={state.error ? `category-${category.id}-error` : undefined} />
-        <button className={styles.outlineButton} type="submit" disabled={pending}>{pending ? "수정 중" : "수정"}</button>
+        <input
+          ref={inputRef}
+          className={styles.input}
+          name="name"
+          type="text"
+          maxLength={40}
+          required
+          readOnly={!editing}
+          defaultValue={category.name}
+          onKeyDown={handleKeyDown}
+          aria-label={`${category.name} 카테고리명`}
+          aria-invalid={!!error}
+          aria-describedby={error ? `category-${category.id}-error` : undefined}
+        />
+        {/* 같은 버튼의 type을 바꾸면 클릭 직후 제출될 수 있어 key로 다른 버튼을 그린다. */}
+        {editing ? (
+          <button key="save" className={styles.primaryButton} type="submit" disabled={pending}>{pending ? "저장 중" : "저장"}</button>
+        ) : (
+          <button key="edit" className={styles.outlineButton} type="button" onClick={startEditing}>수정</button>
+        )}
       </form>
-      <form action={deleteCategory.bind(null, category.id)} onSubmit={confirmDelete} className={styles.deleteForm}>
-        <button className={styles.dangerButton} type="submit">삭제</button>
-      </form>
+      <div className={styles.deleteCell}>
+        <button className={styles.dangerButton} type="button" onClick={() => setDeleting(true)}>삭제</button>
+      </div>
       <span className={`${styles.usage} ${menuCount === 0 ? styles.usageEmpty : ""}`}>메뉴 {menuCount}개에서 사용 중</span>
-      {state.error && <span id={`category-${category.id}-error`} className={styles.fieldError}>{state.error}</span>}
+      {error && <span id={`category-${category.id}-error`} className={styles.fieldError}>{error}</span>}
+      {deleting && <DeleteCategoryDialog categoryId={category.id} categoryName={category.name} onClose={() => setDeleting(false)} />}
     </div>
   );
 }
