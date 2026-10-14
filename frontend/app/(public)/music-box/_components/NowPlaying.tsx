@@ -14,23 +14,29 @@ export function NowPlaying({ playing, next, repeatOne = false }: NowPlayingProps
       <h2 id="playing-title" className={styles.panelTitle}>
         <span className={styles.panelIcon} aria-hidden="true">◉</span>
         지금 나오는 음악
-        {playing && <span className={styles.onAir}>ON AIR</span>}
       </h2>
 
       {playing ? (
         <>
-          <div className={styles.cover}>
-            <span className={styles.vinyl} aria-hidden="true" />
-            <div>
-              <h3>{playing.songTitle}</h3>
-              <p>{playing.artist}</p>
-            </div>
-          </div>
-          {playing.youtubeVideoId ? (
-            <YouTubePlayer videoId={playing.youtubeVideoId} title={playing.songTitle} loop={repeatOne} />
-          ) : (
-            <p className={styles.empty}>영상을 준비하고 있어요.</p>
-          )}
+          {/* 홈 DJ 부스와 같은 LP 재킷: 앞면에 곡명과 YouTube 화면, 재생바를 담는다. */}
+          <article className={styles.sleeve}>
+            <header className={styles.sleeveHead}>
+              <div>
+                <p className={styles.sleeveLabel}>NOW PLAYING</p>
+                <h3>{playing.songTitle}</h3>
+              </div>
+              <p className={styles.sleeveArtist}>{playing.artist}</p>
+            </header>
+            {playing.youtubeVideoId ? (
+              <YouTubePlayer videoId={playing.youtubeVideoId} title={playing.songTitle} loop={repeatOne} />
+            ) : (
+              <p className={styles.videoEmpty}>영상을 준비하고 있어요.</p>
+            )}
+            <footer className={styles.sleeveFoot}>
+              <span>SAMDABANG RECORDS</span>
+              <b>STEREO · 1987</b>
+            </footer>
+          </article>
           <blockquote className={styles.letter}>
             {playing.story}
             <cite>— {playing.requesterName}님의 사연</cite>

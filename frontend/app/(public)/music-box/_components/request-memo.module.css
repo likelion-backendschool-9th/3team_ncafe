@@ -36,7 +36,9 @@
 .queueBadge { position: absolute; top: 1rem; right: 1rem; padding: 0.12rem 0.5rem; border: 1px solid var(--teal); border-radius: 999px; color: var(--teal); font-family: var(--font-body), sans-serif; font-size: 0.68rem; font-weight: 800; }
 .queueBadgeNext { background: var(--teal); color: #fff; }
 .queueBadgeMuted { border-color: #9a8a78; color: var(--muted); }
-.memoSong { margin: 0; padding: 0 4rem 0.45rem 0; border-bottom: 2px solid var(--ink); font-family: var(--font-display), sans-serif; font-size: 1.12rem; overflow-wrap: anywhere; }
+.memoSong { margin: 0; padding: 0 0 0.45rem; border-bottom: 2px solid var(--ink); font-family: var(--font-display), sans-serif; font-size: 1.12rem; overflow-wrap: anywhere; }
+/* 오른쪽 위 순번 배지와 곡명이 겹치지 않게 비워 둔다. */
+.memoSongWithBadge { padding-right: 4rem; }
 .memoSong small { color: var(--muted); font-family: var(--font-body), sans-serif; font-size: 0.76rem; }
 .memoStory {
   display: -webkit-box;

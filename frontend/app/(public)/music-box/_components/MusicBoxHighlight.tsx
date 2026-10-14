@@ -42,13 +42,8 @@ export async function MusicBoxHighlight() {
         caption={`DJ 부스에 도착한 신청곡 메모 · 대기 ${queue.length}곡`}
         empty="아직 기다리는 신청곡이 없어요. 첫 사연을 보내 주세요."
       >
-        {nextUp.map((request, index) => (
-          <RequestMemo
-            key={request.id}
-            request={request}
-            badge={`대기 ${index + 1}`}
-            badgeTone={index === 0 ? "accent" : "default"}
-          />
+        {nextUp.map((request) => (
+          <RequestMemo key={request.id} request={request} showTime={false} />
         ))}
       </RequestMemoBoard>
     </section>

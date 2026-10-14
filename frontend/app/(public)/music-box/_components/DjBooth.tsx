@@ -11,12 +11,6 @@ const bulbColors = ["#e9503f", "#3f8fe0", "#4fc06a", "#f2c335"];
 const topBulbs = Array.from({ length: 18 }, (_, index) => bulbColors[index % bulbColors.length]);
 const bulbSideClass = { top: styles.bulbsTop, left: styles.bulbsLeft, right: styles.bulbsRight };
 const sideBulbs = Array.from({ length: 6 }, (_, index) => bulbColors[(index + 2) % bulbColors.length]);
-// 책장 위 3칸에만 앞면이 보이는 LP를 양 끝에 하나씩 둔다.
-const faceOutCovers = [
-  ["#2f5d6b", "#6b4a8c"],
-  ["#6b4a8c", "#b5552f"],
-  ["#b5552f", "#4a6b3a"],
-];
 
 function Bulbs({ side }: { side: "top" | "left" | "right" }) {
   const colors = side === "top" ? topBulbs : sideBulbs;
@@ -29,23 +23,19 @@ function Bulbs({ side }: { side: "top" | "left" | "right" }) {
   );
 }
 
+// DJ 부스: 책상 위 턴테이블에 LP 재킷(영상)을 얹고, 옆에 지금 곡의 신청곡 메모지를 둔다.
+// YouTube 화면은 정책상 가리지 않아야 해서 재킷 앞면에 그대로 보이고, LP판은 재킷 뒤에서 반쯤 나와 돈다.
 export function DjBooth({ nowPlaying, repeatOne = false }: { nowPlaying: NowPlaying | null; repeatOne?: boolean }) {
-  // 판은 음악이 실제로 재생 중일 때만 돈다. 일시정지하면 그 각도에서 멈춘다.
   const videoId = nowPlaying?.youtubeVideoId ?? null;
   const { frameRef, ready, playing, current, duration, progress, error, toggle, seek } = useYouTubePlayback(videoId, { loop: repeatOne });
 
   return (
+    // 판과 톤암은 음악이 실제로 재생 중일 때만 움직인다. 일시정지하면 그 각도에서 멈춘다.
     <div className={styles.window} data-playing={playing}>
-      <div className={styles.shelves} aria-hidden="true">
-        {[0, 1, 2, 3].map((row) => (
-          <div key={row} className={styles.shelfRow} style={{ "--shift": `${row * 37}px` } as CSSProperties}>
-            {faceOutCovers[row]?.map((color, index) => (
-              <span key={index} className={`${styles.faceOut} ${index === 0 ? styles.faceOutLeft : styles.faceOutRight}`} style={{ "--cover": color } as CSSProperties} />
-            ))}
-          </div>
-        ))}
-      </div>
-      <div className={styles.warmLight} aria-hidden="true" />
+      <div className={styles.shelves} aria-hidden="true" />
+      <span className={`${styles.faceOut} ${styles.faceOutLeft}`} aria-hidden="true" />
+      <span className={`${styles.faceOut} ${styles.faceOutRight}`} aria-hidden="true" />
+      <div className={styles.dim} aria-hidden="true" />
 
       <Bulbs side="top" />
       <Bulbs side="left" />
@@ -58,66 +48,89 @@ export function DjBooth({ nowPlaying, repeatOne = false }: { nowPlaying: NowPlay
         </text>
       </svg>
 
-      <article className={`${styles.board} ${videoId ? styles.boardWithVideo : ""}`} aria-labelledby="booth-now-title">
-        {nowPlaying && <span className={styles.onAir}>ON AIR</span>}
-        {videoId && <div ref={frameRef} className={styles.video} />}
-        <div className={styles.boardText}>
-          <p className={styles.boardLabel}>지금 흐르는 노래</p>
+      <div className={styles.desk} aria-hidden="true" />
+
+      <div className={styles.stage}>
+        <div className={styles.deck}>
+          <div className={styles.platter} aria-hidden="true">
+            <span className={styles.record}><span>SAMDABANG</span></span>
+          </div>
+          <span className={styles.tonearm} aria-hidden="true" />
+          <span className={styles.speed} aria-hidden="true"><b>33</b><i>45</i></span>
+
+          <article className={styles.sleeve} aria-labelledby="booth-now-title">
+            <header className={styles.sleeveHead}>
+              <div>
+                <p className={styles.sleeveLabel}>NOW PLAYING</p>
+                <h3 id="booth-now-title">{nowPlaying ? nowPlaying.songTitle : "잠시 쉬어 가는 시간이에요"}</h3>
+              </div>
+              {nowPlaying && <p className={styles.sleeveArtist}>{nowPlaying.artist}</p>}
+            </header>
+            {videoId ? (
+              <div ref={frameRef} className={styles.video} />
+            ) : (
+              <p className={styles.videoEmpty}>
+                {nowPlaying ? "영상을 준비하고 있어요." : "신청곡을 보내 주시면 DJ가 순서대로 틀어 드려요."}
+              </p>
+            )}
+            {nowPlaying && videoId && (
+              <div className={styles.player}>
+                <button className={styles.playButton} type="button" onClick={toggle} disabled={!ready} aria-label={playing ? `${nowPlaying.songTitle} 일시정지` : `${nowPlaying.songTitle} 재생`}>
+                  {playing ? "❚❚" : "▶"}
+                </button>
+                <input
+                  className={styles.progress}
+                  type="range"
+                  min={0}
+                  max={duration || 0}
+                  step="any"
+                  value={current}
+                  disabled={!ready}
+                  onChange={(event) => seek(event.target.value)}
+                  aria-label={`${nowPlaying.songTitle} 재생 위치`}
+                  style={{ "--progress": `${progress}%` } as CSSProperties}
+                />
+                <span className={styles.time}>{clock(current)} / {clock(duration)}</span>
+              </div>
+            )}
+            <footer className={styles.sleeveFoot}>
+              {error ? (
+                <span className={styles.sleeveError} role="alert">{error}</span>
+              ) : (
+                <>
+                  <span>SAMDABANG RECORDS</span>
+                  <b>STEREO · 1987</b>
+                </>
+              )}
+            </footer>
+          </article>
+        </div>
+
+        <article className={styles.slip} aria-label="지금 곡의 신청곡 메모">
+          <span className={`${styles.tape} ${styles.tapeLeft}`} aria-hidden="true" />
+          <span className={`${styles.tape} ${styles.tapeRight}`} aria-hidden="true" />
+          <p className={styles.slipTitle}>신 청 곡</p>
           {nowPlaying ? (
             <>
-              <h3 id="booth-now-title" className={styles.boardTitle}>
-                {nowPlaying.songTitle} <span>· {nowPlaying.artist}</span>
-              </h3>
-              <blockquote className={styles.boardStory}>
-                {nowPlaying.story}
-                <cite>— {nowPlaying.requesterName}님의 사연</cite>
-              </blockquote>
+              <p className={styles.slipLine}>
+                <span>신 청 인</span>
+                <strong>{nowPlaying.requesterName}</strong>
+              </p>
+              <div className={styles.slipStory}>
+                <span>사 연</span>
+                <p>{nowPlaying.story}</p>
+              </div>
             </>
           ) : (
-            <>
-              <h3 id="booth-now-title" className={styles.boardTitle}>잠시 쉬어 가는 시간이에요</h3>
-              <p className={styles.boardNote}>신청곡을 보내 주시면 DJ가 순서대로 틀어 드려요.</p>
-            </>
+            <p className={styles.slipEmpty}>아직 도착한 사연이 없어요.</p>
           )}
-          {nowPlaying && !videoId && <p className={styles.boardNote}>영상을 준비하고 있어요.</p>}
-          {error && <p className={styles.boardNote} role="alert">{error}</p>}
-          {nowPlaying && videoId && (
-            <div className={styles.player}>
-              <button className={styles.playButton} type="button" onClick={toggle} disabled={!ready} aria-label={playing ? `${nowPlaying.songTitle} 일시정지` : `${nowPlaying.songTitle} 재생`}>
-                {playing ? "❚❚" : "▶"}
-              </button>
-              <input
-                className={styles.progress}
-                type="range"
-                min={0}
-                max={duration || 0}
-                step="any"
-                value={current}
-                disabled={!ready}
-                onChange={(event) => seek(event.target.value)}
-                aria-label={`${nowPlaying.songTitle} 재생 위치`}
-                style={{ "--progress": `${progress}%` } as CSSProperties}
-              />
-              <span className={styles.time}>{clock(current)} / {clock(duration)}</span>
-            </div>
-          )}
-        </div>
-      </article>
+          <footer className={styles.slipFoot}>
+            <p>차와 음악이 있는~</p>
+            <p className={styles.shopName}>삼 다 방 <span>☎ SINCE 1987</span></p>
+          </footer>
+        </article>
+      </div>
 
-      <div className={styles.desk} aria-hidden="true" />
-      <div className={styles.turntable} aria-hidden="true">
-        <span className={styles.platter}><span className={styles.record} /></span>
-        <span className={styles.tonearm} />
-        <span className={styles.deckKnob} />
-      </div>
-      <div className={styles.amp} aria-hidden="true">
-        <span className={styles.vu}><i /></span>
-        <span className={styles.vu}><i /></span>
-        <span className={styles.ampKnobs}><b /><b /><b /><b /></span>
-      </div>
-      <span className={styles.headphones} aria-hidden="true" />
-      <span className={styles.mic} aria-hidden="true"><i /><b /><span /></span>
-      <span className={styles.lamp} aria-hidden="true"><i /><b /><span /></span>
       <span className={styles.deskLabel} aria-hidden="true">DJ BOOTH · 삼다방</span>
     </div>
   );

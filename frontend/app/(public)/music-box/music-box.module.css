@@ -29,14 +29,14 @@
     url('/images/hero/dabang-interior-music-box-booth.png') center 48% / cover;
   box-shadow: 8px 9px 0 #1b110b;
 }
-.heroRecord, .vinyl {
+.heroRecord {
   position: relative;
   display: block;
   border-radius: 50%;
   background: radial-gradient(circle, #a82b2d 0 18%, #f5e7cf 18% 19.5%, #a82b2d 19.5% 27%, transparent 27%),
     repeating-radial-gradient(circle, #1a1310 0 2px, #2a201b 2px 4px);
 }
-.heroRecord::after, .vinyl::after {
+.heroRecord::after {
   content: "";
   position: absolute;
   top: 50%;
@@ -216,66 +216,39 @@
 /* 지금 나오는 음악 */
 .nowPanel { display: flex; flex-direction: column; padding-inline: 1.3rem; }
 .nowPanel .panelTitle { gap: 0.45rem; font-size: 1.2rem; white-space: nowrap; }
-.onAir {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 0.35rem;
-  margin-left: auto;
-  padding: 0.15rem 0.55rem;
-  border-radius: 999px;
-  background: var(--red);
-  color: #fff8ec;
-  font-family: var(--font-body), sans-serif;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
+/* LP 재킷: 홈 DJ 부스의 재킷과 같은 모양. 종이가 패널 위에 살짝 떠 있게 그림자를 번지게 준다. */
+.sleeve {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: linear-gradient(135deg, #f3e3c3, #e2c99d);
+  box-shadow: inset 0 0 0 1px #c9a77066, inset 0 0 40px #a8783b44, 0 1px 2px #3a211340, 3px 8px 16px #3a211359;
 }
-.onAir::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #ffd9a0; }
-.cover { display: grid; grid-template-columns: 104px minmax(0, 1fr); align-items: center; gap: 0.9rem; padding: 1.1rem; background: linear-gradient(135deg, #2b1c14, #3d2618); color: var(--paper); }
-.vinyl { width: 104px; height: 104px; box-shadow: 0 0 0 3px #0d0907, 3px 4px 10px #000a; }
-.cover h3 { margin: 0; font-size: 1.3rem; line-height: 1.25; overflow-wrap: anywhere; }
-.cover p { margin: 0.25rem 0 0; color: #dfb67c; font-size: 0.88rem; }
-
-.player { display: grid; gap: 0.35rem; margin-top: 1.1rem; }
+.sleeveHead { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; min-height: 46px; border-bottom: 3px double var(--red); }
+.sleeveHead h3 { margin: 2px 0 6px; font-size: 1.35rem; line-height: 1.1; overflow-wrap: anywhere; }
+.sleeveLabel { margin: 0; color: var(--red); font-family: Arial, sans-serif; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.2em; }
+.sleeveArtist { flex-shrink: 0; margin: 0 0 7px; font-size: 0.95rem; font-weight: 700; }
+.sleeveFoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: Georgia, serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.2em; }
+.sleeveFoot b { padding: 1px 6px; border: 1.5px solid var(--ink); font-family: Arial, sans-serif; font-size: 0.62rem; letter-spacing: 0.1em; }
 /* YouTube 화면은 정책상 가리지 않고 높이 200px 이상으로 보여 준다. */
 .video { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #000; box-shadow: 0 0 0 2px var(--ink); }
 .video iframe { display: block; width: 100%; height: 100%; border: 0; }
-.playerError { margin: 0.2rem 0 0; color: var(--red); font-size: 0.82rem; font-weight: 700; }
-.progress {
-  width: 100%;
-  height: 5px;
-  margin: 0.4rem 0 0;
-  border-radius: 3px;
-  background: linear-gradient(90deg, var(--red) var(--progress, 0%), #d9c8ab var(--progress, 0%));
-  cursor: pointer;
-  appearance: none;
-}
-.progress::-webkit-slider-thumb { width: 13px; height: 13px; border: 0; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 3px var(--paper); appearance: none; }
-.progress::-moz-range-thumb { width: 13px; height: 13px; border: 0; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 3px var(--paper); }
+.videoEmpty { display: grid; width: 100%; aspect-ratio: 16 / 9; place-items: center; margin: 0; background: linear-gradient(135deg, #2b3a44, #141b21 55%, #2a1f18); color: #f4ead6cc; font-size: 0.86rem; }
+.playerError { margin: 0; color: var(--red); font-size: 0.82rem; font-weight: 700; }
+.player { display: flex; align-items: center; gap: 10px; }
+.progress { flex: 1; min-width: 0; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--red) var(--progress, 0%), #c9b08c var(--progress, 0%)); cursor: pointer; appearance: none; }
+.progress::-webkit-slider-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--red); appearance: none; }
+.progress::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--red); }
 .progress:focus-visible { outline: 2px solid var(--teal); outline-offset: 4px; }
-.time { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.75rem; }
-.playButton {
-  display: grid;
-  justify-self: center;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  margin-top: 0.3rem;
-  border: 0;
-  border-radius: 50%;
-  background: var(--red);
-  color: #fff8ec;
-  cursor: pointer;
-  font-size: 1.1rem;
-  box-shadow: 3px 4px 0 var(--red-dark);
-}
+.time { color: var(--muted); font-size: 0.72rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.playButton { display: grid; flex: 0 0 36px; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--red); color: #fff8ec; cursor: pointer; font-size: 0.75rem; }
 .playButton:hover { background: #812125; }
 .playButton:disabled { opacity: 0.55; cursor: wait; }
 .playButton:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
 
 .letter {
-  margin: 1rem 0 0;
+  margin: 1.6rem 0 0;
   padding: 0.2rem 0 0.2rem 0.9rem;
   border-left: 3px solid var(--teal);
   color: #4a3a2e;
