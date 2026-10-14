@@ -1,0 +1,163 @@
+.page {
+  --paper: #f5e7cf;
+  --paper-dark: #ead4b4;
+  --ink: #34251d;
+  --muted-ink: #685748;
+  --line: #ad8c68;
+  --red: #a82b2d;
+  --red-dark: #812125;
+  --teal-dark: #174b4a;
+  display: grid;
+  gap: 1.6rem;
+  width: min(100%, 760px);
+  min-width: 0;
+  margin-inline: auto;
+  padding-block: 2rem clamp(4rem, 8vw, 6rem);
+  color: var(--paper);
+}
+
+.heading {
+  padding: clamp(1.7rem, 4vw, 2.8rem);
+  border: 4px double #e1bd89;
+  background: linear-gradient(0deg, #25150bb8, #25150b70),
+    repeating-linear-gradient(90deg, #70472e 0 48px, #5b3827 48px 96px);
+  text-align: center;
+  box-shadow: 6px 7px 0 #1a100a75;
+}
+.eyebrow { margin: 0; color: #efd28d; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.12em; }
+.heading h1 { margin: 0.4rem 0 0; font-size: clamp(2rem, 4.5vw, 3rem); line-height: 1.2; }
+.heading > p:last-child { margin: 0.65rem 0 0; color: #e6ceb0; word-break: keep-all; }
+
+.breadcrumb { display: flex; align-items: center; gap: 0.6rem; color: #dbc19a; font-size: 0.88rem; }
+.breadcrumb a { text-underline-offset: 3px; }
+
+/* 회원증: 종이 카드 + 이중 테두리 + 붉은 도장 */
+.memberCard {
+  position: relative;
+  padding: clamp(1.2rem, 4vw, 1.8rem);
+  border: 3px double var(--ink);
+  background: radial-gradient(circle at 92% 82%, #a82b2d14, transparent 32%), var(--paper);
+  color: var(--ink);
+  box-shadow: 6px 7px 0 #74452e;
+}
+.memberCardTop { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding-bottom: 0.7rem; border-bottom: 2px solid var(--ink); }
+.memberCardTop h2 { margin: 0; color: var(--red-dark); font-family: var(--font-menu-name), var(--font-display), sans-serif; font-size: clamp(1.35rem, 3.5vw, 1.7rem); }
+.memberCardTop span { flex: none; color: var(--muted-ink); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; }
+.memberFields { display: grid; gap: 0.2rem; margin: 0.6rem 0 0; padding-right: clamp(0px, 18vw, 120px); }
+.memberFields div { display: flex; align-items: baseline; gap: 0.6rem; padding-block: 0.55rem; }
+.memberFields dt { display: flex; flex: 1; align-items: baseline; gap: 0.6rem; color: var(--muted-ink); font-size: 0.88rem; font-weight: 700; white-space: nowrap; }
+.memberFields dt::after { content: ""; flex: 1; min-width: 1rem; border-bottom: 2px dotted var(--line); }
+.memberFields dd { min-width: 0; margin: 0 0 0 auto; overflow-wrap: anywhere; font-size: 1.05rem; font-weight: 800; text-align: right; }
+.stamp {
+  position: absolute;
+  right: clamp(1rem, 4vw, 1.8rem);
+  bottom: clamp(0.9rem, 3vw, 1.4rem);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: 84px;
+  height: 84px;
+  border: 3px solid #a82b2dcc;
+  border-radius: 50%;
+  outline: 1px solid #a82b2d99;
+  outline-offset: -8px;
+  color: #a82b2dd9;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.45rem;
+  line-height: 1;
+  transform: rotate(-14deg);
+  pointer-events: none;
+}
+.stamp small { margin-top: 0.2rem; font-family: var(--font-body), sans-serif; font-size: 0.48rem; font-weight: 800; letter-spacing: 0.1em; }
+
+/* 바로가기: 다방 메뉴판 줄 */
+.shortcuts { display: grid; gap: 0.8rem; }
+.shortcut {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem clamp(1rem, 3vw, 1.4rem);
+  border: 3px double var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 5px 6px 0 #74452e;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.shortcut:hover { transform: translate(-2px, -2px); box-shadow: 7px 8px 0 #74452e; }
+.shortcut:active { transform: translate(3px, 3px); box-shadow: 2px 3px 0 #74452e; }
+.shortcutNo {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 2px solid #efca70;
+  border-radius: 50%;
+  outline: 1px solid var(--red-dark);
+  background: var(--red);
+  color: #fff8e5;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.1rem;
+}
+.shortcutText { display: grid; flex: 1; gap: 0.1rem; min-width: 0; }
+.shortcutText strong { font-family: var(--font-menu-name), var(--font-display), sans-serif; font-size: 1.25rem; font-weight: 400; }
+.shortcutText span { color: var(--muted-ink); font-size: 0.88rem; word-break: keep-all; }
+.shortcutArrow { flex: none; color: var(--red); font-size: 1.4rem; font-weight: 800; transition: transform 0.15s; }
+.shortcut:hover .shortcutArrow { transform: translateX(4px); }
+.shortcut:hover strong { color: var(--red-dark); }
+
+.logout { display: flex; justify-content: center; padding-top: 0.4rem; }
+.logoutButton {
+  min-width: 180px;
+  min-height: 46px;
+  padding: 0.55rem 1.2rem;
+  border: 1.5px solid #e1bd89;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--paper);
+  font: inherit;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.logoutButton:hover { border-color: var(--paper); background: #f5e7cf1a; }
+
+.shortcut:focus-visible, .logoutButton:focus-visible { outline: 3px solid #f8d986; outline-offset: 3px; }
+
+/* 나의 신청곡 */
+.requestList { display: grid; gap: 0.9rem; margin: 0; padding: 0; list-style: none; }
+.requestCard {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.15rem clamp(1rem, 3vw, 1.5rem);
+  border: 3px double var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 5px 6px 0 #74452e;
+}
+.requestTop { display: flex; align-items: start; justify-content: space-between; gap: 1rem; padding-bottom: 0.7rem; border-bottom: 1px dashed var(--line); }
+.requestTop > div { display: grid; gap: 0.1rem; min-width: 0; }
+.requestTop strong { font-family: var(--font-menu-name), var(--font-display), sans-serif; font-size: 1.3rem; font-weight: 400; }
+.requestTop > div span { color: var(--muted-ink); font-size: 0.9rem; font-weight: 700; }
+.requestStatus { display: inline-flex; flex: none; align-items: center; min-height: 2rem; padding: 0.25rem 0.7rem; border-radius: 999px; background: #e8d2a8; color: #6e4515; font-size: 0.82rem; font-weight: 800; }
+.requestStatus[data-status="playing"] { background: #f2d3cf; color: var(--red-dark); }
+.requestStatus[data-status="played"] { background: #d8ded0; color: #405247; }
+.requestStory { margin: 0; white-space: pre-line; word-break: keep-all; }
+.requestCard time { color: var(--muted-ink); font-size: 0.85rem; }
+
+.empty { display: grid; justify-items: center; gap: 0.65rem; margin: 0; padding: 3rem 1rem; border: 1px dashed #d5b58b; color: #e9cfaa; text-align: center; }
+.empty h2, .empty p { margin: 0; }
+.empty a { margin-top: 0.5rem; color: #fff0d2; font-weight: 800; text-underline-offset: 3px; }
+
+@media (max-width: 520px) {
+  .memberFields { padding-right: 0; padding-bottom: 4.5rem; }
+  .memberFields div { flex-wrap: wrap; }
+  .stamp { width: 70px; height: 70px; font-size: 1.2rem; }
+  .shortcut { gap: 0.75rem; }
+  .shortcutArrow { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shortcut, .shortcutArrow { transition: none; }
+}
