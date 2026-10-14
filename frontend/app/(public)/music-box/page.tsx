@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getCurrentUser } from "@/app/_lib/session/session";
 import { mockMusicBoxRepository, waitingQueueOf, type MusicRequest } from "@/app/_lib/mock/music-box";
 import { NowPlaying } from "./_components/NowPlaying";
@@ -68,6 +69,12 @@ export default async function MusicBoxPage({ searchParams }: { searchParams: Sea
           waitingCount={queue.length}
           todayCount={todayCount}
         />
+
+        {user && (
+          <div className={styles.pageFoot}>
+            <Link className={styles.gatePrimary} href="/mypage/music-box">내 신청곡 관리</Link>
+          </div>
+        )}
       </div>
     </main>
   );
