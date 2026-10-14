@@ -296,6 +296,10 @@
 .pager a:hover { background: var(--paper-deep); }
 .pager a.pagerCurrent { border-color: var(--red); background: var(--red); color: #fff; }
 
+/* 로그인 회원만: 마이페이지 신청곡 관리로 이동 */
+.pageFoot { display: flex; justify-content: flex-end; margin-top: 1.6rem; }
+.pageFoot .gatePrimary:hover { background: var(--red-dark); }
+
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; justify-items: center; }
   .heroRecord, .heroNote { display: none; }
