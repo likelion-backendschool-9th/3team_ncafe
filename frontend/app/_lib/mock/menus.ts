@@ -149,6 +149,21 @@ export const mockMenuRepository = {
     return updated;
   },
 
+  // 카테고리 삭제 시 그 카테고리를 쓰던 메뉴를 다른 카테고리로 옮긴다. 이미 옮길 카테고리가 있으면 중복으로 넣지 않는다.
+  async replaceCategory(from: string, to: string): Promise<number> {
+    const allMenus = menus();
+    const updatedAt = new Date().toISOString();
+    let moved = 0;
+    const next = allMenus.map((menu) => {
+      if (!menu.categories.includes(from)) return menu;
+      moved += 1;
+      const categories = [...new Set(menu.categories.map((category) => (category === from ? to : category)))];
+      return { ...menu, categories, updatedAt };
+    });
+    if (moved > 0) writeMockData(fileName, next);
+    return moved;
+  },
+
   async remove(id: string): Promise<boolean> {
     const allMenus = menus();
     const remaining = allMenus.filter((menu) => menu.id !== id);

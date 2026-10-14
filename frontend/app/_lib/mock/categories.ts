@@ -7,14 +7,27 @@ export type Category = {
   createdAt: string;
 };
 
+// 카테고리를 삭제하면 그 카테고리의 메뉴가 옮겨 가는 기본 카테고리. 수정·삭제할 수 없다.
+export const FALLBACK_CATEGORY_NAME = "기타";
+
 const fileName = "categories.json";
-const defaultNames = ["커피", "차", "쥬스", "다과", "세트"];
+const defaultNames = ["커피", "차", "쥬스", "다과", "세트", FALLBACK_CATEGORY_NAME];
 
 function categories(): Category[] {
-  return readMockData<Category[]>(fileName, () => {
+  const all = readMockData<Category[]>(fileName, () => {
     const createdAt = new Date().toISOString();
     return defaultNames.map((name) => ({ id: randomUUID(), name, createdAt }));
   });
+  // 기타가 생기기 전에 만들어진 로컬 데이터에도 기타를 채워 넣는다.
+  if (!all.some((category) => category.name === FALLBACK_CATEGORY_NAME)) {
+    all.push({ id: randomUUID(), name: FALLBACK_CATEGORY_NAME, createdAt: new Date().toISOString() });
+    writeMockData(fileName, all);
+  }
+  return all;
+}
+
+export function isFallbackCategory(category: Category): boolean {
+  return category.name === FALLBACK_CATEGORY_NAME;
 }
 
 export const mockCategoryRepository = {
@@ -41,17 +54,20 @@ export const mockCategoryRepository = {
     }
     const index = all.findIndex((category) => category.id === id);
     if (index < 0) return null;
+    if (isFallbackCategory(all[index])) throw new Error(`${FALLBACK_CATEGORY_NAME} 카테고리는 수정할 수 없습니다.`);
     all[index] = { ...all[index], name: trimmed };
     writeMockData(fileName, all);
     return all[index];
   },
 
-  async remove(id: string): Promise<boolean> {
+  // 지운 카테고리를 반환해 호출하는 쪽에서 그 이름을 쓰던 메뉴를 옮길 수 있게 한다.
+  async remove(id: string): Promise<Category | null> {
     const all = categories();
-    const remaining = all.filter((category) => category.id !== id);
-    if (remaining.length === all.length) return false;
-    writeMockData(fileName, remaining);
-    return true;
+    const target = all.find((category) => category.id === id);
+    if (!target) return null;
+    if (isFallbackCategory(target)) throw new Error(`${FALLBACK_CATEGORY_NAME} 카테고리는 삭제할 수 없습니다.`);
+    writeMockData(fileName, all.filter((category) => category.id !== id));
+    return target;
   },
 
   // 목록에 저장된 배열 순서 자체가 화면에 보여줄 순서

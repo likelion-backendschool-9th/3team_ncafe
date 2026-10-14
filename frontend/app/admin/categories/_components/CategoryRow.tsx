@@ -1,31 +1,46 @@
 "use client";
 
-import { useActionState, type FormEvent } from "react";
+import { useActionState, useRef, useState, type KeyboardEvent } from "react";
 import type { Category } from "@/app/_lib/mock/categories";
-import { deleteCategory, renameCategory, type CategoryFormState } from "../_actions";
+import { renameCategory, type CategoryFormState } from "../_actions";
+import { DeleteCategoryDialog } from "./DeleteCategoryDialog";
 import styles from "../categories.module.css";
 
 const initialState: CategoryFormState = {};
 
-export function CategoryRow({ category, menuCount, isFirst, isLast, onMoveUp, onMoveDown }: {
+export function CategoryRow({ category, menuCount, position, locked, isFirst, isLast, onMoveUp, onMoveDown }: {
   category: Category;
   menuCount: number;
+  position: number;
+  // 삭제된 카테고리의 메뉴가 옮겨 가는 기타 카테고리는 수정·삭제를 막는다.
+  locked: boolean;
   isFirst: boolean;
   isLast: boolean;
   onMoveUp: () => void;
   onMoveDown: () => void;
 }) {
-  const boundRename = renameCategory.bind(null, category.id);
-  const [state, formAction, pending] = useActionState(boundRename, initialState);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [state, formAction, pending] = useActionState(async (previous: CategoryFormState, formData: FormData) => {
+    const result = await renameCategory(category.id, previous, formData);
+    if (!result.error) setEditing(false);
+    return result;
+  }, initialState);
+  const error = editing ? state.error : undefined;
+  const lockedHint = "삭제된 카테고리의 메뉴가 옮겨 가는 기본 카테고리라 수정·삭제할 수 없어요.";
 
-  function confirmDelete(event: FormEvent<HTMLFormElement>) {
-    if (menuCount > 0) {
-      if (!window.confirm(`'${category.name}' 카테고리를 쓰는 메뉴가 ${menuCount}개 있습니다. 그래도 삭제할까요?`)) {
-        event.preventDefault();
-      }
-      return;
-    }
-    if (!window.confirm(`'${category.name}' 카테고리를 삭제할까요?`)) event.preventDefault();
+  function startEditing() {
+    setEditing(true);
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }
+
+  // Esc로 수정을 취소하면 입력값을 원래 이름으로 되돌린다.
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== "Escape" || !editing) return;
+    event.currentTarget.value = category.name;
+    setEditing(false);
   }
 
   return (
@@ -35,15 +50,35 @@ export function CategoryRow({ category, menuCount, isFirst, isLast, onMoveUp, on
         <button type="button" className={styles.orderButton} onClick={onMoveUp} disabled={isFirst} aria-label={`${category.name} 위로 이동`}>▲</button>
         <button type="button" className={styles.orderButton} onClick={onMoveDown} disabled={isLast} aria-label={`${category.name} 아래로 이동`}>▼</button>
       </div>
+      <span className={styles.number} aria-hidden="true">{String(position).padStart(2, "0")}</span>
       <form action={formAction} className={styles.rowForm}>
-        <input name="name" type="text" maxLength={40} required defaultValue={category.name} aria-invalid={!!state.error} aria-describedby={state.error ? `category-${category.id}-error` : undefined} />
-        <button className={styles.saveButton} type="submit" disabled={pending}>{pending ? "수정 중..." : "수정"}</button>
+        <input
+          ref={inputRef}
+          className={styles.input}
+          name="name"
+          type="text"
+          maxLength={40}
+          required
+          readOnly={!editing}
+          defaultValue={category.name}
+          onKeyDown={handleKeyDown}
+          aria-label={`${category.name} 카테고리명`}
+          aria-invalid={!!error}
+          aria-describedby={error ? `category-${category.id}-error` : undefined}
+        />
+        {/* 같은 버튼의 type을 바꾸면 클릭 직후 제출될 수 있어 key로 다른 버튼을 그린다. */}
+        {editing ? (
+          <button key="save" className={styles.primaryButton} type="submit" disabled={pending}>{pending ? "저장 중" : "저장"}</button>
+        ) : (
+          <button key="edit" className={styles.outlineButton} type="button" onClick={startEditing} disabled={locked} title={locked ? lockedHint : undefined}>수정</button>
+        )}
       </form>
-      <form action={deleteCategory.bind(null, category.id)} onSubmit={confirmDelete}>
-        <button className={styles.deleteButton} type="submit">삭제</button>
-      </form>
-      <span className={styles.meta}>메뉴 {menuCount}개에서 사용 중</span>
-      {state.error && <span id={`category-${category.id}-error`} className={styles.fieldError}>{state.error}</span>}
+      <div className={styles.deleteCell}>
+        <button className={styles.dangerButton} type="button" onClick={() => setDeleting(true)} disabled={locked} title={locked ? lockedHint : undefined}>삭제</button>
+      </div>
+      <span className={`${styles.usage} ${menuCount === 0 ? styles.usageEmpty : ""}`}>메뉴 {menuCount}개에서 사용 중</span>
+      {error && <span id={`category-${category.id}-error`} className={styles.fieldError}>{error}</span>}
+      {deleting && <DeleteCategoryDialog categoryId={category.id} categoryName={category.name} onClose={() => setDeleting(false)} />}
     </div>
   );
 }
