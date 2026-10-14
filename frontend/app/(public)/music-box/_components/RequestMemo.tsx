@@ -45,6 +45,8 @@ export function RequestMemoBoard({ title, caption, titleLevel: Title = "h3", emp
 
 type RequestMemoProps = {
   request: Pick<MusicRequest, "songTitle" | "artist" | "story" | "requesterName" | "createdAt">;
+  // 사연에 쓸 손글씨 폰트 클래스 (handwritingSequence)
+  handwriting?: string;
   // 홈 메모처럼 순번 배지가 필요 없으면 비워 둔다.
   badge?: string;
   badgeTone?: keyof typeof badgeToneClass;
@@ -52,13 +54,13 @@ type RequestMemoProps = {
   action?: ReactNode;
 };
 
-export function RequestMemo({ request, badge, badgeTone = "default", showTime = true, action }: RequestMemoProps) {
+export function RequestMemo({ request, handwriting, badge, badgeTone = "default", showTime = true, action }: RequestMemoProps) {
   return (
     <li className={styles.memo}>
       {action && <div className={styles.memoAction}>{action}</div>}
       {badge && <span className={`${styles.queueBadge} ${badgeToneClass[badgeTone]}`}>{badge}</span>}
       <p className={`${styles.memoSong} ${badge ? styles.memoSongWithBadge : ""}`}>{request.songTitle} <small>· {request.artist}</small></p>
-      <p className={styles.memoStory}>{request.story}</p>
+      <p className={`${styles.memoStory} ${handwriting ?? ""}`}>{request.story}</p>
       <p className={styles.memoMeta}>
         <span>— {request.requesterName}님의 사연</span>
         {showTime && <span>{requestedAt(request.createdAt)}</span>}

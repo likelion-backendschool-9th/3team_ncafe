@@ -234,7 +234,7 @@
 .tapeRight { right: 30px; transform: rotate(5deg); }
 .slipTitle { width: fit-content; margin: 0 auto 0.6rem; padding: 0 6px 2px; border-bottom: 4px double var(--ink); font-size: 1.5rem; font-weight: 700; letter-spacing: 0.12em; }
 .slipLine { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: end; gap: 8px; min-height: 38px; margin: 0; padding-bottom: 3px; border-bottom: 1px solid #c9b08c; }
-.slipLine strong { color: #1f2a5a; font-size: 1.1rem; overflow-wrap: anywhere; }
+.slipLine strong { color: #1f2a5a; font-size: 1.3rem; font-weight: 400; overflow-wrap: anywhere; }
 .slipStory { flex: 1; min-height: 0; padding-top: 10px; overflow: hidden; }
 /* 사연은 메모지의 대부분을 차지하도록 크게, 메모지 밑줄에 맞춰 적는다. */
 .slipStory p {
@@ -243,7 +243,7 @@
   overflow: hidden;
   background: repeating-linear-gradient(180deg, transparent 0 31px, #c9b08c 31px 32px);
   color: #1f2a5a;
-  font-size: 1.05rem;
+  font-size: 1.25rem;
   line-height: 32px;
   word-break: keep-all;
   overflow-wrap: anywhere;

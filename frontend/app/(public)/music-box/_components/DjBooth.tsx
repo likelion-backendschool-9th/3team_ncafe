@@ -5,7 +5,10 @@ import type { MusicRequest } from "@/app/_lib/mock/music-box";
 import styles from "./music-box-highlight.module.css";
 import { clock, useYouTubePlayback } from "./useYouTubePlayback";
 
-type NowPlaying = Pick<MusicRequest, "songTitle" | "artist" | "story" | "requesterName" | "youtubeVideoId">;
+type NowPlaying = Pick<MusicRequest, "songTitle" | "artist" | "story" | "requesterName" | "youtubeVideoId"> & {
+  // 메모지에 적을 손글씨 폰트 클래스 (handwritingSequence)
+  handwriting?: string;
+};
 
 const bulbColors = ["#e9503f", "#3f8fe0", "#4fc06a", "#f2c335"];
 const topBulbs = Array.from({ length: 18 }, (_, index) => bulbColors[index % bulbColors.length]);
@@ -114,11 +117,11 @@ export function DjBooth({ nowPlaying, repeatOne = false }: { nowPlaying: NowPlay
             <>
               <p className={styles.slipLine}>
                 <span>신 청 인</span>
-                <strong>{nowPlaying.requesterName}</strong>
+                <strong className={nowPlaying.handwriting}>{nowPlaying.requesterName}</strong>
               </p>
               <div className={styles.slipStory}>
                 <span>사 연</span>
-                <p>{nowPlaying.story}</p>
+                <p className={nowPlaying.handwriting}>{nowPlaying.story}</p>
               </div>
             </>
           ) : (

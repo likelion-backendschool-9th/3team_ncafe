@@ -44,8 +44,10 @@
   display: -webkit-box;
   margin: 0.6rem 0 0;
   overflow: hidden;
-  font-size: 0.88rem;
-  line-height: 1.7;
+  /* 손님이 볼펜으로 적은 손글씨(handwriting.ts). 손글씨 폰트는 작아 보여서 조금 키운다. */
+  color: #1f2a5a;
+  font-size: 1.05rem;
+  line-height: 1.6;
   word-break: keep-all;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
