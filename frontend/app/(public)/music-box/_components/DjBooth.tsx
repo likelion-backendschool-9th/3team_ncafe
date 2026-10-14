@@ -3,9 +3,9 @@
 import type { CSSProperties } from "react";
 import type { MusicRequest } from "@/app/_lib/mock/music-box";
 import styles from "./music-box-highlight.module.css";
-import { clock, useAudioPlayback } from "./useAudioPlayback";
+import { clock, useYouTubePlayback } from "./useYouTubePlayback";
 
-type NowPlaying = Pick<MusicRequest, "songTitle" | "artist" | "story" | "requesterName" | "audioUrl">;
+type NowPlaying = Pick<MusicRequest, "songTitle" | "artist" | "story" | "requesterName" | "youtubeVideoId">;
 
 const bulbColors = ["#e9503f", "#3f8fe0", "#4fc06a", "#f2c335"];
 const topBulbs = Array.from({ length: 18 }, (_, index) => bulbColors[index % bulbColors.length]);
@@ -31,8 +31,8 @@ function Bulbs({ side }: { side: "top" | "left" | "right" }) {
 
 export function DjBooth({ nowPlaying }: { nowPlaying: NowPlaying | null }) {
   // 판은 음악이 실제로 재생 중일 때만 돈다. 일시정지하면 그 각도에서 멈춘다.
-  const { audioProps, playing, current, duration, progress, toggle, seek } = useAudioPlayback();
-  const audioUrl = nowPlaying?.audioUrl;
+  const videoId = nowPlaying?.youtubeVideoId ?? null;
+  const { frameRef, ready, playing, current, duration, progress, error, toggle, seek } = useYouTubePlayback(videoId);
 
   return (
     <div className={styles.window} data-playing={playing}>
@@ -58,46 +58,50 @@ export function DjBooth({ nowPlaying }: { nowPlaying: NowPlaying | null }) {
         </text>
       </svg>
 
-      <article className={styles.board} aria-labelledby="booth-now-title">
+      <article className={`${styles.board} ${videoId ? styles.boardWithVideo : ""}`} aria-labelledby="booth-now-title">
         {nowPlaying && <span className={styles.onAir}>ON AIR</span>}
-        <p className={styles.boardLabel}>지금 흐르는 노래</p>
-        {nowPlaying ? (
-          <>
-            <h3 id="booth-now-title" className={styles.boardTitle}>
-              {nowPlaying.songTitle} <span>· {nowPlaying.artist}</span>
-            </h3>
-            <blockquote className={styles.boardStory}>
-              {nowPlaying.story}
-              <cite>— {nowPlaying.requesterName}님의 사연</cite>
-            </blockquote>
-          </>
-        ) : (
-          <>
-            <h3 id="booth-now-title" className={styles.boardTitle}>잠시 쉬어 가는 시간이에요</h3>
-            <p className={styles.boardNote}>신청곡을 보내 주시면 DJ가 순서대로 틀어 드려요.</p>
-          </>
-        )}
-        {nowPlaying && !audioUrl && <p className={styles.boardNote}>음원을 준비하고 있어요.</p>}
-        {nowPlaying && audioUrl && (
-          <div className={styles.player}>
-            <audio src={audioUrl} {...audioProps} />
-            <button className={styles.playButton} type="button" onClick={toggle} aria-label={playing ? `${nowPlaying.songTitle} 일시정지` : `${nowPlaying.songTitle} 재생`}>
-              {playing ? "❚❚" : "▶"}
-            </button>
-            <input
-              className={styles.progress}
-              type="range"
-              min={0}
-              max={duration || 0}
-              step="any"
-              value={current}
-              onChange={(event) => seek(event.target.value)}
-              aria-label={`${nowPlaying.songTitle} 재생 위치`}
-              style={{ "--progress": `${progress}%` } as CSSProperties}
-            />
-            <span className={styles.time}>{clock(current)} / {clock(duration)}</span>
-          </div>
-        )}
+        {videoId && <div ref={frameRef} className={styles.video} />}
+        <div className={styles.boardText}>
+          <p className={styles.boardLabel}>지금 흐르는 노래</p>
+          {nowPlaying ? (
+            <>
+              <h3 id="booth-now-title" className={styles.boardTitle}>
+                {nowPlaying.songTitle} <span>· {nowPlaying.artist}</span>
+              </h3>
+              <blockquote className={styles.boardStory}>
+                {nowPlaying.story}
+                <cite>— {nowPlaying.requesterName}님의 사연</cite>
+              </blockquote>
+            </>
+          ) : (
+            <>
+              <h3 id="booth-now-title" className={styles.boardTitle}>잠시 쉬어 가는 시간이에요</h3>
+              <p className={styles.boardNote}>신청곡을 보내 주시면 DJ가 순서대로 틀어 드려요.</p>
+            </>
+          )}
+          {nowPlaying && !videoId && <p className={styles.boardNote}>영상을 준비하고 있어요.</p>}
+          {error && <p className={styles.boardNote} role="alert">{error}</p>}
+          {nowPlaying && videoId && (
+            <div className={styles.player}>
+              <button className={styles.playButton} type="button" onClick={toggle} disabled={!ready} aria-label={playing ? `${nowPlaying.songTitle} 일시정지` : `${nowPlaying.songTitle} 재생`}>
+                {playing ? "❚❚" : "▶"}
+              </button>
+              <input
+                className={styles.progress}
+                type="range"
+                min={0}
+                max={duration || 0}
+                step="any"
+                value={current}
+                disabled={!ready}
+                onChange={(event) => seek(event.target.value)}
+                aria-label={`${nowPlaying.songTitle} 재생 위치`}
+                style={{ "--progress": `${progress}%` } as CSSProperties}
+              />
+              <span className={styles.time}>{clock(current)} / {clock(duration)}</span>
+            </div>
+          )}
+        </div>
       </article>
 
       <div className={styles.desk} aria-hidden="true" />

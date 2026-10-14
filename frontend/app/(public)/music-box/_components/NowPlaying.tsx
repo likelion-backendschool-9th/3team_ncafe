@@ -1,6 +1,6 @@
 import type { MusicRequest } from "@/app/_lib/mock/music-box";
 import styles from "../music-box.module.css";
-import { AudioPlayer } from "./AudioPlayer";
+import { YouTubePlayer } from "./YouTubePlayer";
 
 type NowPlayingProps = {
   playing: MusicRequest | undefined;
@@ -25,10 +25,10 @@ export function NowPlaying({ playing, next }: NowPlayingProps) {
               <p>{playing.artist}</p>
             </div>
           </div>
-          {playing.audioUrl ? (
-            <AudioPlayer src={playing.audioUrl} title={playing.songTitle} />
+          {playing.youtubeVideoId ? (
+            <YouTubePlayer videoId={playing.youtubeVideoId} title={playing.songTitle} />
           ) : (
-            <p className={styles.empty}>음원을 준비하고 있어요.</p>
+            <p className={styles.empty}>영상을 준비하고 있어요.</p>
           )}
           <blockquote className={styles.letter}>
             {playing.story}

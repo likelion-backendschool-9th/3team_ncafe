@@ -12,7 +12,8 @@ export type MusicRequest = {
   artist: string;
   story: string;
   status: MusicRequestStatus;
-  audioUrl: string | null;
+  // 관리자가 선곡할 때 붙인 YouTube 영상 ID(11자리). 선곡 전에는 없다.
+  youtubeVideoId: string | null;
   createdAt: string;
   playedAt: string | null;
 };
@@ -20,11 +21,11 @@ export type MusicRequest = {
 export type MusicRequestInput = Pick<MusicRequest, "userId" | "requesterName" | "songTitle" | "artist" | "story">;
 
 const fileName = "music-requests.json";
-export const MUSIC_BOX_SAMPLE_AUDIO = "/audio-samples/music-box-sample.wav";
 
 type SeedRequest = Pick<MusicRequest, "songTitle" | "artist" | "requesterName" | "story" | "status">;
 
 // 화면 확인용 목 데이터. 첫 곡은 재생 중, 다음 4곡은 대기, 나머지는 재생 완료 상태로 시작한다.
+// 재생 중인 곡도 영상 없이 시작하므로, 관리자 화면에서 YouTube 링크를 붙여 다시 선곡하면 된다.
 const seedRequests: SeedRequest[] = [
   { songTitle: "서른 즈음에", artist: "김광석", requesterName: "하늘바람", status: "playing", story: "지친 하루 끝에 다방에 들렀다가 이 노래를 들으니 큰 위로가 되네요. 오늘도 수고한 모두에게 이 노래를 보냅니다." },
   { songTitle: "가을이 오면", artist: "이문세", requesterName: "커피좋아", status: "pending", story: "창밖에 낙엽이 떨어지는 걸 보니 대학 시절 친구들과 통기타 치며 부르던 이 노래가 생각나요. 그 친구들도 어디선가 듣고 있으면 좋겠습니다." },
@@ -48,15 +49,21 @@ function seed(): MusicRequest[] {
       ...request,
       id: randomUUID(),
       userId: null,
-      audioUrl: request.status === "playing" ? MUSIC_BOX_SAMPLE_AUDIO : null,
+      youtubeVideoId: null,
       createdAt: new Date(now - minutesAgo * 60_000).toISOString(),
       playedAt: request.status === "played" ? new Date(now - (index - 4) * 12 * 60_000).toISOString() : null,
     };
   });
 }
 
+// 음원 주소(audioUrl)로 저장하던 예전 목 데이터도 그대로 읽도록, 영상 ID가 없으면 null로 채우고 audioUrl은 버린다.
+type StoredMusicRequest = Omit<MusicRequest, "youtubeVideoId"> & { youtubeVideoId?: string | null; audioUrl?: unknown };
+
 function requests(): MusicRequest[] {
-  return readMockData<MusicRequest[]>(fileName, seed);
+  return readMockData<StoredMusicRequest[]>(fileName, seed).map(({ audioUrl: _legacy, ...request }) => ({
+    ...request,
+    youtubeVideoId: request.youtubeVideoId ?? null,
+  }));
 }
 
 export const mockMusicBoxRepository = {
@@ -69,7 +76,7 @@ export const mockMusicBoxRepository = {
       ...input,
       id: randomUUID(),
       status: "pending",
-      audioUrl: null,
+      youtubeVideoId: null,
       createdAt: new Date().toISOString(),
       playedAt: null,
     };
@@ -86,7 +93,7 @@ export const mockMusicBoxRepository = {
     return true;
   },
 
-  async start(id: string, audioUrl: string): Promise<boolean> {
+  async start(id: string, youtubeVideoId: string): Promise<boolean> {
     const all = requests();
     const target = all.find((request) => request.id === id);
     if (!target || target.status !== "pending") return false;
@@ -99,7 +106,7 @@ export const mockMusicBoxRepository = {
       }
     }
     target.status = "playing";
-    target.audioUrl = audioUrl;
+    target.youtubeVideoId = youtubeVideoId;
     writeMockData(fileName, all);
     return true;
   },

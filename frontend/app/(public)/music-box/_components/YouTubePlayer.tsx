@@ -2,14 +2,15 @@
 
 import type { CSSProperties } from "react";
 import styles from "../music-box.module.css";
-import { clock, useAudioPlayback } from "./useAudioPlayback";
+import { clock, useYouTubePlayback } from "./useYouTubePlayback";
 
-export function AudioPlayer({ src, title }: { src: string; title: string }) {
-  const { audioProps, playing, current, duration, progress, toggle, seek } = useAudioPlayback();
+export function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
+  const { frameRef, ready, playing, current, duration, progress, error, toggle, seek } = useYouTubePlayback(videoId);
 
   return (
     <div className={styles.player}>
-      <audio src={src} {...audioProps} />
+      <div ref={frameRef} className={styles.video} />
+      {error && <p className={styles.playerError} role="alert">{error}</p>}
       <input
         className={styles.progress}
         type="range"
@@ -17,6 +18,7 @@ export function AudioPlayer({ src, title }: { src: string; title: string }) {
         max={duration || 0}
         step="any"
         value={current}
+        disabled={!ready}
         onChange={(event) => seek(event.target.value)}
         aria-label={`${title} 재생 위치`}
         style={{ "--progress": `${progress}%` } as CSSProperties}
@@ -25,7 +27,7 @@ export function AudioPlayer({ src, title }: { src: string; title: string }) {
         <span>{clock(current)}</span>
         <span>{clock(duration)}</span>
       </div>
-      <button className={styles.playButton} type="button" onClick={toggle} aria-label={playing ? `${title} 일시정지` : `${title} 재생`}>
+      <button className={styles.playButton} type="button" onClick={toggle} disabled={!ready} aria-label={playing ? `${title} 일시정지` : `${title} 재생`}>
         {playing ? "❚❚" : "▶"}
       </button>
     </div>
