@@ -2,20 +2,7 @@ import Link from "next/link";
 import { mockMusicBoxRepository } from "@/app/_lib/mock/music-box";
 import { DjBooth } from "./DjBooth";
 import styles from "./music-box-highlight.module.css";
-
-const requestedAtFormat = new Intl.DateTimeFormat("ko-KR", {
-  timeZone: "Asia/Seoul",
-  month: "2-digit",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-  hourCycle: "h23",
-});
-
-function requestedAt(value: string): string {
-  const parts = Object.fromEntries(requestedAtFormat.formatToParts(new Date(value)).map((part) => [part.type, part.value]));
-  return `${parts.month}.${parts.day} ${parts.hour}:${parts.minute}`;
-}
+import { RequestMemo, RequestMemoBoard } from "./RequestMemo";
 
 // 홈 하단 뮤직박스 칸: 지금 흐르는 노래(DJ 부스)와 다음 차례 신청곡 3곡을 사연과 함께 보여 준다.
 export async function MusicBoxHighlight() {
@@ -49,29 +36,20 @@ export async function MusicBoxHighlight() {
         />
       </div>
 
-      <div className={styles.frontBoard}>
-        <div className={styles.frontHead}>
-          <h3>다음 차례 신청곡</h3>
-          <span>DJ 부스에 도착한 신청곡 메모 · 대기 {queue.length}곡</span>
-        </div>
-        {nextUp.length > 0 ? (
-          <ol className={styles.memos}>
-            {nextUp.map((request, index) => (
-              <li key={request.id} className={styles.memo}>
-                <span className={`${styles.queueBadge} ${index === 0 ? styles.queueBadgeNext : ""}`}>대기 {index + 1}</span>
-                <p className={styles.memoSong}>{request.songTitle} <small>· {request.artist}</small></p>
-                <p className={styles.memoStory}>{request.story}</p>
-                <p className={styles.memoMeta}>
-                  <span>— {request.requesterName}님의 사연</span>
-                  <span>{requestedAt(request.createdAt)}</span>
-                </p>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p className={styles.emptyMemo}>아직 기다리는 신청곡이 없어요. 첫 사연을 보내 주세요.</p>
-        )}
-      </div>
+      <RequestMemoBoard
+        title="다음 차례 신청곡"
+        caption={`DJ 부스에 도착한 신청곡 메모 · 대기 ${queue.length}곡`}
+        empty="아직 기다리는 신청곡이 없어요. 첫 사연을 보내 주세요."
+      >
+        {nextUp.map((request, index) => (
+          <RequestMemo
+            key={request.id}
+            request={request}
+            badge={`대기 ${index + 1}`}
+            badgeTone={index === 0 ? "accent" : "default"}
+          />
+        ))}
+      </RequestMemoBoard>
     </section>
   );
 }
