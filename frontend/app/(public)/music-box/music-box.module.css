@@ -289,7 +289,8 @@
 .rowPlaying td { background: #f2d4c4; }
 .status { display: inline-block; padding: 0.18rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 800; white-space: nowrap; }
 .statusPlaying { background: var(--red); color: #fff8ec; }
-.statusPending { border: 1px solid var(--teal); color: var(--teal); }
+.statusQueued { border: 1px solid var(--teal); color: var(--teal); }
+.statusPending { border: 1px solid #a5875c; color: #785b35; }
 .statusPlayed { background: #d9c8ab; color: var(--muted); }
 .pager { display: flex; justify-content: center; gap: 0.35rem; margin-top: 1rem; font-size: 0.85rem; }
 .pager a { display: grid; place-items: center; min-width: 32px; height: 32px; border: 1px solid #b9a080; color: var(--ink); text-decoration: none; }

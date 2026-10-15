@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/app/_lib/session/session";
-import { mockMusicBoxRepository, waitingQueueOf, type MusicRequest } from "@/app/_lib/mock/music-box";
+import { inboxOf, mockMusicBoxRepository, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
 import { NowPlaying } from "./_components/NowPlaying";
 import { RequestForm } from "./_components/RequestForm";
 import { RequestTable, type RequestRow } from "./_components/RequestTable";
@@ -23,13 +23,15 @@ export default async function MusicBoxPage({ searchParams }: { searchParams: Sea
     mockMusicBoxRepository.getRepeatMode(),
   ]);
 
-  // 목록은 재생 중 → 대기(플레이리스트 순, 그다음 접수 순) → 재생 완료(최근 순)로 보여 준다. 취소된 신청은 보이지 않는다.
+  // 목록은 재생 중 → 플레이리스트 → 접수 → 재생 완료 순서다. 취소된 신청은 보이지 않는다.
   const playing = requests.find((request) => request.status === "playing");
-  const queue = waitingQueueOf(requests);
+  const playlist = playlistOf(requests);
+  const inbox = inboxOf(requests);
   const played = requests.filter((request) => request.status === "played").sort(byPlayedAtDesc);
   const rows: RequestRow[] = [
     ...(playing ? [{ request: playing, queuePosition: null }] : []),
-    ...queue.map((request, index) => ({ request, queuePosition: index + 1 })),
+    ...playlist.map((request, index) => ({ request, queuePosition: index + 1 })),
+    ...inbox.map((request) => ({ request, queuePosition: null })),
     ...played.map((request) => ({ request, queuePosition: null })),
   ];
 
@@ -58,7 +60,7 @@ export default async function MusicBoxPage({ searchParams }: { searchParams: Sea
 
         <div className={styles.topRow}>
           <RequestForm memberName={user?.name ?? null} requestNumber={requests.length + 1} />
-          <NowPlaying playing={playing} next={queue[0]} repeatOne={repeat === "one"} />
+          <NowPlaying playing={playing} next={playlist[0]} repeatOne={repeat === "one"} />
         </div>
 
         <RequestTable
@@ -66,7 +68,8 @@ export default async function MusicBoxPage({ searchParams }: { searchParams: Sea
           firstNumber={firstIndex + 1}
           page={page}
           totalPages={totalPages}
-          waitingCount={queue.length}
+          waitingCount={playlist.length}
+          receivedCount={inbox.length}
           todayCount={todayCount}
         />
 

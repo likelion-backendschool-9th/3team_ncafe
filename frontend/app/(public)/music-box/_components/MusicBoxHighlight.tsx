@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { mockMusicBoxRepository, waitingQueueOf } from "@/app/_lib/mock/music-box";
+import { mockMusicBoxRepository, playlistOf } from "@/app/_lib/mock/music-box";
 import { DjBooth } from "./DjBooth";
 import { handwritingSequence } from "./handwriting";
 import styles from "./music-box-highlight.module.css";
@@ -9,8 +9,8 @@ import { RequestMemo, RequestMemoBoard } from "./RequestMemo";
 export async function MusicBoxHighlight() {
   const [requests, repeat] = await Promise.all([mockMusicBoxRepository.list(), mockMusicBoxRepository.getRepeatMode()]);
   const playing = requests.find((request) => request.status === "playing");
-  const queue = waitingQueueOf(requests);
-  const nextUp = queue.slice(0, 3);
+  const playlist = playlistOf(requests);
+  const nextUp = playlist.slice(0, 3);
   // 턴테이블 옆 메모지와 다음 차례 메모 3장이 모두 다른 손글씨가 되게 한 번에 고른다.
   const [playingHand, ...memoHands] = handwritingSequence(playing?.id ?? nextUp[0]?.id ?? "", nextUp.length + 1);
 
@@ -46,8 +46,8 @@ export async function MusicBoxHighlight() {
 
       <RequestMemoBoard
         title="다음 차례 신청곡"
-        caption={`DJ 부스에 도착한 신청곡 메모 · 대기 ${queue.length}곡`}
-        empty="아직 기다리는 신청곡이 없어요. 첫 사연을 보내 주세요."
+        caption={`플레이리스트에 담긴 신청곡 · 재생 대기 ${playlist.length}곡`}
+        empty="아직 플레이리스트에 담긴 신청곡이 없어요."
       >
         {nextUp.map((request, index) => (
           <RequestMemo key={request.id} request={request} handwriting={memoHands[index]} showTime={false} />
