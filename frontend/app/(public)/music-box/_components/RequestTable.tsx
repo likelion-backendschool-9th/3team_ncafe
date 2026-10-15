@@ -14,6 +14,7 @@ type RequestTableProps = {
   page: number;
   totalPages: number;
   waitingCount: number;
+  receivedCount: number;
   todayCount: number;
 };
 
@@ -33,17 +34,18 @@ function requestedAt(value: string): string {
 
 function StatusBadge({ row }: { row: RequestRow }) {
   if (row.request.status === "playing") return <span className={`${styles.status} ${styles.statusPlaying}`}>재생 중</span>;
-  if (row.queuePosition !== null) return <span className={`${styles.status} ${styles.statusPending}`}>대기 {row.queuePosition}</span>;
+  if (row.request.status === "queued" && row.queuePosition !== null) return <span className={`${styles.status} ${styles.statusQueued}`}>재생 대기 {row.queuePosition}</span>;
+  if (row.request.status === "pending") return <span className={`${styles.status} ${styles.statusPending}`}>접수됨</span>;
   return <span className={`${styles.status} ${styles.statusPlayed}`}>재생 완료</span>;
 }
 
-export function RequestTable({ rows, firstNumber, page, totalPages, waitingCount, todayCount }: RequestTableProps) {
+export function RequestTable({ rows, firstNumber, page, totalPages, waitingCount, receivedCount, todayCount }: RequestTableProps) {
   return (
     <section className={`${styles.panel} ${styles.listPanel}`} aria-labelledby="queue-title">
       <h2 id="queue-title" className={styles.panelTitle}>
         <span className={styles.panelIcon} aria-hidden="true">♫</span>
         신청곡 목록
-        <span className={styles.count}>대기 {waitingCount}곡 · 오늘 접수 {todayCount}곡</span>
+        <span className={styles.count}>재생 대기 {waitingCount}곡 · 접수 {receivedCount}곡 · 오늘 접수 {todayCount}곡</span>
       </h2>
 
       {rows.length > 0 ? (

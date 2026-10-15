@@ -154,11 +154,6 @@ export function inboxOf(all: MusicRequest[]): MusicRequest[] {
     .sort(byCreatedAt);
 }
 
-// 손님 화면에서 보여 줄 대기 순서: 플레이리스트 순서대로, 그 뒤에 아직 담지 않은 접수 곡을 신청 순으로.
-export function waitingQueueOf(all: MusicRequest[]): MusicRequest[] {
-  return [...playlistOf(all), ...inboxOf(all)];
-}
-
 function lastPlaylistOrder(all: MusicRequest[]): number {
   return Math.max(
     0,

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { mockMusicBoxRepository, waitingQueueOf, type MusicRequest } from "@/app/_lib/mock/music-box";
+import { mockMusicBoxRepository, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
 import { requireRole } from "@/app/_lib/session/session";
 import { DjBooth } from "@/app/(public)/music-box/_components/DjBooth";
 import { handwritingSequence } from "@/app/(public)/music-box/_components/handwriting";
@@ -11,13 +11,14 @@ import { DeleteRequestForm } from "./_components/DeleteRequestForm";
 
 type SearchParams = Promise<{ deleted?: string; error?: string }>;
 
-const statusOrder: Record<MusicRequest["status"], number> = { playing: 0, queued: 1, pending: 1, played: 2, cancelled: 3 };
+const statusOrder: Record<MusicRequest["status"], number> = { playing: 0, queued: 1, pending: 2, played: 3, cancelled: 4 };
 
 function statusBadge(request: MusicRequest, position: number | undefined): string {
   if (request.status === "playing") return "재생 중";
   if (request.status === "played") return "재생 완료";
   if (request.status === "cancelled") return "취소됨";
-  return `대기 ${position}`;
+  if (request.status === "pending") return "접수됨";
+  return `재생 대기 ${position}`;
 }
 
 export default async function MyMusicRequestsPage({ searchParams }: { searchParams: SearchParams }) {
@@ -29,9 +30,9 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
   ]);
 
   const playing = requests.find((request) => request.status === "playing");
-  const queue = waitingQueueOf(requests);
-  const queuePosition = new Map(queue.map((request, index) => [request.id, index + 1]));
-  // 내 신청곡은 재생 중 → 대기(차례 순) → 재생 완료(최근 신청 순) → 취소됨으로 보여 준다.
+  const playlist = playlistOf(requests);
+  const queuePosition = new Map(playlist.map((request, index) => [request.id, index + 1]));
+  // 내 신청곡은 재생 중 → 플레이리스트(차례 순) → 접수 → 재생 완료 → 취소됨으로 보여 준다.
   const mine = requests
     .filter((request) => request.userId === user.id)
     .sort((a, b) =>
