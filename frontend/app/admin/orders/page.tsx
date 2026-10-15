@@ -57,6 +57,7 @@ function StatusControls({ order, query }: { order: Order; query: string }) {
         action={changeAdminOrderStatus.bind(null, order.id, order.status, query)}
         orderCode={orderCode(order)}
         currentLabel={orderStatusLabels[order.status]}
+        status={order.status}
         choices={targets.map((target) => ({
           value: target,
           label: target === "canceled" ? "주문 취소" : target === previous ? `이전: ${orderStatusLabels[target]}` : `다음: ${orderStatusLabels[target]}`,
@@ -111,7 +112,7 @@ function OrderSection({
   const pageKey = `${sectionKey}Page`;
 
   return (
-    <OrderSectionAccordion key={`${sectionKey}-${open}`} title={title} description={description} count={orders.length} defaultOpen={open}>
+    <OrderSectionAccordion key={`${sectionKey}-${open}`} title={title} description={description} count={orders.length} tone={sectionKey} defaultOpen={open}>
       {visible.length === 0 ? (
         <p className={styles.sectionEmpty}>이 영역에 표시할 주문이 없습니다.</p>
       ) : view === "grid" ? (

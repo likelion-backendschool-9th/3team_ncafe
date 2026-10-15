@@ -1,14 +1,16 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import type { OrderStatus } from "@/app/_lib/orders/types";
 import controls from "./order-controls.module.css";
 
 type Choice = { value: string; label: string };
 
-function StatusSelect({ id, orderCode, currentLabel, choices }: {
+function StatusSelect({ id, orderCode, currentLabel, status, choices }: {
   id: string;
   orderCode: string;
   currentLabel: string;
+  status: OrderStatus;
   choices: Choice[];
 }) {
   const { pending } = useFormStatus();
@@ -16,6 +18,7 @@ function StatusSelect({ id, orderCode, currentLabel, choices }: {
     <>
       <select
         className={`${controls.select} ${controls.statusSelect}`}
+        data-status={status}
         id={id}
         name="nextStatus"
         defaultValue=""
@@ -36,11 +39,13 @@ export function StatusChangeForm({
   action,
   orderCode,
   currentLabel,
+  status,
   choices,
 }: {
   action: (formData: FormData) => Promise<void>;
   orderCode: string;
   currentLabel: string;
+  status: OrderStatus;
   choices: Choice[];
 }) {
   const id = `status-${orderCode}`;
@@ -54,7 +59,7 @@ export function StatusChangeForm({
         selected.value = "";
       }
     }}>
-      <StatusSelect id={id} orderCode={orderCode} currentLabel={currentLabel} choices={choices} />
+      <StatusSelect id={id} orderCode={orderCode} currentLabel={currentLabel} status={status} choices={choices} />
     </form>
   );
 }
