@@ -76,6 +76,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }: {
               action={changeAdminOrderStatusFromDetail.bind(null, order.id, status, listQuery.toString())}
               orderCode={code}
               currentLabel={orderStatusLabels[status]}
+              status={status}
               choices={choices}
             /> : <select className={controls.select} defaultValue={status} disabled aria-label={`${code} 주문 상태`}>
               <option value={status}>{orderStatusLabels[status]}</option>
