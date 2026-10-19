@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { mockMusicBoxRepository, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
+import { mockMusicBoxRepository, onAirOf, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
 import { requireRole } from "@/app/_lib/session/session";
 import { DjBooth } from "@/app/(public)/music-box/_components/DjBooth";
 import { handwritingSequence } from "@/app/(public)/music-box/_components/handwriting";
 import boothStyles from "@/app/(public)/music-box/_components/music-box-highlight.module.css";
+import { MusicBoxRefresher } from "@/app/(public)/music-box/_components/MusicBoxRefresher";
 import { RequestMemo, RequestMemoBoard } from "@/app/(public)/music-box/_components/RequestMemo";
 import styles from "../mypage.module.css";
 import { deleteMyMusicRequest } from "./_actions";
@@ -29,6 +30,7 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
   ]);
 
   const playing = requests.find((request) => request.status === "playing");
+  const onAir = onAirOf(playing);
   const playlist = playlistOf(requests);
   const queuePosition = new Map(playlist.map((request, index) => [request.id, index + 1]));
   // 내 신청곡은 재생 중 → 플레이리스트(차례 순) → 접수 → 재생 완료 → 취소됨으로 보여 준다.
@@ -43,6 +45,7 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
+      <MusicBoxRefresher endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
       <nav className={styles.breadcrumb} aria-label="현재 위치">
         <Link href="/mypage">마이페이지</Link>
         <span aria-hidden="true">/</span>
@@ -71,6 +74,7 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
               youtubeVideoId: playing.youtubeVideoId,
               handwriting: playing.userId === user.id ? myHand : otherHand,
             } : null}
+            onAir={onAir}
           />
         </div>
 

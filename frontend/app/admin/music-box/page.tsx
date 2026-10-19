@@ -1,4 +1,5 @@
-import { inboxOf, mockMusicBoxRepository, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
+import { MusicBoxRefresher } from "@/app/(public)/music-box/_components/MusicBoxRefresher";
+import { inboxOf, mockMusicBoxRepository, onAirOf, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
 import { requireRole } from "@/app/_lib/session/session";
 import { cancelCurrent, cancelRequest, finishCurrent, moveInPlaylist, moveToPlayed, playNow, returnToInbox } from "./_actions";
 import { AddToPlaylistForm } from "./_components/AddToPlaylistForm";
@@ -39,9 +40,11 @@ export default async function AdminMusicBoxPage() {
     .filter((request) => request.status === "played")
     .sort((a, b) => (b.playedAt ?? "").localeCompare(a.playedAt ?? ""))
     .slice(0, 10);
+  const onAir = onAirOf(playing);
 
   return (
     <div className={styles.page}>
+      <MusicBoxRefresher endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
       <header className={styles.heading}>
         <p className="eyebrow">MUSIC BOX</p>
         <h1>뮤직박스 운영</h1>
@@ -68,14 +71,18 @@ export default async function AdminMusicBoxPage() {
               <div className={styles.mediaSide}>
                 <div>
                   <p>지금 손님 화면에서 나오는 곡이에요.</p>
-                  <p className={styles.hint}>영상이 끝나거나 재생 완료를 누르면 지난 선곡으로 넘어가고, 플레이리스트 맨 앞 곡이 자동으로 재생돼요.</p>
-                  <p className={styles.hint}>선곡 취소를 누르면 접수된 신청곡으로 돌아가요.</p>
+                  <p className={styles.hint}>
+                    {playing.durationSeconds
+                      ? "영상 길이만큼 지나면 손님 화면이 닫혀 있어도 지난 선곡으로 넘어가고, 플레이리스트 맨 앞 곡이 자동으로 재생돼요."
+                      : "영상 길이를 아직 몰라서, 손님 화면에서 영상이 끝나면 다음 곡으로 넘어가요."}
+                  </p>
+                  <p className={styles.hint}>재생 완료를 누르면 바로 넘어가고, 선곡 취소를 누르면 접수된 신청곡으로 돌아가요.</p>
                 </div>
                 <div className={styles.actions}>
-                  <form action={finishCurrent}>
+                  <form action={finishCurrent.bind(null, playing.id)}>
                     <button className={styles.primaryButton} type="submit">재생 완료</button>
                   </form>
-                  <form action={cancelCurrent} className={styles.pushEnd}>
+                  <form action={cancelCurrent.bind(null, playing.id)} className={styles.pushEnd}>
                     <button className={styles.dangerButton} type="submit">선곡 취소</button>
                   </form>
                 </div>

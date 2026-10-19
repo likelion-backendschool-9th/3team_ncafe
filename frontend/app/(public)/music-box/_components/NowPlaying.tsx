@@ -1,13 +1,14 @@
-import type { MusicRequest } from "@/app/_lib/mock/music-box";
+import type { MusicRequest, OnAir } from "@/app/_lib/mock/music-box";
 import styles from "../music-box.module.css";
 import { YouTubePlayer } from "./YouTubePlayer";
 
 type NowPlayingProps = {
   playing: MusicRequest | undefined;
+  onAir: OnAir | null;
   next: MusicRequest | undefined;
 };
 
-export function NowPlaying({ playing, next }: NowPlayingProps) {
+export function NowPlaying({ playing, onAir, next }: NowPlayingProps) {
   return (
     <section className={`${styles.panel} ${styles.nowPanel}`} aria-labelledby="playing-title">
       <h2 id="playing-title" className={styles.panelTitle}>
@@ -27,7 +28,7 @@ export function NowPlaying({ playing, next }: NowPlayingProps) {
               <p className={styles.sleeveArtist}>{playing.artist}</p>
             </header>
             {playing.youtubeVideoId ? (
-              <YouTubePlayer key={playing.id} requestId={playing.id} videoId={playing.youtubeVideoId} title={playing.songTitle} />
+              <YouTubePlayer key={playing.id} requestId={playing.id} videoId={playing.youtubeVideoId} title={playing.songTitle} onAir={onAir} />
             ) : (
               <p className={styles.videoEmpty}>영상을 준비하고 있어요.</p>
             )}

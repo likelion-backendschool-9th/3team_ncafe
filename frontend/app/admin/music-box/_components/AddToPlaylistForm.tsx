@@ -21,6 +21,8 @@ export function AddToPlaylistForm({ requestId, songTitle, initialVideoId, cancel
   const [state, formAction, pending] = useActionState(addToPlaylist.bind(null, requestId), initialState);
   const [link, setLink] = useState(initialVideoId ? `https://youtu.be/${initialVideoId}` : "");
   const [previewId, setPreviewId] = useState(initialVideoId);
+  // 미리보기 플레이어가 읽은 영상 길이. 미리보기한 영상이 바뀌면 다시 읽는다.
+  const [duration, setDuration] = useState<{ videoId: string; seconds: number } | null>(null);
   const [linkError, setLinkError] = useState<string | null>(null);
   const formId = useId();
   const inputId = useId();
@@ -54,12 +56,13 @@ export function AddToPlaylistForm({ requestId, songTitle, initialVideoId, cancel
           />
           <button className={styles.outlineButton} type="button" onClick={preview}>미리보기</button>
         </div>
+        <input type="hidden" name="durationSeconds" value={duration && duration.videoId === previewId ? duration.seconds : ""} />
         {(linkError || state.error) && <p className={styles.formError} role="alert">{linkError ?? state.error}</p>}
       </form>
 
       <div className={styles.mediaRow}>
         {previewId ? (
-          <YouTubePreview videoId={previewId} title={songTitle} />
+          <YouTubePreview videoId={previewId} title={songTitle} onDuration={(seconds) => setDuration({ videoId: previewId, seconds })} />
         ) : (
           <div className={styles.previewEmpty}>링크를 넣고 미리보기를 눌러 주세요.</div>
         )}
