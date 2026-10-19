@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { readMockData, writeMockData } from './store';
 
 // 접수(pending) → 관리자가 링크를 붙여 플레이리스트에 담음(queued) → 재생 중(playing) → 재생 완료(played).
+// 재생 중인 곡이 없으면 플레이리스트 맨 앞 곡이 자동으로 재생 중이 된다.
 // 관리자가 접수를 취소하면 cancelled로 남겨 신청자가 마이페이지에서 볼 수 있게 한다.
 export type MusicRequestStatus =
   | 'pending'
@@ -9,7 +10,6 @@ export type MusicRequestStatus =
   | 'playing'
   | 'played'
   | 'cancelled';
-export type RepeatMode = 'off' | 'one' | 'all';
 
 export type MusicRequest = {
   id: string;
@@ -34,7 +34,6 @@ export type MusicRequestInput = Pick<
 >;
 
 const fileName = 'music-requests.json';
-const settingsFileName = 'music-box-settings.json';
 
 type SeedRequest = Pick<
   MusicRequest,
@@ -168,10 +167,15 @@ function firstPlaylistOrder(all: MusicRequest[]): number {
   );
 }
 
-function readSettings(): { repeat: RepeatMode } {
-  return readMockData(settingsFileName, () => ({
-    repeat: 'off' as RepeatMode,
-  }));
+// 재생 중인 곡이 없으면 플레이리스트 맨 앞 곡을 튼다. 상태를 바꾸는 작업은 저장 전에 항상 부른다.
+function playNextIfIdle(all: MusicRequest[]): MusicRequest | null {
+  if (all.some((request) => request.status === 'playing')) return null;
+  const next = playlistOf(all)[0] ?? null;
+  if (next) {
+    next.status = 'playing';
+    next.playlistOrder = null;
+  }
+  return next;
 }
 
 export const mockMusicBoxRepository = {
@@ -207,7 +211,7 @@ export const mockMusicBoxRepository = {
     return true;
   },
 
-  // 접수 곡에 영상 링크를 붙여 플레이리스트 맨 끝에 담는다.
+  // 접수 곡에 영상 링크를 붙여 플레이리스트 맨 끝에 담는다. 재생 중인 곡이 없으면 바로 재생된다.
   async addToPlaylist(id: string, youtubeVideoId: string): Promise<boolean> {
     const all = requests();
     const target = all.find((request) => request.id === id);
@@ -215,17 +219,31 @@ export const mockMusicBoxRepository = {
     target.youtubeVideoId = youtubeVideoId;
     target.playlistOrder = lastPlaylistOrder(all) + 1;
     target.status = 'queued';
+    playNextIfIdle(all);
     writeMockData(fileName, all);
     return true;
   },
 
-  // 플레이리스트에서 빼면 링크는 남긴 채 접수함으로 돌아간다.
-  async removeFromPlaylist(id: string): Promise<boolean> {
+  // 플레이리스트나 지난 선곡의 곡을 링크는 남긴 채 접수함으로 되돌린다.
+  async returnToInbox(id: string): Promise<boolean> {
+    const all = requests();
+    const target = all.find((request) => request.id === id);
+    if (!target || (target.status !== 'queued' && target.status !== 'played')) return false;
+    target.status = 'pending';
+    target.playlistOrder = null;
+    target.playedAt = null;
+    writeMockData(fileName, all);
+    return true;
+  },
+
+  // 플레이리스트의 곡을 틀지 않고 지난 선곡으로 넘긴다.
+  async moveToPlayed(id: string): Promise<boolean> {
     const all = requests();
     const target = all.find((request) => request.id === id);
     if (!target || target.status !== 'queued') return false;
-    target.status = 'pending';
+    target.status = 'played';
     target.playlistOrder = null;
+    target.playedAt = new Date().toISOString();
     writeMockData(fileName, all);
     return true;
   },
@@ -262,40 +280,29 @@ export const mockMusicBoxRepository = {
     return true;
   },
 
-  // 재생 완료: 지금 곡을 끝내고 플레이리스트 첫 곡을 튼다. 전체 반복이면 끝난 곡을 플레이리스트 맨 끝에 다시 담는다.
-  // 나중에 영상이 끝날 때 자동으로 넘기고 싶으면 이 함수를 부르면 된다.
-  async advance(): Promise<MusicRequest | null> {
+  // 재생 완료: 지금 곡을 지난 선곡으로 넘기고 플레이리스트 첫 곡을 튼다.
+  // expectedId를 주면 그 곡이 아직 재생 중일 때만 넘긴다. 손님 화면 여러 곳에서 영상 끝을 동시에 알려도 한 곡만 넘어가게 한다.
+  async advance(expectedId?: string): Promise<MusicRequest | null> {
     const all = requests();
     const current = all.find((request) => request.status === 'playing');
+    if (expectedId !== undefined && current?.id !== expectedId) return null;
     if (current) {
+      current.status = 'played';
       current.playedAt = new Date().toISOString();
-      if (readSettings().repeat === 'all' && current.youtubeVideoId) {
-        current.status = 'queued';
-        current.playlistOrder = lastPlaylistOrder(all) + 1;
-      } else {
-        current.status = 'played';
-      }
     }
-    const next = playlistOf(all)[0] ?? null;
-    if (next) {
-      next.status = 'playing';
-      next.playlistOrder = null;
-    }
+    const next = playNextIfIdle(all);
     writeMockData(fileName, all);
     return next;
   },
 
-  // 선곡 취소: 지금 곡을 멈추고 플레이리스트 맨 앞으로 되돌린다. 영상이 없던 곡은 접수함으로 돌아간다.
+  // 선곡 취소: 지금 곡을 링크는 남긴 채 접수함으로 되돌리고 플레이리스트 첫 곡을 튼다.
   async cancelCurrent(): Promise<boolean> {
     const all = requests();
     const current = all.find((request) => request.status === 'playing');
     if (!current) return false;
-    if (current.youtubeVideoId) {
-      current.status = 'queued';
-      current.playlistOrder = firstPlaylistOrder(all) - 1;
-    } else {
-      current.status = 'pending';
-    }
+    current.status = 'pending';
+    current.playlistOrder = null;
+    playNextIfIdle(all);
     writeMockData(fileName, all);
     return true;
   },
@@ -308,13 +315,5 @@ export const mockMusicBoxRepository = {
     target.status = 'cancelled';
     writeMockData(fileName, all);
     return true;
-  },
-
-  async getRepeatMode(): Promise<RepeatMode> {
-    return readSettings().repeat;
-  },
-
-  async setRepeatMode(repeat: RepeatMode): Promise<void> {
-    writeMockData(settingsFileName, { repeat });
   },
 };

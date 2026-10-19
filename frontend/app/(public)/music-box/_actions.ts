@@ -34,3 +34,11 @@ export async function submitMusicRequest(_previous: RequestFormState, formData: 
   revalidatePath("/admin/music-box");
   redirect("/music-box?submitted=1");
 }
+
+// 손님 화면에서 지금 곡 영상이 끝나면 부른다. 그 곡이 아직 재생 중일 때만 지난 선곡으로 넘기고 플레이리스트 다음 곡을 튼다.
+// 이미 다른 화면이 넘겼더라도 이 화면이 새 곡을 받아 가도록 화면은 항상 새로 그린다.
+export async function finishPlaying(id: string): Promise<void> {
+  if (typeof id !== "string" || !id) return;
+  await mockMusicBoxRepository.advance(id);
+  for (const path of ["/", "/music-box", "/mypage/music-box", "/admin/music-box"]) revalidatePath(path);
+}

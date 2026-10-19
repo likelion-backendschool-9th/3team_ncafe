@@ -7,7 +7,7 @@ import { RequestMemo, RequestMemoBoard } from "./RequestMemo";
 
 // 홈 하단 뮤직박스 칸: 지금 흐르는 노래(DJ 부스)와 다음 차례 신청곡 3곡을 사연과 함께 보여 준다.
 export async function MusicBoxHighlight() {
-  const [requests, repeat] = await Promise.all([mockMusicBoxRepository.list(), mockMusicBoxRepository.getRepeatMode()]);
+  const requests = await mockMusicBoxRepository.list();
   const playing = requests.find((request) => request.status === "playing");
   const playlist = playlistOf(requests);
   const nextUp = playlist.slice(0, 3);
@@ -39,7 +39,6 @@ export async function MusicBoxHighlight() {
             youtubeVideoId: playing.youtubeVideoId,
             handwriting: playingHand,
           } : null}
-          repeatOne={repeat === "one"}
           storySpeech
         />
       </div>

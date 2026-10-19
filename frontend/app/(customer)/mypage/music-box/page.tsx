@@ -22,11 +22,10 @@ function statusBadge(request: MusicRequest, position: number | undefined): strin
 }
 
 export default async function MyMusicRequestsPage({ searchParams }: { searchParams: SearchParams }) {
-  const [user, { deleted, error }, requests, repeat] = await Promise.all([
+  const [user, { deleted, error }, requests] = await Promise.all([
     requireRole("customer", "/mypage/music-box"),
     searchParams,
     mockMusicBoxRepository.list(),
-    mockMusicBoxRepository.getRepeatMode(),
   ]);
 
   const playing = requests.find((request) => request.status === "playing");
@@ -62,7 +61,9 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
       <section aria-label="뮤직박스">
         <div className={boothStyles.frame}>
           <DjBooth
+            key={playing?.id ?? "empty"}
             nowPlaying={playing ? {
+              id: playing.id,
               songTitle: playing.songTitle,
               artist: playing.artist,
               story: playing.story,
@@ -70,7 +71,6 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
               youtubeVideoId: playing.youtubeVideoId,
               handwriting: playing.userId === user.id ? myHand : otherHand,
             } : null}
-            repeatOne={repeat === "one"}
           />
         </div>
 

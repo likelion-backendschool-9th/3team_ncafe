@@ -16,11 +16,10 @@ function byPlayedAtDesc(a: MusicRequest, b: MusicRequest): number {
 }
 
 export default async function MusicBoxPage({ searchParams }: { searchParams: SearchParams }) {
-  const [{ submitted, page: pageParam }, user, requests, repeat] = await Promise.all([
+  const [{ submitted, page: pageParam }, user, requests] = await Promise.all([
     searchParams,
     getCurrentUser(),
     mockMusicBoxRepository.list(),
-    mockMusicBoxRepository.getRepeatMode(),
   ]);
 
   // 목록은 재생 중 → 플레이리스트 → 접수 → 재생 완료 순서다. 취소된 신청은 보이지 않는다.
@@ -60,7 +59,7 @@ export default async function MusicBoxPage({ searchParams }: { searchParams: Sea
 
         <div className={styles.topRow}>
           <RequestForm memberName={user?.name ?? null} requestNumber={requests.length + 1} />
-          <NowPlaying playing={playing} next={playlist[0]} repeatOne={repeat === "one"} />
+          <NowPlaying playing={playing} next={playlist[0]} />
         </div>
 
         <RequestTable

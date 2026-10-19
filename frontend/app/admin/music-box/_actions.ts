@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { mockMusicBoxRepository, type RepeatMode } from "@/app/_lib/mock/music-box";
+import { mockMusicBoxRepository } from "@/app/_lib/mock/music-box";
 import { requireRole } from "@/app/_lib/session/session";
 import { parseYouTubeVideoId } from "@/app/_lib/youtube";
 
@@ -38,9 +38,15 @@ export async function addToPlaylist(id: string, _previous: PlaylistFormState, fo
   return {};
 }
 
-export async function removeFromPlaylist(id: string): Promise<void> {
+export async function returnToInbox(id: string): Promise<void> {
   await requireAdmin();
-  await mockMusicBoxRepository.removeFromPlaylist(id);
+  await mockMusicBoxRepository.returnToInbox(id);
+  refreshMusicBox();
+}
+
+export async function moveToPlayed(id: string): Promise<void> {
+  await requireAdmin();
+  await mockMusicBoxRepository.moveToPlayed(id);
   refreshMusicBox();
 }
 
@@ -71,14 +77,5 @@ export async function cancelCurrent(): Promise<void> {
 export async function cancelRequest(id: string): Promise<void> {
   await requireAdmin();
   await mockMusicBoxRepository.cancelRequest(id);
-  refreshMusicBox();
-}
-
-const repeatModes: RepeatMode[] = ["off", "one", "all"];
-
-export async function setRepeatMode(mode: RepeatMode): Promise<void> {
-  await requireAdmin();
-  if (!repeatModes.includes(mode)) return;
-  await mockMusicBoxRepository.setRepeatMode(mode);
   refreshMusicBox();
 }

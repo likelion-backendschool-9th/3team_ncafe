@@ -45,6 +45,9 @@ const EMBED_BLOCKED = new Set([101, 150]);
 
 let apiReady: Promise<YouTubeNamespace> | null = null;
 
+// 이 화면에서 곡이 끝까지 재생돼 다음 곡으로 넘어갈 때만, 새로 뜨는 다음 곡을 바로 이어서 튼다.
+let continueWithNext = false;
+
 // IFrame API 스크립트는 페이지에 플레이어가 여러 개 있어도 한 번만 불러온다.
 function loadYouTubeApi(): Promise<YouTubeNamespace> {
   if (window.YT?.Player) return Promise.resolve(window.YT);
@@ -100,12 +103,12 @@ export function clock(seconds: number): string {
 
 // 뮤직박스 페이지와 DJ 부스가 같은 YouTube 재생 동작(재생/일시정지, 위치 이동)을 쓰도록 묶는다.
 // 플레이어 화면은 YouTube 정책상 가리거나 숨기면 안 되므로, frameRef를 붙인 칸을 그대로 보여 줘야 한다.
-// loop: 관리자가 한 곡 반복을 켜면 영상이 끝날 때 처음부터 다시 튼다.
-export function useYouTubePlayback(videoId: string | null, { controls = false, loop = false } = {}) {
+// onEnded: 영상이 끝까지 재생되면 부른다. 뮤직박스는 여기서 플레이리스트 다음 곡으로 넘긴다.
+export function useYouTubePlayback(videoId: string | null, { controls = false, onEnded }: { controls?: boolean; onEnded?: () => void } = {}) {
   const frameRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YouTubePlayer | null>(null);
-  // 반복 설정이 바뀌어도 플레이어를 새로 만들지 않도록 최신 값만 따로 들고 있는다.
-  const loopRef = useRef(loop);
+  // 콜백이 바뀌어도 플레이어를 새로 만들지 않도록 최신 값만 따로 들고 있는다.
+  const onEndedRef = useRef(onEnded);
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
@@ -136,12 +139,15 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
             setSound(saved);
             setReady(true);
             setDuration(target.getDuration());
+            if (continueWithNext) {
+              continueWithNext = false;
+              target.playVideo();
+            }
           },
           onStateChange: ({ data, target }) => {
-            if (data === ENDED && loopRef.current) {
-              target.seekTo(0, true);
-              target.playVideo();
-              return;
+            if (data === ENDED && onEndedRef.current) {
+              continueWithNext = true;
+              onEndedRef.current();
             }
             setPlaying(data === PLAYING);
             setDuration(target.getDuration());
@@ -171,8 +177,8 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
   }, [videoId, controls]);
 
   useEffect(() => {
-    loopRef.current = loop;
-  }, [loop]);
+    onEndedRef.current = onEnded;
+  }, [onEnded]);
 
   // IFrame API는 재생 시간 변화를 알려 주지 않아서, 재생 중에만 0.5초마다 읽어 온다.
   useEffect(() => {

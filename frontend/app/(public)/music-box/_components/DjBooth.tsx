@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import type { MusicRequest } from "@/app/_lib/mock/music-box";
+import { finishPlaying } from "../_actions";
 import styles from "./music-box-highlight.module.css";
 import { useStorySpeech } from "./useStorySpeech";
 import { clock, useYouTubePlayback } from "./useYouTubePlayback";
@@ -31,9 +32,12 @@ function Bulbs({ side }: { side: "top" | "left" | "right" }) {
 
 // DJ 부스: 책상 위 턴테이블에 LP 재킷(영상)을 얹고, 옆에 지금 곡의 신청곡 메모지를 둔다.
 // YouTube 화면은 정책상 가리지 않아야 해서 재킷 앞면에 그대로 보이고, LP판은 재킷 뒤에서 반쯤 나와 돈다.
-export function DjBooth({ nowPlaying, repeatOne = false, storySpeech = false }: { nowPlaying: NowPlaying | null; repeatOne?: boolean; storySpeech?: boolean }) {
+export function DjBooth({ nowPlaying, storySpeech = false }: { nowPlaying: NowPlaying | null; storySpeech?: boolean }) {
   const videoId = nowPlaying?.youtubeVideoId ?? null;
-  const { frameRef, ready, playing, current, duration, progress, error, toggle, seek, volume } = useYouTubePlayback(videoId, { loop: repeatOne });
+  const playingId = nowPlaying?.id;
+  const { frameRef, ready, playing, current, duration, progress, error, toggle, seek, volume } = useYouTubePlayback(videoId, {
+    onEnded: playingId ? () => void finishPlaying(playingId) : undefined,
+  });
   const speech = useStorySpeech(storySpeech ? nowPlaying?.id ?? null : null, volume.level);
 
   return (
