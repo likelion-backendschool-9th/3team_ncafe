@@ -71,11 +71,6 @@
 .preview figcaption { color: var(--muted); font-size: 0.8rem; }
 .previewEmpty { display: grid; height: 200px; place-items: center; border: 1px dashed var(--border); border-radius: 6px; background: #f5ead6; color: var(--muted); font-size: 0.85rem; }
 
-.repeat { display: inline-flex; margin-top: 0.7rem; border: 1px solid #a82b2d; border-radius: 3px; overflow: hidden; }
-.repeat form + form button { border-left: 1px solid #a82b2d; }
-.repeat button { min-height: 36px; padding: 0 0.8rem; border: 0; background: transparent; color: #9b2924; cursor: pointer; font: inherit; font-size: 0.85rem; font-weight: 700; }
-.repeat button[aria-pressed="true"] { background: #a82b2d; color: #fff8ec; }
-
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .pushEnd { margin-left: auto; }
 .primaryButton, .outlineButton, .dangerButton { min-height: 44px; padding: 0 1rem; border-radius: 2px; cursor: pointer; font: inherit; font-weight: 800; }
@@ -86,11 +81,12 @@
 .outlineButton:hover { background: #dfeee9; }
 .dangerButton { border: 1px solid #9b2924; background: transparent; color: #9b2924; font-weight: 700; }
 .dangerButton:hover { background: #f6dcd8; }
-.primaryButton:focus-visible, .outlineButton:focus-visible, .dangerButton:focus-visible, .repeat button:focus-visible, .reorder button:focus-visible, .linkField input:focus-visible { outline: 3px solid #207a72; outline-offset: 2px; }
+.primaryButton:focus-visible, .outlineButton:focus-visible, .dangerButton:focus-visible, .reorder button:focus-visible, .linkField input:focus-visible { outline: 3px solid #207a72; outline-offset: 2px; }
 
-.history { display: grid; gap: 0.6rem; padding-left: 2.5rem; }
-.history li { padding-right: 0.6rem; }
-.history span { float: right; color: var(--muted); font-size: 0.85rem; }
+.history { display: grid; gap: 0.6rem; list-style: none; }
+.history li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.8rem; }
+.historyTitle { min-width: 0; overflow-wrap: anywhere; }
+.historyTime { color: var(--muted); font-size: 0.85rem; }
 
 @media (max-width: 760px) {
   .sectionHint { margin-left: 0; flex-basis: 100%; }
@@ -100,4 +96,8 @@
   .mediaRow > :first-child { flex-basis: auto; }
   .mediaSide { min-height: 0; }
 }
-@media (max-width: 640px) { .history span { display: block; float: none; } }
+@media (max-width: 640px) {
+  .history li { grid-template-columns: auto minmax(0, 1fr); }
+  .history li form { grid-row: span 2; }
+  .historyTime { grid-column: 2; }
+}

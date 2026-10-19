@@ -1,6 +1,6 @@
-import { inboxOf, mockMusicBoxRepository, playlistOf, type MusicRequest, type RepeatMode } from "@/app/_lib/mock/music-box";
+import { inboxOf, mockMusicBoxRepository, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
 import { requireRole } from "@/app/_lib/session/session";
-import { cancelCurrent, cancelRequest, finishCurrent, moveInPlaylist, playNow, removeFromPlaylist, setRepeatMode } from "./_actions";
+import { cancelCurrent, cancelRequest, finishCurrent, moveInPlaylist, moveToPlayed, playNow, returnToInbox } from "./_actions";
 import { AddToPlaylistForm } from "./_components/AddToPlaylistForm";
 import { CancelRequestForm } from "./_components/CancelRequestForm";
 import { RequestCard } from "./_components/RequestCard";
@@ -19,8 +19,6 @@ function requester(request: MusicRequest): string {
   return `${request.requesterName} · ${requestedAtFormat.format(new Date(request.createdAt))}`;
 }
 
-const repeatLabels: Record<RepeatMode, string> = { off: "반복 끔", one: "한 곡 반복", all: "전체 반복" };
-
 function Story({ request }: { request: MusicRequest }) {
   return <blockquote className={styles.story}>{request.story}</blockquote>;
 }
@@ -33,7 +31,7 @@ function MediaPreview({ request }: { request: MusicRequest }) {
 
 export default async function AdminMusicBoxPage() {
   await requireRole("admin", "/admin/music-box");
-  const [requests, repeat] = await Promise.all([mockMusicBoxRepository.list(), mockMusicBoxRepository.getRepeatMode()]);
+  const requests = await mockMusicBoxRepository.list();
   const playing = requests.find((request) => request.status === "playing");
   const playlist = playlistOf(requests);
   const inbox = inboxOf(requests);
@@ -62,7 +60,6 @@ export default async function AdminMusicBoxPage() {
             songTitle={playing.songTitle}
             artist={playing.artist}
             requester={requester(playing)}
-            chip={repeat === "off" ? undefined : { label: repeatLabels[repeat], tone: "accent" }}
             defaultOpen
           >
             <Story request={playing} />
@@ -71,14 +68,8 @@ export default async function AdminMusicBoxPage() {
               <div className={styles.mediaSide}>
                 <div>
                   <p>지금 손님 화면에서 나오는 곡이에요.</p>
-                  <p className={styles.hint}>재생 완료를 누르면 플레이리스트의 다음 곡이 이어서 나와요.</p>
-                  <div className={styles.repeat} role="group" aria-label="반복">
-                    {(Object.keys(repeatLabels) as RepeatMode[]).map((mode) => (
-                      <form key={mode} action={setRepeatMode.bind(null, mode)}>
-                        <button type="submit" aria-pressed={repeat === mode}>{repeatLabels[mode]}</button>
-                      </form>
-                    ))}
-                  </div>
+                  <p className={styles.hint}>영상이 끝나거나 재생 완료를 누르면 지난 선곡으로 넘어가고, 플레이리스트 맨 앞 곡이 자동으로 재생돼요.</p>
+                  <p className={styles.hint}>선곡 취소를 누르면 접수된 신청곡으로 돌아가요.</p>
                 </div>
                 <div className={styles.actions}>
                   <form action={finishCurrent}>
@@ -91,7 +82,7 @@ export default async function AdminMusicBoxPage() {
               </div>
             </div>
           </RequestCard>
-        ) : <p className={styles.empty}>선곡된 노래가 없습니다. 플레이리스트에서 한 곡을 틀어 주세요.</p>}
+        ) : <p className={styles.empty}>선곡된 노래가 없습니다. 플레이리스트에 곡을 담으면 바로 재생돼요.</p>}
       </section>
 
       <section className={styles.section} aria-labelledby="playlist-title">
@@ -134,8 +125,11 @@ export default async function AdminMusicBoxPage() {
                       <form action={playNow.bind(null, request.id)}>
                         <button className={styles.primaryButton} type="submit">지금 재생</button>
                       </form>
-                      <form action={removeFromPlaylist.bind(null, request.id)} className={styles.pushEnd}>
-                        <button className={styles.outlineButton} type="submit">플레이리스트에서 빼기</button>
+                      <form action={returnToInbox.bind(null, request.id)} className={styles.pushEnd}>
+                        <button className={styles.dangerButton} type="submit">접수된 신청곡으로 되돌리기</button>
+                      </form>
+                      <form action={moveToPlayed.bind(null, request.id)}>
+                        <button className={styles.outlineButton} type="submit">지난 선곡으로 빼기</button>
                       </form>
                     </div>
                   </div>
@@ -184,8 +178,11 @@ export default async function AdminMusicBoxPage() {
           <ul className={styles.history}>
             {played.map((request) => (
               <li key={request.id}>
-                {request.songTitle} · {request.artist}
-                <span>{request.playedAt && requestedAtFormat.format(new Date(request.playedAt))}</span>
+                <form action={returnToInbox.bind(null, request.id)}>
+                  <button className={styles.dangerButton} type="submit" aria-label={`${request.songTitle} 접수된 신청곡으로 되돌리기`}>접수된 신청곡으로</button>
+                </form>
+                <span className={styles.historyTitle}>{request.songTitle} · {request.artist}</span>
+                <span className={styles.historyTime}>{request.playedAt && requestedAtFormat.format(new Date(request.playedAt))}</span>
               </li>
             ))}
           </ul>
