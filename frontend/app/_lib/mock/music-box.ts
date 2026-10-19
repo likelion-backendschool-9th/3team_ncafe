@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readMockData, writeMockData } from './store';
 
 // 접수(pending) → 관리자가 링크를 붙여 플레이리스트에 담음(queued) → 재생 중(playing) → 재생 완료(played).
@@ -177,6 +177,15 @@ export function onAirOf(request: MusicRequest | undefined): OnAir | null {
     endsAt: endsAt(request),
     serverNow: Date.now(),
   };
+}
+
+// 뮤직박스 화면에 보이는 상태(신청곡·순서·재생 중인 곡과 시각)를 짧게 줄인 값.
+// 열려 있는 화면은 이 값만 자주 확인하고, 달라졌을 때만 화면을 새로 받아 온다.
+export function musicBoxVersion(all: MusicRequest[]): string {
+  const state = [...all]
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map((request) => [request.id, request.status, request.playlistOrder, request.youtubeVideoId, request.startedAt, request.durationSeconds]);
+  return createHash('sha1').update(JSON.stringify(state)).digest('hex').slice(0, 16);
 }
 
 function startPlaying(request: MusicRequest, at: number): void {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { mockMusicBoxRepository, onAirOf, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
+import { mockMusicBoxRepository, musicBoxVersion, onAirOf, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
 import { requireRole } from "@/app/_lib/session/session";
 import { DjBooth } from "@/app/(public)/music-box/_components/DjBooth";
 import { handwritingSequence } from "@/app/(public)/music-box/_components/handwriting";
@@ -45,7 +45,7 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
-      <MusicBoxRefresher endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
+      <MusicBoxRefresher version={musicBoxVersion(requests)} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
       <nav className={styles.breadcrumb} aria-label="현재 위치">
         <Link href="/mypage">마이페이지</Link>
         <span aria-hidden="true">/</span>

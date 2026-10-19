@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { mockMusicBoxRepository, onAirOf, playlistOf } from "@/app/_lib/mock/music-box";
+import { mockMusicBoxRepository, musicBoxVersion, onAirOf, playlistOf } from "@/app/_lib/mock/music-box";
 import { DjBooth } from "./DjBooth";
 import { handwritingSequence } from "./handwriting";
 import styles from "./music-box-highlight.module.css";
@@ -19,7 +19,7 @@ export async function MusicBoxHighlight() {
 
   return (
     <section className={`container ${styles.section}`} aria-labelledby="home-music-box-title">
-      <MusicBoxRefresher endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
+      <MusicBoxRefresher version={musicBoxVersion(requests)} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
       <div className={styles.head}>
         <div>
           <p className={styles.eyebrow}>다방 이야기 · 뮤직박스</p>

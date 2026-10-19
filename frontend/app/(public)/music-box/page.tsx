@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/app/_lib/session/session";
-import { inboxOf, mockMusicBoxRepository, onAirOf, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
+import { inboxOf, mockMusicBoxRepository, musicBoxVersion, onAirOf, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
 import { MusicBoxRefresher } from "./_components/MusicBoxRefresher";
 import { NowPlaying } from "./_components/NowPlaying";
 import { RequestForm } from "./_components/RequestForm";
@@ -44,7 +44,7 @@ export default async function MusicBoxPage({ searchParams }: { searchParams: Sea
 
   return (
     <main className={styles.page}>
-      <MusicBoxRefresher endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
+      <MusicBoxRefresher version={musicBoxVersion(requests)} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
       <div className="container">
         <header className={styles.hero}>
           <span className={styles.heroRecord} aria-hidden="true" />

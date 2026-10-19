@@ -43,6 +43,7 @@ declare global {
 // https://developers.google.com/youtube/iframe_api_reference#Events
 const PLAYING = 1;
 const ENDED = 0;
+const PAUSED = 2;
 const EMBED_BLOCKED = new Set([101, 150]);
 
 // 손님 화면 재생 위치가 서버 기준과 이만큼(초) 벌어지면 다시 맞춘다. 너무 작으면 버퍼링 때마다 건너뛴다.
@@ -54,9 +55,8 @@ let apiReady: Promise<YouTubeNamespace> | null = null;
 
 // 손님 플레이어는 관리자가 튼 곡을 저절로 재생한다.
 // 브라우저는 사용자가 이 페이지에서 한 번이라도 누른 뒤에만 소리 나는 재생을 허락하고, 그 허락은 새로고침 전까지 유지된다.
-// 아직 누른 적이 없으면 음소거로 틀고 "소리 켜기"를 보여 준다. 손님이 직접 멈추면 다음 곡도 저절로 틀지 않는다.
+// 아직 누른 적이 없으면 음소거로 틀고 "소리 켜기"를 보여 준다.
 let soundUnlocked = false;
-let stoppedByUser = false;
 
 function canPlaySound(): boolean {
   const activation = navigator.userActivation as UserActivation | undefined;
@@ -148,6 +148,8 @@ type PlaybackOptions = {
   controls?: boolean;
   // 뮤직박스 플레이어. 관리자가 튼 곡을 서버 시각에 맞춰 저절로 재생하고, 위치는 옮길 수 없다.
   live?: boolean;
+  // 손님 화면용. 영상을 눌러 멈춰도 바로 다른 손님들이 듣는 지점부터 다시 틀고, 키보드 조작도 막는다. 손님은 소리만 조절한다.
+  locked?: boolean;
   // 지금 곡의 재생 시작 시각. 없으면(예전 데이터) 처음부터 튼다.
   sync?: PlaybackSync | null;
   // 영상이 끝까지 재생되면 부른다.
@@ -158,13 +160,14 @@ type PlaybackOptions = {
 
 // 뮤직박스 페이지와 DJ 부스, 관리자 미리보기가 같은 YouTube 재생 동작을 쓰도록 묶는다.
 // 플레이어 화면은 YouTube 정책상 가리거나 숨기면 안 되므로, frameRef를 붙인 칸을 그대로 보여 줘야 한다.
-export function useYouTubePlayback(videoId: string | null, { controls = false, live = false, sync = null, onEnded, onDuration }: PlaybackOptions = {}) {
+export function useYouTubePlayback(videoId: string | null, { controls = false, live = false, locked = false, sync = null, onEnded, onDuration }: PlaybackOptions = {}) {
   const frameRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YouTubePlayer | null>(null);
   // 콜백·시각이 바뀌어도 플레이어를 새로 만들지 않도록 최신 값만 따로 들고 있는다.
   const onEndedRef = useRef(onEnded);
   const onDurationRef = useRef(onDuration);
   const liveRef = useRef(live);
+  const lockedRef = useRef(locked);
   const syncRef = useRef<SyncState | null>(null);
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -206,7 +209,7 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
         videoId,
         width: "100%",
         height: "100%",
-        playerVars: { controls: controls ? 1 : 0, playsinline: 1, rel: 0 },
+        playerVars: { controls: controls ? 1 : 0, disablekb: lockedRef.current ? 1 : 0, playsinline: 1, rel: 0 },
         events: {
           onReady: ({ target }) => {
             const saved = readSound();
@@ -215,11 +218,13 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
             setReady(true);
             setDuration(target.getDuration());
             reportDuration(target);
-            if (liveRef.current && !stoppedByUser) autoStart(target);
+            if (liveRef.current) autoStart(target);
           },
           onStateChange: ({ data, target }) => {
             if (data === ENDED) onEndedRef.current?.();
             if (data === PLAYING && liveRef.current) keepInSync(target, syncRef.current);
+            // YouTube 화면은 정책상 가리거나 막을 수 없어서 눌러서 멈출 수는 있다. 멈추면 바로 지금 위치부터 다시 튼다.
+            if (data === PAUSED && lockedRef.current) startLive(target, syncRef.current);
             reportDuration(target);
             setPlaying(data === PLAYING);
             setDuration(target.getDuration());
@@ -260,7 +265,8 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
     onEndedRef.current = onEnded;
     onDurationRef.current = onDuration;
     liveRef.current = live;
-  }, [onEnded, onDuration, live]);
+    lockedRef.current = locked;
+  }, [onEnded, onDuration, live, locked]);
 
   // 화면이 새로 그려질 때마다 서버 시각이 같이 오므로, 그때 손님 기기 시계와의 차이를 다시 잰다.
   const startedAt = sync?.startedAt;
@@ -285,23 +291,6 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
     }, 500);
     return () => window.clearInterval(timer);
   }, [playing]);
-
-  // 손님은 위치를 옮길 수 없다. 멈췄다가 다시 들으면 다른 손님들이 듣는 지점부터 이어서 나온다.
-  // 직접 멈추면 다음 곡도 저절로 틀지 않고, 다시 들으면 그때부터 다시 이어서 튼다.
-  function toggle() {
-    const player = playerRef.current;
-    if (!player || !ready) return;
-    if (playing) {
-      if (live) stoppedByUser = true;
-      player.pauseVideo();
-    } else if (live) {
-      stoppedByUser = false;
-      unlockSound(player, sound);
-      startLive(player, syncRef.current);
-    } else {
-      player.playVideo();
-    }
-  }
 
   // 손님이 누른 순간부터는 소리를 낼 수 있으므로, 고른 볼륨·음소거 설정대로 되돌린다.
   function unlockSound(player: YouTubePlayer, next: Sound) {
@@ -342,5 +331,5 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
   const progress = duration ? (current / duration) * 100 : 0;
   const volume = { level: sound.muted || soundBlocked ? 0 : sound.volume, change: changeVolume, toggleMute };
 
-  return { frameRef, ready, playing, current, duration, progress, error, toggle, volume, soundBlocked, unmute };
+  return { frameRef, ready, playing, current, duration, progress, error, volume, soundBlocked, unmute };
 }
