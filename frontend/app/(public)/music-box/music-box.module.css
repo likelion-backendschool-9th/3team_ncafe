@@ -239,6 +239,9 @@
 .player { display: flex; align-items: center; gap: 10px; }
 .progress { flex: 1; min-width: 0; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--red) var(--progress, 0%), #c9b08c var(--progress, 0%)); }
 .time { color: var(--muted); font-size: 0.72rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.unmuteButton { flex: none; padding: 0.35rem 0.75rem; border: 0; border-radius: 999px; background: var(--red); color: #fff8ec; cursor: pointer; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+.unmuteButton:hover { background: #812125; }
+.unmuteButton:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
 .playButton { display: grid; flex: 0 0 36px; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--red); color: #fff8ec; cursor: pointer; font-size: 0.75rem; }
 .playButton:hover { background: #812125; }
 .playButton:disabled { opacity: 0.55; cursor: wait; }

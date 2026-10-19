@@ -8,10 +8,11 @@ import { clock, useYouTubePlayback } from "./useYouTubePlayback";
 import { VolumeControl } from "./VolumeControl";
 
 // LP 재킷 안에 들어가는 영상과 재생바. 재킷 틀은 NowPlaying이 그린다.
-// 손님은 관리자가 튼 곡을 듣기만 한다. onAir(서버 재생 시각)에 맞춰 다른 손님과 같은 지점을 듣고, 위치는 옮길 수 없다.
+// 손님은 관리자가 튼 곡을 듣기만 한다. 곡이 올라오면 저절로 재생되고, onAir(서버 재생 시각)에 맞춰 다른 손님과 같은 지점을 듣는다.
+// 이 페이지에서 아직 아무것도 누르지 않았으면 브라우저 정책상 음소거로 재생되므로 "소리 켜기"를 보여 준다.
 // 영상이 끝나면 이 곡(requestId)을 끝내고 플레이리스트 다음 곡으로 넘긴다.
 export function YouTubePlayer({ requestId, videoId, title, onAir }: { requestId: string; videoId: string; title: string; onAir: OnAir | null }) {
-  const { frameRef, ready, playing, current, duration, progress, error, toggle, volume } = useYouTubePlayback(videoId, {
+  const { frameRef, ready, playing, current, duration, progress, error, toggle, volume, soundBlocked, unmute } = useYouTubePlayback(videoId, {
     live: true,
     sync: onAir,
     onEnded: () => void finishPlaying(requestId),
@@ -29,8 +30,8 @@ export function YouTubePlayer({ requestId, videoId, title, onAir }: { requestId:
           type="button"
           onClick={toggle}
           disabled={!ready}
-          aria-label={playing ? `${title} 듣기 멈추기` : `${title} 같이 듣기`}
-          title={playing ? "듣기 멈추기" : "다른 손님들과 같은 곡 듣기"}
+          aria-label={playing ? `${title} 듣기 멈추기` : `${title} 다시 듣기`}
+          title={playing ? "듣기 멈추기" : "다른 손님들이 듣는 곳부터 다시 듣기"}
         >
           {playing ? "❚❚" : "▶"}
         </button>
@@ -44,7 +45,11 @@ export function YouTubePlayer({ requestId, videoId, title, onAir }: { requestId:
           aria-valuetext={`${clock(current)} / ${clock(duration)}`}
           style={{ "--progress": `${progress}%` } as CSSProperties}
         />
-        <span className={styles.time}>{clock(current)} / {clock(duration)}</span>
+        {soundBlocked ? (
+          <button className={styles.unmuteButton} type="button" onClick={unmute}>🔊 소리 켜기</button>
+        ) : (
+          <span className={styles.time}>{clock(current)} / {clock(duration)}</span>
+        )}
         <VolumeControl title={title} level={volume.level} disabled={!ready} onChange={volume.change} onToggleMute={volume.toggleMute} />
       </div>
     </>

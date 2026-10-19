@@ -4,6 +4,7 @@ import { requireRole } from "@/app/_lib/session/session";
 import { cancelCurrent, cancelRequest, finishCurrent, moveInPlaylist, moveToPlayed, playNow, returnToInbox } from "./_actions";
 import { AddToPlaylistForm } from "./_components/AddToPlaylistForm";
 import { CancelRequestForm } from "./_components/CancelRequestForm";
+import { OnAirPlayer } from "./_components/OnAirPlayer";
 import { RequestCard } from "./_components/RequestCard";
 import { YouTubePreview } from "./_components/YouTubePreview";
 import styles from "./music-box.module.css";
@@ -67,10 +68,12 @@ export default async function AdminMusicBoxPage() {
           >
             <Story request={playing} />
             <div className={styles.mediaRow}>
-              <MediaPreview request={playing} />
+              {playing.youtubeVideoId
+                ? <OnAirPlayer key={playing.id} requestId={playing.id} videoId={playing.youtubeVideoId} title={playing.songTitle} onAir={onAir} />
+                : <MediaPreview request={playing} />}
               <div className={styles.mediaSide}>
                 <div>
-                  <p>지금 손님 화면에서 나오는 곡이에요.</p>
+                  <p>지금 손님 화면에서 같은 위치로 함께 나오는 곡이에요.</p>
                   <p className={styles.hint}>
                     {playing.durationSeconds
                       ? "영상 길이만큼 지나면 손님 화면이 닫혀 있어도 지난 선곡으로 넘어가고, 플레이리스트 맨 앞 곡이 자동으로 재생돼요."

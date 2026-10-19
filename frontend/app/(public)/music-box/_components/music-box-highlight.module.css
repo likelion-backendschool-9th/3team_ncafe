@@ -206,6 +206,9 @@
 .playButton:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
 .progress { flex: 1; min-width: 0; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--red) var(--progress, 0%), #c9b08c var(--progress, 0%)); }
 .time { color: var(--muted); font-size: 0.7rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.unmuteButton { flex: none; padding: 4px 10px; border: 0; border-radius: 999px; background: var(--red); color: #fff; cursor: pointer; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
+.unmuteButton:hover { background: #812125; }
+.unmuteButton:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
 .sleeveFoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; font-family: Georgia, serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.2em; }
 .sleeveFoot b { padding: 1px 6px; border: 1.5px solid var(--ink); font-family: Arial, sans-serif; font-size: 0.62rem; letter-spacing: 0.1em; }
 .sleeveError { color: var(--red); font-family: var(--font-body), sans-serif; font-size: 0.78rem; letter-spacing: 0; }

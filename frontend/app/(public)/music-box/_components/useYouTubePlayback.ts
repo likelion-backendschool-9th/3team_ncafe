@@ -24,6 +24,8 @@ type YouTubePlayerOptions = {
     onReady: (event: { target: YouTubePlayer }) => void;
     onStateChange: (event: { data: number; target: YouTubePlayer }) => void;
     onError: (event: { data: number }) => void;
+    // 브라우저가 소리 나는 자동재생을 막았을 때 부른다.
+    onAutoplayBlocked: (event: { target: YouTubePlayer }) => void;
   };
 };
 
@@ -50,9 +52,16 @@ const DRIFT_CHECK_EVERY = 6;
 
 let apiReady: Promise<YouTubeNamespace> | null = null;
 
-// 손님이 이 화면에서 "같이 듣기"를 누른 뒤로는 곡이 바뀌어도 새 곡을 바로 이어서 튼다.
-// 브라우저는 사용자가 한 번 누른 페이지에서만 소리 나는 재생을 허락하고, 그 허락은 새로고침 전까지 유지된다.
-let listening = false;
+// 손님 플레이어는 관리자가 튼 곡을 저절로 재생한다.
+// 브라우저는 사용자가 이 페이지에서 한 번이라도 누른 뒤에만 소리 나는 재생을 허락하고, 그 허락은 새로고침 전까지 유지된다.
+// 아직 누른 적이 없으면 음소거로 틀고 "소리 켜기"를 보여 준다. 손님이 직접 멈추면 다음 곡도 저절로 틀지 않는다.
+let soundUnlocked = false;
+let stoppedByUser = false;
+
+function canPlaySound(): boolean {
+  const activation = navigator.userActivation as UserActivation | undefined;
+  return soundUnlocked || activation?.hasBeenActive === true;
+}
 
 // 서버 시각 기준으로 지금 곡이 몇 초째여야 하는지 계산하는 데 쓰는 값. offset은 (서버 시각 - 손님 기기 시각)이다.
 export type PlaybackSync = { startedAt: string; serverNow: number };
@@ -137,7 +146,7 @@ export function clock(seconds: number): string {
 type PlaybackOptions = {
   // YouTube 기본 조작 막대를 보여 줄지. 관리자 미리보기에서만 켠다.
   controls?: boolean;
-  // 손님 뮤직박스 플레이어. 관리자가 튼 곡을 서버 시각에 맞춰 듣기만 하고, 같이 듣기를 누른 뒤로는 다음 곡도 이어서 튼다.
+  // 뮤직박스 플레이어. 관리자가 튼 곡을 서버 시각에 맞춰 저절로 재생하고, 위치는 옮길 수 없다.
   live?: boolean;
   // 지금 곡의 재생 시작 시각. 없으면(예전 데이터) 처음부터 튼다.
   sync?: PlaybackSync | null;
@@ -163,6 +172,8 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
   const [duration, setDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [sound, setSound] = useState<Sound>(DEFAULT_SOUND);
+  // 브라우저 정책 때문에 음소거로 틀고 있는지. 손님이 고른 볼륨·음소거 설정과는 따로 둔다.
+  const [soundBlocked, setSoundBlocked] = useState(false);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -181,6 +192,14 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
       onDurationRef.current?.(length);
     }
 
+    // 소리를 낼 수 없는 페이지면 음소거로 먼저 튼다. 소리를 켜면 그때 손님이 고른 볼륨으로 돌아간다.
+    function autoStart(player: YouTubePlayer) {
+      const blocked = !canPlaySound();
+      if (blocked) player.mute();
+      setSoundBlocked(blocked);
+      startLive(player, syncRef.current);
+    }
+
     loadYouTubeApi().then((YT) => {
       if (cancelled) return;
       playerRef.current = new YT.Player(mount, {
@@ -196,7 +215,7 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
             setReady(true);
             setDuration(target.getDuration());
             reportDuration(target);
-            if (liveRef.current && listening) startLive(target, syncRef.current);
+            if (liveRef.current && !stoppedByUser) autoStart(target);
           },
           onStateChange: ({ data, target }) => {
             if (data === ENDED) onEndedRef.current?.();
@@ -212,6 +231,13 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
               ? "이 영상은 다른 사이트에서 재생할 수 없어요."
               : "영상을 불러오지 못했어요.");
           },
+          // 소리를 낼 수 있다고 봤는데도 막혔으면 음소거로 다시 튼다.
+          onAutoplayBlocked: ({ target }) => {
+            if (!liveRef.current) return;
+            target.mute();
+            setSoundBlocked(true);
+            target.playVideo();
+          },
         },
       });
     });
@@ -226,6 +252,7 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
       setCurrent(0);
       setDuration(0);
       setError(null);
+      setSoundBlocked(false);
     };
   }, [videoId, controls]);
 
@@ -260,25 +287,39 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
   }, [playing]);
 
   // 손님은 위치를 옮길 수 없다. 멈췄다가 다시 들으면 다른 손님들이 듣는 지점부터 이어서 나온다.
-  // 직접 멈추면 다음 곡도 저절로 틀지 않는다.
+  // 직접 멈추면 다음 곡도 저절로 틀지 않고, 다시 들으면 그때부터 다시 이어서 튼다.
   function toggle() {
     const player = playerRef.current;
     if (!player || !ready) return;
     if (playing) {
-      if (live) listening = false;
+      if (live) stoppedByUser = true;
       player.pauseVideo();
     } else if (live) {
-      listening = true;
+      stoppedByUser = false;
+      unlockSound(player, sound);
       startLive(player, syncRef.current);
     } else {
       player.playVideo();
     }
   }
 
+  // 손님이 누른 순간부터는 소리를 낼 수 있으므로, 고른 볼륨·음소거 설정대로 되돌린다.
+  function unlockSound(player: YouTubePlayer, next: Sound) {
+    soundUnlocked = true;
+    applySound(player, next);
+    setSoundBlocked(false);
+  }
+
+  function unmute() {
+    const player = playerRef.current;
+    if (!player || !ready) return;
+    unlockSound(player, sound);
+  }
+
   function changeSound(next: Sound) {
     const player = playerRef.current;
     if (!player || !ready) return;
-    applySound(player, next);
+    unlockSound(player, next);
     setSound(next);
     saveSound(next);
   }
@@ -299,7 +340,7 @@ export function useYouTubePlayback(videoId: string | null, { controls = false, l
   }
 
   const progress = duration ? (current / duration) * 100 : 0;
-  const volume = { level: sound.muted ? 0 : sound.volume, change: changeVolume, toggleMute };
+  const volume = { level: sound.muted || soundBlocked ? 0 : sound.volume, change: changeVolume, toggleMute };
 
-  return { frameRef, ready, playing, current, duration, progress, error, toggle, volume };
+  return { frameRef, ready, playing, current, duration, progress, error, toggle, volume, soundBlocked, unmute };
 }

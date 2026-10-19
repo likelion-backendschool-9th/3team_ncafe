@@ -32,11 +32,12 @@ function Bulbs({ side }: { side: "top" | "left" | "right" }) {
 
 // DJ 부스: 책상 위 턴테이블에 LP 재킷(영상)을 얹고, 옆에 지금 곡의 신청곡 메모지를 둔다.
 // YouTube 화면은 정책상 가리지 않아야 해서 재킷 앞면에 그대로 보이고, LP판은 재킷 뒤에서 반쯤 나와 돈다.
-// 손님은 관리자가 튼 곡을 듣기만 한다. onAir(서버 재생 시각)에 맞춰 다른 손님과 같은 지점을 듣고, 위치는 옮길 수 없다.
+// 손님은 관리자가 튼 곡을 듣기만 한다. 곡이 올라오면 저절로 재생되고, onAir(서버 재생 시각)에 맞춰 다른 손님과 같은 지점을 듣는다.
+// 이 페이지에서 아직 아무것도 누르지 않았으면 브라우저 정책상 음소거로 재생되므로 "소리 켜기"를 보여 준다.
 export function DjBooth({ nowPlaying, onAir = null, storySpeech = false }: { nowPlaying: NowPlaying | null; onAir?: OnAir | null; storySpeech?: boolean }) {
   const videoId = nowPlaying?.youtubeVideoId ?? null;
   const playingId = nowPlaying?.id;
-  const { frameRef, ready, playing, current, duration, progress, error, toggle, volume } = useYouTubePlayback(videoId, {
+  const { frameRef, ready, playing, current, duration, progress, error, toggle, volume, soundBlocked, unmute } = useYouTubePlayback(videoId, {
     live: true,
     sync: onAir,
     onEnded: playingId ? () => void finishPlaying(playingId) : undefined,
@@ -96,8 +97,8 @@ export function DjBooth({ nowPlaying, onAir = null, storySpeech = false }: { now
                   type="button"
                   onClick={toggle}
                   disabled={!ready}
-                  aria-label={playing ? `${nowPlaying.songTitle} 듣기 멈추기` : `${nowPlaying.songTitle} 같이 듣기`}
-                  title={playing ? "듣기 멈추기" : "다른 손님들과 같은 곡 듣기"}
+                  aria-label={playing ? `${nowPlaying.songTitle} 듣기 멈추기` : `${nowPlaying.songTitle} 다시 듣기`}
+                  title={playing ? "듣기 멈추기" : "다른 손님들이 듣는 곳부터 다시 듣기"}
                 >
                   {playing ? "❚❚" : "▶"}
                 </button>
@@ -111,7 +112,11 @@ export function DjBooth({ nowPlaying, onAir = null, storySpeech = false }: { now
                   aria-valuetext={`${clock(current)} / ${clock(duration)}`}
                   style={{ "--progress": `${progress}%` } as CSSProperties}
                 />
-                <span className={styles.time}>{clock(current)} / {clock(duration)}</span>
+                {soundBlocked ? (
+                  <button className={styles.unmuteButton} type="button" onClick={unmute}>🔊 소리 켜기</button>
+                ) : (
+                  <span className={styles.time}>{clock(current)} / {clock(duration)}</span>
+                )}
                 <VolumeControl
                   title={nowPlaying.songTitle}
                   level={volume.level}
