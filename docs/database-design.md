@@ -18,6 +18,12 @@
 
 ## 2. ERD
 
+![삼다방 데이터베이스 ER 다이어그램](database-erd.svg)
+
+[ERD 이미지 열기](database-erd.svg) · [그림 원본 열기](database-erd.dot)
+
+선 끝의 `1`, `0..1`, `0..N`, `1..N`은 관계의 개수를 뜻한다. `music_box_state`는 다른 테이블에서 참조하는 FK가 없는 단일 제어 행이므로 연결선 없이 표시했다. 아래 Mermaid는 같은 관계를 텍스트로 편집할 때 사용한다.
+
 ```mermaid
 erDiagram
     users ||--o| carts : owns
