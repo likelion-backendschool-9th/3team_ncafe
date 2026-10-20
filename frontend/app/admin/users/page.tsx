@@ -45,7 +45,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
               <tbody>{members.map((user) => <tr key={user.id}>
                 <td><div className={styles.person}><span className={styles.avatar} aria-hidden="true">{user.name.slice(0, 1)}</span><Link className={styles.memberName} href={`/admin/users/${encodeURIComponent(user.id)}${query}`}>{user.name}</Link></div></td>
                 <td>{user.email}</td>
-                <td><span className={user.role === "admin" ? `${styles.badge} ${styles.admin}` : styles.secondary}>{roleLabels[user.role]}</span></td>
+                <td><span className={user.role === "admin" ? `${styles.badge} ${styles.admin}` : styles.badge}>{roleLabels[user.role]}</span></td>
                 <td><span className={`${styles.badge} ${styles[user.status]}`}>{statusLabels[user.status]}</span></td>
                 <td><div className={styles.rowActions}><Link className={styles.outlineButton} href={`/admin/users/${encodeURIComponent(user.id)}${query}`}>상세 보기</Link><UserStatusForm user={user} compact /></div></td>
               </tr>)}</tbody>
