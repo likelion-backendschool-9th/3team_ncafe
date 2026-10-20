@@ -29,7 +29,7 @@
 .table th, .table td { padding: 1rem 0.8rem; border-bottom: 1px solid #d6c2a2; white-space: nowrap; }
 .table th { background: #efe0c4; color: var(--muted); font-size: 0.8rem; font-weight: 700; }
 .table th:first-child, .table td:first-child { padding-left: 1.1rem; }
-.table th:last-child, .table td:last-child { padding-right: 1.1rem; text-align: right; }
+.table th:last-child, .table td:last-child { width: 1%; padding-right: 1.1rem; text-align: left; }
 .table tbody tr:last-child td { border-bottom: 0; }
 .table tbody tr:hover { background: #fff8ec; }
 .person { display: flex; align-items: center; gap: 0.75rem; }
@@ -41,8 +41,10 @@ a.memberName:hover { color: var(--accent); text-decoration: underline; }
 .active { border-color: #b2cab8; background: #e4eee1; color: #215940; }
 .suspended { border-color: #e0b6a9; background: #f5e0d7; color: #98292c; }
 .admin { border-color: #a7c6c1; background: #e0ece7; color: #174b4a; }
-.rowActions { display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; }
-.rowActions .statusForm { max-width: 150px; gap: 0.4rem; }
+.rowActions { display: grid; grid-template-columns: repeat(2, 6rem); width: max-content; align-items: center; gap: 0.5rem; }
+.rowActions .statusForm { width: 100%; min-width: 0; gap: 0.4rem; }
+.rowActions > .outlineButton, .rowActions > .statusForm > .outlineButton { width: 100%; }
+.protectedAction { display: inline-flex; width: 100%; min-height: 36px; align-items: center; justify-content: center; color: var(--muted); font-size: 0.85rem; }
 .rowActions .statusForm > p { white-space: normal; overflow-wrap: anywhere; text-align: left; }
 .outlineButton { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 0.35rem 0.7rem; border: 1px solid #768c79; border-radius: 2px; background: transparent; color: #174b4a; cursor: pointer; font: inherit; font-size: 0.85rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
 .outlineButton:hover { background: #e0ece7; }
@@ -54,6 +56,9 @@ a.memberName:hover { color: var(--accent); text-decoration: underline; }
 .detailGrid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr); align-items: start; gap: 1.25rem; }
 .panel { min-width: 0; padding: 1.5rem; border: 1px solid var(--border); border-top: 3px solid #174b4a; border-radius: 8px; background: var(--member-panel); }
 .panelHeading { margin: 0 0 1.1rem; font-size: 1.35rem; }
+.statusPanel { display: grid; align-content: start; gap: 1.5rem; }
+.statusPanel > .panelHeading, .statusPanel > p { margin: 0; }
+.statusPanel > .statusForm > .outlineButton { width: min(100%, 12rem); min-height: 44px; justify-self: start; }
 .profile { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding-bottom: 1.3rem; border-bottom: 1px dashed var(--border); }
 .profile .avatar { flex-basis: 64px; width: 64px; height: 64px; font-size: 1.4rem; }
 .profile h2 { margin: 0 0 0.3rem; font-size: 1.5rem; }

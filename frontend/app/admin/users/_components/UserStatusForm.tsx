@@ -25,7 +25,7 @@ export function UserStatusForm({ user, compact = false }: { user: User; compact?
   const statusLabel = { active: "정상", suspended: "이용 정지" };
 
   if (user.role === "admin") {
-    return <span className={styles.hint}>{compact ? "변경 제한" : "관리자 계정은 상태를 변경할 수 없습니다."}</span>;
+    return <span className={compact ? styles.protectedAction : styles.hint}>{compact ? "변경 제한" : "관리자 계정은 상태를 변경할 수 없습니다."}</span>;
   }
 
   return (
