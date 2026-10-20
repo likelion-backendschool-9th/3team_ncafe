@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { mockMenuRepository } from "./menus";
 import { readMockData, writeMockData } from "./store";
-import type { CreateOrderInput, Order, OrderItem, OrderStatus } from "../orders/types";
+import { MAX_ORDER_REQUEST_LENGTH, type CreateOrderInput, type Order, type OrderItem, type OrderStatus } from "../orders/types";
 
 const fileName = "orders.json";
 const maxItems = 50;
 const maxQuantity = 99;
+const orderTypes = ["dine-in", "takeout"];
+const paymentMethods = ["card", "cash"];
 
 const progress: OrderStatus[] = ["received", "preparing", "ready", "completed"];
 
@@ -41,6 +43,13 @@ export const mockOrderRepository = {
     if (!Array.isArray(input.items) || input.items.length === 0 || input.items.length > maxItems ||
         !Number.isSafeInteger(input.expectedTotalAmount) || input.expectedTotalAmount < 0) {
       throw new OrderError("INVALID_INPUT", "주문 품목이나 총 금액이 올바르지 않습니다.");
+    }
+    if (!orderTypes.includes(input.orderType) || !paymentMethods.includes(input.paymentMethod)) {
+      throw new OrderError("INVALID_INPUT", "수령 방식이나 결제 수단을 선택해 주세요.");
+    }
+    const request = typeof input.request === "string" ? input.request.trim() : "";
+    if (request.length > MAX_ORDER_REQUEST_LENGTH) {
+      throw new OrderError("INVALID_INPUT", `요청사항은 ${MAX_ORDER_REQUEST_LENGTH}자 이내로 입력해 주세요.`);
     }
 
     const menus = new Map((await mockMenuRepository.list()).map((menu) => [menu.id, menu]));
@@ -88,6 +97,9 @@ export const mockOrderRepository = {
       items,
       totalAmount,
       status: "received",
+      orderType: input.orderType,
+      paymentMethod: input.paymentMethod,
+      request,
       createdAt: now,
       updatedAt: now,
     };

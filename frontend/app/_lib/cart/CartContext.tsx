@@ -21,6 +21,8 @@ type AddItemInput = Omit<CartItem, "id" | "selected">;
 
 type CartContextValue = {
   items: CartItem[];
+  // localStorage를 읽기 전에는 items가 비어 있어서, 진짜 빈 장바구니와 구분할 때 쓴다
+  hydrated: boolean;
   addItem: (input: AddItemInput) => void;
   removeItem: (id: string) => void;
   setQuantity: (id: string, quantity: number) => void;
@@ -93,7 +95,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, setQuantity, toggleSelected, toggleAll }}>
+    <CartContext.Provider value={{ items, hydrated, addItem, removeItem, setQuantity, toggleSelected, toggleAll }}>
       {children}
     </CartContext.Provider>
   );
