@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { mockMusicBoxRepository, musicBoxVersion, onAirOf, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
 import { requireRole } from "@/app/_lib/session/session";
-import { DjBooth } from "@/app/(public)/music-box/_components/DjBooth";
-import { handwritingSequence } from "@/app/(public)/music-box/_components/handwriting";
-import boothStyles from "@/app/(public)/music-box/_components/music-box-highlight.module.css";
-import { MusicBoxRefresher } from "@/app/(public)/music-box/_components/MusicBoxRefresher";
-import { RequestMemo, RequestMemoBoard } from "@/app/(public)/music-box/_components/RequestMemo";
+import { DjBooth } from "@/app/(public)/musicbox/_components/DjBooth";
+import { handwritingSequence } from "@/app/(public)/musicbox/_components/handwriting";
+import boothStyles from "@/app/(public)/musicbox/_components/music-box-highlight.module.css";
+import { MusicBoxRefresher } from "@/app/(public)/musicbox/_components/MusicBoxRefresher";
+import { RequestMemo, RequestMemoBoard } from "@/app/(public)/musicbox/_components/RequestMemo";
 import styles from "../mypage.module.css";
 import { deleteMyMusicRequest } from "./_actions";
 import { DeleteRequestForm } from "./_components/DeleteRequestForm";
@@ -24,7 +24,7 @@ function statusBadge(request: MusicRequest, position: number | undefined): strin
 
 export default async function MyMusicRequestsPage({ searchParams }: { searchParams: SearchParams }) {
   const [user, { deleted, error }, requests] = await Promise.all([
-    requireRole("customer", "/mypage/music-box"),
+    requireRole("customer", "/my/songs"),
     searchParams,
     mockMusicBoxRepository.list(),
   ]);
@@ -47,7 +47,7 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
     <div className={`${styles.page} ${styles.pageWide}`}>
       <MusicBoxRefresher version={musicBoxVersion(requests)} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
       <nav className={styles.breadcrumb} aria-label="현재 위치">
-        <Link href="/mypage">마이페이지</Link>
+        <Link href="/my">마이페이지</Link>
         <span aria-hidden="true">/</span>
         <span>신청곡 · 사연</span>
       </nav>
@@ -82,7 +82,7 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
           title="내가 보낸 신청곡"
           titleLevel="h2"
           caption={`총 ${mine.length}곡 · 재생 중인 곡은 삭제할 수 없어요`}
-          empty={<>아직 보낸 신청곡이 없어요. <Link href="/music-box">신청곡 보내러 가기 →</Link></>}
+          empty={<>아직 보낸 신청곡이 없어요. <Link href="/musicbox">신청곡 보내러 가기 →</Link></>}
         >
           {mine.map((request) => (
             <RequestMemo

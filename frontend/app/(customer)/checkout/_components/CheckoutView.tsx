@@ -79,7 +79,7 @@ export function CheckoutView() {
           setPlaced(true);
           purchasedIds.forEach(removeItem);
         });
-        router.replace(`/orders/${encodeURIComponent(result.orderId)}?placed=1`);
+        router.replace(`/my/orders/${encodeURIComponent(result.orderId)}?placed=1`);
       } catch {
         setError("주문 결과를 확인하지 못했습니다. 다시 주문하기 전에 주문목록을 확인해 주세요.");
       } finally {

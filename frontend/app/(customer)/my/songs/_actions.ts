@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { mockMusicBoxRepository } from "@/app/_lib/mock/music-box";
 import { requireRole } from "@/app/_lib/session/session";
 
-const pagePath = "/mypage/music-box";
+const pagePath = "/my/songs";
 
 export async function deleteMyMusicRequest(id: string): Promise<void> {
   const customer = await requireRole("customer", pagePath);
@@ -13,8 +13,8 @@ export async function deleteMyMusicRequest(id: string): Promise<void> {
   if (!removed) redirect(`${pagePath}?error=delete`);
 
   revalidatePath("/");
-  revalidatePath("/music-box");
-  revalidatePath("/admin/music-box");
+  revalidatePath("/musicbox");
+  revalidatePath("/admin/songs");
   revalidatePath(pagePath);
   redirect(`${pagePath}?deleted=1`);
 }

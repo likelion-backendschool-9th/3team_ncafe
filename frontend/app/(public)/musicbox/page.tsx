@@ -77,7 +77,7 @@ export default async function MusicBoxPage({ searchParams }: { searchParams: Sea
 
         {user && (
           <div className={styles.pageFoot}>
-            <Link className={styles.gatePrimary} href="/mypage/music-box">내 신청곡 관리</Link>
+            <Link className={styles.gatePrimary} href="/my/songs">내 신청곡 관리</Link>
           </div>
         )}
       </div>

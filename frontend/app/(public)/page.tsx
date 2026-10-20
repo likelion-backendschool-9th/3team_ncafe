@@ -4,7 +4,7 @@ import { BrandLogo } from '@/app/_components/BrandLogo';
 import { MenuCard } from '@/app/_components/MenuCard';
 import { mockMenuRepository, type Menu } from '@/app/_lib/mock/menus';
 import { getCurrentUser } from '@/app/_lib/session/session';
-import { MusicBoxHighlight } from './music-box/_components/MusicBoxHighlight';
+import { MusicBoxHighlight } from './musicbox/_components/MusicBoxHighlight';
 import styles from './page.module.css';
 
 // 이미지를 바꿀 때 이 URL에 로컬 경로나 직접 찾은 이미지 URL을 넣으세요.
@@ -61,7 +61,7 @@ export default async function HomePage() {
               <Link className={styles.ctaPrimary} href="/menus">
                 전체 메뉴 보기
               </Link>
-              <Link className={styles.ctaSecondary} href="/music-box">
+              <Link className={styles.ctaSecondary} href="/musicbox">
                 뮤직박스 신청곡
               </Link>
               {!user && (

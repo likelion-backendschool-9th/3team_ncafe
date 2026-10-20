@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 
 const links = [
   { href: "/menus", label: "메뉴" },
-  { href: "/music-box", label: "뮤직박스" },
+  { href: "/musicbox", label: "뮤직박스" },
   { href: "/cart", label: "장바구니" },
-  { href: "/orders", label: "주문목록" },
+  { href: "/my/orders", label: "주문목록" },
 ];
 
 export function SiteNav() {

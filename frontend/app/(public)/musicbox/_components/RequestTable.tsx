@@ -82,18 +82,18 @@ export function RequestTable({ rows, firstNumber, page, totalPages, waitingCount
 
       {totalPages > 1 && (
         <nav className={styles.pager} aria-label="신청곡 목록 페이지">
-          {page > 1 && <Link href={`/music-box?page=${page - 1}`} aria-label="이전 페이지">‹</Link>}
+          {page > 1 && <Link href={`/musicbox?page=${page - 1}`} aria-label="이전 페이지">‹</Link>}
           {Array.from({ length: totalPages }, (_, index) => index + 1).map((number) => (
             <Link
               key={number}
-              href={`/music-box?page=${number}`}
+              href={`/musicbox?page=${number}`}
               className={number === page ? styles.pagerCurrent : undefined}
               aria-current={number === page ? "page" : undefined}
             >
               {number}
             </Link>
           ))}
-          {page < totalPages && <Link href={`/music-box?page=${page + 1}`} aria-label="다음 페이지">›</Link>}
+          {page < totalPages && <Link href={`/musicbox?page=${page + 1}`} aria-label="다음 페이지">›</Link>}
         </nav>
       )}
     </section>

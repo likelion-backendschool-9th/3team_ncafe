@@ -69,7 +69,7 @@ export function UserMenu({ name, email, isAdmin }: UserMenuProps) {
           <strong>{name}님</strong>
           <span>{email}</span>
         </div>
-        <Link className="user-menu__item" href={isAdmin ? '/admin' : '/mypage'}>
+        <Link className="user-menu__item" href={isAdmin ? '/admin' : '/my'}>
           {isAdmin ? '관리자 페이지' : '마이페이지'}
         </Link>
         <form action={logout}>

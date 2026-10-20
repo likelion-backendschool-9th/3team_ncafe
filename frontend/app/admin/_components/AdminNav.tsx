@@ -9,7 +9,7 @@ const links = [
   { href: "/admin/menus", label: "메뉴 목록" },
   { href: "/admin/orders", label: "주문 관리" },
   { href: "/admin/categories", label: "카테고리 관리" },
-  { href: "/admin/music-box", label: "뮤직박스 운영" },
+  { href: "/admin/songs", label: "뮤직박스 운영" },
 ];
 
 export function AdminNav() {

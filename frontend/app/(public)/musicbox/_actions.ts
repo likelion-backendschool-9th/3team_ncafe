@@ -30,13 +30,13 @@ export async function submitMusicRequest(_previous: RequestFormState, formData: 
   } catch {
     return { error: "신청곡을 접수하지 못했습니다. 잠시 후 다시 시도해 주세요." };
   }
-  revalidatePath("/music-box");
-  revalidatePath("/admin/music-box");
-  redirect("/music-box?submitted=1");
+  revalidatePath("/musicbox");
+  revalidatePath("/admin/songs");
+  redirect("/musicbox?submitted=1");
 }
 
 function refreshMusicBox(): void {
-  for (const path of ["/", "/music-box", "/mypage/music-box", "/admin/music-box"]) revalidatePath(path);
+  for (const path of ["/", "/musicbox", "/my/songs", "/admin/songs"]) revalidatePath(path);
 }
 
 // 손님 화면에서 지금 곡 영상이 끝나면 부른다. 그 곡이 아직 재생 중이고 서버 시각으로도 거의 끝났을 때만 다음 곡으로 넘긴다.

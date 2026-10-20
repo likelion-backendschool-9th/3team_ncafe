@@ -1,6 +1,6 @@
 "use client";
 
-import { useYouTubePlayback } from "@/app/(public)/music-box/_components/useYouTubePlayback";
+import { useYouTubePlayback } from "@/app/(public)/musicbox/_components/useYouTubePlayback";
 import { youtubeWatchUrl } from "@/app/_lib/youtube";
 import styles from "../music-box.module.css";
 

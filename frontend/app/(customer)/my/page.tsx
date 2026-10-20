@@ -5,7 +5,7 @@ import styles from "./mypage.module.css";
 
 const shortcuts = [
   {
-    href: "/mypage/music-box",
+    href: "/my/songs",
     no: "01",
     title: "신청곡 · 사연 관리",
     description: "뮤직박스에 보낸 신청곡과 사연을 확인하고 삭제합니다.",
@@ -17,7 +17,7 @@ const shortcuts = [
     description: "담아 둔 메뉴의 수량을 바꾸고 주문합니다.",
   },
   {
-    href: "/orders",
+    href: "/my/orders",
     no: "03",
     title: "주문 목록 관리",
     description: "진행 중인 주문과 지난 주문을 확인합니다.",
@@ -25,7 +25,7 @@ const shortcuts = [
 ];
 
 export default async function MyPage() {
-  const user = await requireRole("customer", "/mypage");
+  const user = await requireRole("customer", "/my");
 
   return (
     <div className={styles.page}>

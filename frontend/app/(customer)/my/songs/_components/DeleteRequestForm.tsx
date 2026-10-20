@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import styles from "@/app/(public)/music-box/_components/request-memo.module.css";
+import styles from "@/app/(public)/musicbox/_components/request-memo.module.css";
 
 function SubmitButton({ songTitle }: { songTitle: string }) {
   const { pending } = useFormStatus();

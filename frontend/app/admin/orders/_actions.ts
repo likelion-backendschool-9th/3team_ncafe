@@ -47,8 +47,8 @@ export async function changeAdminOrderStatus(
   }
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${id}`);
-  revalidatePath("/orders");
-  revalidatePath(`/orders/${id}`);
+  revalidatePath("/my/orders");
+  revalidatePath(`/my/orders/${id}`);
   redirect(destination(query, "updated", nextStatus));
 }
 
@@ -68,7 +68,7 @@ export async function changeAdminOrderStatusFromDetail(
   }
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${id}`);
-  revalidatePath("/orders");
-  revalidatePath(`/orders/${id}`);
+  revalidatePath("/my/orders");
+  revalidatePath(`/my/orders/${id}`);
   redirect(detailDestination(id, query, "updated"));
 }
