@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/app/_lib/session/session";
-import { inboxOf, mockMusicBoxRepository, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
+import { inboxOf, mockMusicBoxRepository, musicBoxVersion, onAirOf, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
+import { MusicBoxRefresher } from "./_components/MusicBoxRefresher";
 import { NowPlaying } from "./_components/NowPlaying";
 import { RequestForm } from "./_components/RequestForm";
 import { RequestTable, type RequestRow } from "./_components/RequestTable";
@@ -24,6 +25,7 @@ export default async function MusicBoxPage({ searchParams }: { searchParams: Sea
 
   // 목록은 재생 중 → 플레이리스트 → 접수 → 재생 완료 순서다. 취소된 신청은 보이지 않는다.
   const playing = requests.find((request) => request.status === "playing");
+  const onAir = onAirOf(playing);
   const playlist = playlistOf(requests);
   const inbox = inboxOf(requests);
   const played = requests.filter((request) => request.status === "played").sort(byPlayedAtDesc);
@@ -42,6 +44,7 @@ export default async function MusicBoxPage({ searchParams }: { searchParams: Sea
 
   return (
     <main className={styles.page}>
+      <MusicBoxRefresher version={musicBoxVersion(requests)} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
       <div className="container">
         <header className={styles.hero}>
           <span className={styles.heroRecord} aria-hidden="true" />
@@ -59,7 +62,7 @@ export default async function MusicBoxPage({ searchParams }: { searchParams: Sea
 
         <div className={styles.topRow}>
           <RequestForm memberName={user?.name ?? null} requestNumber={requests.length + 1} />
-          <NowPlaying playing={playing} next={playlist[0]} />
+          <NowPlaying playing={playing} onAir={onAir} next={playlist[0]} />
         </div>
 
         <RequestTable

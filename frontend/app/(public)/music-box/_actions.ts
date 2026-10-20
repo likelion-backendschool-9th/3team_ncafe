@@ -35,10 +35,20 @@ export async function submitMusicRequest(_previous: RequestFormState, formData: 
   redirect("/music-box?submitted=1");
 }
 
-// 손님 화면에서 지금 곡 영상이 끝나면 부른다. 그 곡이 아직 재생 중일 때만 지난 선곡으로 넘기고 플레이리스트 다음 곡을 튼다.
-// 이미 다른 화면이 넘겼더라도 이 화면이 새 곡을 받아 가도록 화면은 항상 새로 그린다.
+function refreshMusicBox(): void {
+  for (const path of ["/", "/music-box", "/mypage/music-box", "/admin/music-box"]) revalidatePath(path);
+}
+
+// 손님 화면에서 지금 곡 영상이 끝나면 부른다. 그 곡이 아직 재생 중이고 서버 시각으로도 거의 끝났을 때만 다음 곡으로 넘긴다.
+// 이미 다른 화면이나 서버가 넘겼더라도 이 화면이 새 곡을 받아 가도록 화면은 항상 새로 그린다.
 export async function finishPlaying(id: string): Promise<void> {
   if (typeof id !== "string" || !id) return;
-  await mockMusicBoxRepository.advance(id);
-  for (const path of ["/", "/music-box", "/mypage/music-box", "/admin/music-box"]) revalidatePath(path);
+  await mockMusicBoxRepository.finishIfDue(id);
+  refreshMusicBox();
+}
+
+// 영상 길이를 아직 모르는 곡을 재생한 화면이 읽은 길이를 알려 준다. 처음 알려 준 값만 기록한다.
+export async function reportDuration(id: string, youtubeVideoId: string, durationSeconds: number): Promise<void> {
+  if (typeof id !== "string" || typeof youtubeVideoId !== "string") return;
+  if (await mockMusicBoxRepository.recordDuration(id, youtubeVideoId, durationSeconds)) refreshMusicBox();
 }

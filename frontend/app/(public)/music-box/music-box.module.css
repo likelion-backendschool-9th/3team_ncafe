@@ -237,15 +237,12 @@
 .videoEmpty { display: grid; width: 100%; aspect-ratio: 16 / 9; place-items: center; margin: 0; background: linear-gradient(135deg, #2b3a44, #141b21 55%, #2a1f18); color: #f4ead6cc; font-size: 0.86rem; }
 .playerError { margin: 0; color: var(--red); font-size: 0.82rem; font-weight: 700; }
 .player { display: flex; align-items: center; gap: 10px; }
-.progress { flex: 1; min-width: 0; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--red) var(--progress, 0%), #c9b08c var(--progress, 0%)); cursor: pointer; appearance: none; }
-.progress::-webkit-slider-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--red); appearance: none; }
-.progress::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--red); }
-.progress:focus-visible { outline: 2px solid var(--teal); outline-offset: 4px; }
+.progress { flex: 1; min-width: 0; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--red) var(--progress, 0%), #c9b08c var(--progress, 0%)); }
 .time { color: var(--muted); font-size: 0.72rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.playButton { display: grid; flex: 0 0 36px; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--red); color: #fff8ec; cursor: pointer; font-size: 0.75rem; }
-.playButton:hover { background: #812125; }
-.playButton:disabled { opacity: 0.55; cursor: wait; }
-.playButton:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.unmuteButton { flex: none; padding: 0.35rem 0.75rem; border: 0; border-radius: 999px; background: var(--red); color: #fff8ec; cursor: pointer; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+.unmuteButton:hover { background: #812125; }
+.unmuteButton:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.onAir { flex: none; padding: 2px 6px; border: 1.5px solid var(--red); border-radius: 3px; color: var(--red); font-family: Arial, sans-serif; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.12em; white-space: nowrap; }
 
 .letter {
   margin: 1.6rem 0 0;

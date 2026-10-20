@@ -1,8 +1,9 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readMockData, writeMockData } from './store';
 
 // 접수(pending) → 관리자가 링크를 붙여 플레이리스트에 담음(queued) → 재생 중(playing) → 재생 완료(played).
 // 재생 중인 곡이 없으면 플레이리스트 맨 앞 곡이 자동으로 재생 중이 된다.
+// 재생 중인 곡은 시작 시각과 영상 길이로 서버가 끝을 정한다. 손님 화면이 열려 있지 않아도, 광고로 늦어져도 같은 시각에 다음 곡으로 넘어간다.
 // 관리자가 접수를 취소하면 cancelled로 남겨 신청자가 마이페이지에서 볼 수 있게 한다.
 export type MusicRequestStatus =
   | 'pending'
@@ -26,6 +27,18 @@ export type MusicRequest = {
   playlistOrder: number | null;
   createdAt: string;
   playedAt: string | null;
+  // 재생을 시작한 시각. 손님 화면은 이 시각으로 지금 몇 초째인지 맞춘다. 재생 중이 아니면 null.
+  startedAt: string | null;
+  // 영상 길이(초). 관리자 미리보기나 처음 재생한 화면이 알려 준다. 모르면 null이고, 그동안은 시간으로 넘기지 않는다.
+  durationSeconds: number | null;
+};
+
+// 손님 화면에 넘기는 지금 곡의 재생 시각. serverNow는 화면을 그린 순간의 서버 시각으로, 손님 기기 시계가 틀려도 위치를 맞추게 한다.
+export type OnAir = {
+  startedAt: string;
+  durationSeconds: number | null;
+  endsAt: number | null;
+  serverNow: number;
 };
 
 export type MusicRequestInput = Pick<
@@ -109,17 +122,21 @@ function seed(): MusicRequest[] {
         request.status === 'played'
           ? new Date(now - (index - 4) * 12 * 60_000).toISOString()
           : null,
+      startedAt: null,
+      durationSeconds: null,
     };
   });
 }
 
-// 예전 목 데이터(audioUrl로 저장하던 것, 플레이리스트가 없던 것)도 그대로 읽도록 빠진 값을 채운다.
+// 예전 목 데이터(audioUrl로 저장하던 것, 플레이리스트·재생 시각이 없던 것)도 그대로 읽도록 빠진 값을 채운다.
 type StoredMusicRequest = Omit<
   MusicRequest,
-  'youtubeVideoId' | 'playlistOrder'
+  'youtubeVideoId' | 'playlistOrder' | 'startedAt' | 'durationSeconds'
 > & {
   youtubeVideoId?: string | null;
   playlistOrder?: number | null;
+  startedAt?: string | null;
+  durationSeconds?: number | null;
   audioUrl?: unknown;
 };
 
@@ -129,8 +146,58 @@ function requests(): MusicRequest[] {
       ...request,
       youtubeVideoId: request.youtubeVideoId ?? null,
       playlistOrder: request.playlistOrder ?? null,
+      // 재생 시각을 저장하기 전부터 재생 중이던 곡은 시각 없이 두고, 예전처럼 영상이 끝날 때 넘긴다.
+      startedAt: request.startedAt ?? null,
+      durationSeconds: request.durationSeconds ?? null,
     }),
   );
+}
+
+// YouTube가 알려 주는 길이와 실제로 영상이 끝나는 때 사이의 오차를 감안해 조금 늦게 끝낸다.
+const END_GRACE_MS = 1000;
+// 손님 화면이 영상 끝을 알려도, 서버 시각으로 이보다 많이 남았으면 그 화면만 앞서간 것으로 보고 넘기지 않는다.
+const EARLY_FINISH_TOLERANCE_MS = 5000;
+// 비정상적인 길이 값은 받지 않는다. (6시간)
+const MAX_DURATION_SECONDS = 6 * 60 * 60;
+
+export function isValidDuration(seconds: unknown): seconds is number {
+  return typeof seconds === 'number' && Number.isFinite(seconds) && seconds > 0 && seconds <= MAX_DURATION_SECONDS;
+}
+
+function endsAt(request: MusicRequest): number | null {
+  if (!request.startedAt || !request.durationSeconds) return null;
+  return Date.parse(request.startedAt) + request.durationSeconds * 1000 + END_GRACE_MS;
+}
+
+export function onAirOf(request: MusicRequest | undefined): OnAir | null {
+  if (!request || request.status !== 'playing' || !request.startedAt) return null;
+  return {
+    startedAt: request.startedAt,
+    durationSeconds: request.durationSeconds,
+    endsAt: endsAt(request),
+    serverNow: Date.now(),
+  };
+}
+
+// 뮤직박스 화면에 보이는 상태(신청곡·순서·재생 중인 곡과 시각)를 짧게 줄인 값.
+// 열려 있는 화면은 이 값만 자주 확인하고, 달라졌을 때만 화면을 새로 받아 온다.
+export function musicBoxVersion(all: MusicRequest[]): string {
+  const state = [...all]
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map((request) => [request.id, request.status, request.playlistOrder, request.youtubeVideoId, request.startedAt, request.durationSeconds]);
+  return createHash('sha1').update(JSON.stringify(state)).digest('hex').slice(0, 16);
+}
+
+function startPlaying(request: MusicRequest, at: number): void {
+  request.status = 'playing';
+  request.playlistOrder = null;
+  request.startedAt = new Date(at).toISOString();
+}
+
+function finishPlaying(request: MusicRequest, at: number): void {
+  request.status = 'played';
+  request.playedAt = new Date(at).toISOString();
+  request.startedAt = null;
 }
 
 function byCreatedAt(a: MusicRequest, b: MusicRequest): number {
@@ -168,19 +235,42 @@ function firstPlaylistOrder(all: MusicRequest[]): number {
 }
 
 // 재생 중인 곡이 없으면 플레이리스트 맨 앞 곡을 튼다. 상태를 바꾸는 작업은 저장 전에 항상 부른다.
-function playNextIfIdle(all: MusicRequest[]): MusicRequest | null {
+function playNextIfIdle(all: MusicRequest[], at = Date.now()): MusicRequest | null {
   if (all.some((request) => request.status === 'playing')) return null;
   const next = playlistOf(all)[0] ?? null;
-  if (next) {
-    next.status = 'playing';
-    next.playlistOrder = null;
-  }
+  if (next) startPlaying(next, at);
   return next;
+}
+
+// 재생 시간이 다 된 곡을 지난 선곡으로 넘기고 다음 곡을 튼다.
+// 다음 곡은 앞 곡이 끝났어야 할 시각부터 재생된 것으로 쳐서, 조회가 늦게 와도 시간이 밀리지 않게 한다.
+// 길이를 모르는 곡은 그 시각부터 세면 이미 끝났는지 알 수 없으므로 지금부터 시작한다.
+// 아무도 화면을 보지 않는 동안 여러 곡이 지났으면 그만큼 한 번에 넘긴다.
+function settle(all: MusicRequest[], now = Date.now()): boolean {
+  let changed = false;
+  for (;;) {
+    const current = all.find((request) => request.status === 'playing');
+    const end = current ? endsAt(current) : null;
+    if (!current || end === null || end > now) return changed;
+    finishPlaying(current, end);
+    const next = playlistOf(all)[0];
+    playNextIfIdle(all, next?.durationSeconds ? end : now);
+    changed = true;
+  }
+}
+
+// 상태를 바꾸는 작업은 시간이 지나 이미 넘어갔어야 할 곡부터 정리한 목록에서 시작한다.
+function settledRequests(): MusicRequest[] {
+  const all = requests();
+  settle(all);
+  return all;
 }
 
 export const mockMusicBoxRepository = {
   async list(): Promise<MusicRequest[]> {
-    return requests().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const all = requests();
+    if (settle(all)) writeMockData(fileName, all);
+    return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
 
   async create(input: MusicRequestInput): Promise<MusicRequest> {
@@ -192,14 +282,16 @@ export const mockMusicBoxRepository = {
       playlistOrder: null,
       createdAt: new Date().toISOString(),
       playedAt: null,
+      startedAt: null,
+      durationSeconds: null,
     };
-    writeMockData(fileName, [...requests(), request]);
+    writeMockData(fileName, [...settledRequests(), request]);
     return request;
   },
 
   // 본인 신청곡만 지울 수 있다. 지금 재생 중인 곡은 DJ 부스가 끊기지 않도록 지우지 않는다.
   async removeByUser(id: string, userId: string): Promise<boolean> {
-    const all = requests();
+    const all = settledRequests();
     const target = all.find(
       (request) => request.id === id && request.userId === userId,
     );
@@ -212,10 +304,13 @@ export const mockMusicBoxRepository = {
   },
 
   // 접수 곡에 영상 링크를 붙여 플레이리스트 맨 끝에 담는다. 재생 중인 곡이 없으면 바로 재생된다.
-  async addToPlaylist(id: string, youtubeVideoId: string): Promise<boolean> {
-    const all = requests();
+  // 영상 길이는 관리자 미리보기가 읽은 값이다. 없으면 같은 영상에 전에 기록해 둔 길이를 그대로 쓴다.
+  async addToPlaylist(id: string, youtubeVideoId: string, durationSeconds: number | null = null): Promise<boolean> {
+    const all = settledRequests();
     const target = all.find((request) => request.id === id);
     if (!target || target.status !== 'pending') return false;
+    const knownDuration = target.youtubeVideoId === youtubeVideoId ? target.durationSeconds : null;
+    target.durationSeconds = durationSeconds ?? knownDuration;
     target.youtubeVideoId = youtubeVideoId;
     target.playlistOrder = lastPlaylistOrder(all) + 1;
     target.status = 'queued';
@@ -224,9 +319,21 @@ export const mockMusicBoxRepository = {
     return true;
   },
 
+  // 영상 길이를 아직 모르는 곡이면, 재생한 화면이 읽은 길이를 기록한다. 이미 있거나 영상이 바뀌었으면 그대로 둔다.
+  async recordDuration(id: string, youtubeVideoId: string, durationSeconds: number): Promise<boolean> {
+    if (!isValidDuration(durationSeconds)) return false;
+    const all = settledRequests();
+    const target = all.find((request) => request.id === id);
+    if (!target || target.youtubeVideoId !== youtubeVideoId || target.durationSeconds) return false;
+    if (target.status !== 'playing' && target.status !== 'queued') return false;
+    target.durationSeconds = durationSeconds;
+    writeMockData(fileName, all);
+    return true;
+  },
+
   // 플레이리스트나 지난 선곡의 곡을 링크는 남긴 채 접수함으로 되돌린다.
   async returnToInbox(id: string): Promise<boolean> {
-    const all = requests();
+    const all = settledRequests();
     const target = all.find((request) => request.id === id);
     if (!target || (target.status !== 'queued' && target.status !== 'played')) return false;
     target.status = 'pending';
@@ -238,7 +345,7 @@ export const mockMusicBoxRepository = {
 
   // 플레이리스트의 곡을 틀지 않고 지난 선곡으로 넘긴다.
   async moveToPlayed(id: string): Promise<boolean> {
-    const all = requests();
+    const all = settledRequests();
     const target = all.find((request) => request.id === id);
     if (!target || target.status !== 'queued') return false;
     target.status = 'played';
@@ -250,7 +357,7 @@ export const mockMusicBoxRepository = {
 
   // 플레이리스트에서 바로 위(up) 또는 아래(down) 곡과 자리를 바꾼다.
   async moveInPlaylist(id: string, direction: 'up' | 'down'): Promise<boolean> {
-    const all = requests();
+    const all = settledRequests();
     const playlist = playlistOf(all);
     const index = playlist.findIndex((request) => request.id === id);
     const neighbor = playlist[direction === 'up' ? index - 1 : index + 1];
@@ -264,44 +371,57 @@ export const mockMusicBoxRepository = {
     return true;
   },
 
-  // 플레이리스트의 곡을 바로 튼다. 듣던 곡은 끊긴 것이므로 플레이리스트 맨 앞으로 돌려 둔다.
+  // 플레이리스트의 곡을 바로 튼다. 듣던 곡은 끊긴 것이므로 플레이리스트 맨 앞으로 돌려 두고, 다시 틀 때는 처음부터 나온다.
   async playNow(id: string): Promise<boolean> {
-    const all = requests();
+    const all = settledRequests();
     const target = all.find((request) => request.id === id);
     if (!target || target.status !== 'queued') return false;
     const current = all.find((request) => request.status === 'playing');
     if (current) {
       current.status = 'queued';
       current.playlistOrder = firstPlaylistOrder(all) - 1;
+      current.startedAt = null;
     }
-    target.status = 'playing';
-    target.playlistOrder = null;
+    startPlaying(target, Date.now());
     writeMockData(fileName, all);
     return true;
   },
 
   // 재생 완료: 지금 곡을 지난 선곡으로 넘기고 플레이리스트 첫 곡을 튼다.
-  // expectedId를 주면 그 곡이 아직 재생 중일 때만 넘긴다. 손님 화면 여러 곳에서 영상 끝을 동시에 알려도 한 곡만 넘어가게 한다.
+  // expectedId를 주면 그 곡이 아직 재생 중일 때만 넘긴다. 관리자 화면이 늦게 그려져 이미 넘어간 다음 곡을 끝내지 않게 한다.
   async advance(expectedId?: string): Promise<MusicRequest | null> {
-    const all = requests();
+    const all = settledRequests();
     const current = all.find((request) => request.status === 'playing');
     if (expectedId !== undefined && current?.id !== expectedId) return null;
-    if (current) {
-      current.status = 'played';
-      current.playedAt = new Date().toISOString();
-    }
+    if (current) finishPlaying(current, Date.now());
     const next = playNextIfIdle(all);
     writeMockData(fileName, all);
     return next;
   },
 
-  // 선곡 취소: 지금 곡을 링크는 남긴 채 접수함으로 되돌리고 플레이리스트 첫 곡을 튼다.
-  async cancelCurrent(): Promise<boolean> {
-    const all = requests();
+  // 손님 화면에서 영상이 끝났다고 알려 올 때 쓴다. 서버 시각으로도 거의 끝난 곡일 때만 넘긴다.
+  // 길이를 아는 곡은 시간이 되면 서버가 알아서 넘기므로, 여기서는 길이를 모르는 곡을 끝내는 역할이 크다.
+  async finishIfDue(expectedId: string): Promise<boolean> {
+    const all = settledRequests();
     const current = all.find((request) => request.status === 'playing');
-    if (!current) return false;
+    if (!current || current.id !== expectedId) return false;
+    const end = endsAt(current);
+    if (end !== null && end - Date.now() > EARLY_FINISH_TOLERANCE_MS) return false;
+    finishPlaying(current, Date.now());
+    playNextIfIdle(all);
+    writeMockData(fileName, all);
+    return true;
+  },
+
+  // 선곡 취소: 지금 곡을 링크는 남긴 채 접수함으로 되돌리고 플레이리스트 첫 곡을 튼다.
+  // expectedId를 주면 그 곡이 아직 재생 중일 때만 취소한다.
+  async cancelCurrent(expectedId?: string): Promise<boolean> {
+    const all = settledRequests();
+    const current = all.find((request) => request.status === 'playing');
+    if (!current || (expectedId !== undefined && current.id !== expectedId)) return false;
     current.status = 'pending';
     current.playlistOrder = null;
+    current.startedAt = null;
     playNextIfIdle(all);
     writeMockData(fileName, all);
     return true;
@@ -309,7 +429,7 @@ export const mockMusicBoxRepository = {
 
   // 접수 취소: 지우지 않고 cancelled로 남겨 신청자가 마이페이지에서 확인할 수 있게 한다.
   async cancelRequest(id: string): Promise<boolean> {
-    const all = requests();
+    const all = settledRequests();
     const target = all.find((request) => request.id === id);
     if (!target || target.status !== 'pending') return false;
     target.status = 'cancelled';
