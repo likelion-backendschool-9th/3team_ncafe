@@ -121,14 +121,14 @@ function OrderSection({
       ) : (
         <div className={styles.tableWrap} role="region" aria-label={`${title} 주문 목록 표`} tabIndex={0}>
           <table className={styles.table}>
-            <thead><tr><th scope="col">주문번호</th><th scope="col">주문일시</th><th scope="col">고객</th><th scope="col">주문 메뉴</th><th scope="col">금액</th><th scope="col">상태</th></tr></thead>
+            <thead><tr><th scope="col"><span className={styles.codeBox}>주문번호</span></th><th scope="col">주문일시</th><th scope="col">고객</th><th scope="col">주문 메뉴</th><th scope="col">금액</th><th scope="col"><span className={styles.statusBox}>상태</span></th></tr></thead>
             <tbody>{visible.map((order) => <tr key={order.id}>
-              <td title={order.id} className={styles.code}><Link href={detailHref(order, query)}>{orderCode(order)}</Link></td>
+              <td title={order.id} className={styles.code}><Link className={styles.codeBox} href={detailHref(order, query)}>{orderCode(order)}</Link></td>
               <td>{orderDate.format(new Date(order.createdAt))}</td>
               <td>{order.customerName}</td>
               <td>{summary(order)}</td>
               <td>{won.format(order.totalAmount)}원</td>
-              <td><StatusControls order={order} query={query} /></td>
+              <td><div className={styles.statusBox}><StatusControls order={order} query={query} /></div></td>
             </tr>)}</tbody>
           </table>
         </div>
