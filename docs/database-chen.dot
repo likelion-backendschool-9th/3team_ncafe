@@ -17,7 +17,7 @@ graph ncafe_chen {
   order_contains [label="포함", pos="1150,600!"];
   source_of [label="메뉴 참조", pos="1700,720!", width=1.8];
   holds [label="담음", pos="850,1050!"];
-  selected_in [label="담김", pos="1700,1050!", width=1.7];
+  cart_menu_reference [label="담김", pos="1700,1050!", width=1.7];
   classifies [label="분류", pos="2250,900!"];
 
   users -- submits [label="1"];
@@ -30,8 +30,8 @@ graph ncafe_chen {
   source_of -- menus [label="1"];
   users -- holds [label="1"];
   holds -- cart_items [label="N"];
-  cart_items -- selected_in [label="N"];
-  selected_in -- menus [label="1"];
+  cart_items -- cart_menu_reference [label="N"];
+  cart_menu_reference -- menus [label="1"];
   categories -- classifies [label="1"];
   classifies -- menus [label="N"];
 
@@ -41,6 +41,8 @@ graph ncafe_chen {
   user_name [label="이름", pos="20,790!"];
   user_role [label="역할", pos="100,670!"];
   user_status [label="계정 상태", pos="370,1010!", width=1.55];
+  user_created [label="생성 시각", pos="-130,1010!", width=1.5];
+  user_updated [label="수정 시각", pos="-130,700!", width=1.5];
 
   music_id [label=<<U>식별자</U>>, pos="100,100!"];
   music_requester [label="신청자명", pos="250,90!", width=1.55];
@@ -52,12 +54,18 @@ graph ncafe_chen {
   music_order [label="대기열 순서", pos="10,240!", width=1.7];
   music_duration [label="영상 길이(초)", pos="40,480!", width=1.8];
   music_started [label="재생 시작 시각", pos="460,480!", width=1.9];
+  music_created [label="생성 시각", pos="540,60!", width=1.5];
+  music_updated [label="수정 시각", pos="620,300!", width=1.5];
 
   order_id [label=<<U>식별자</U>>, pos="720,790!"];
   order_customer [label="주문 당시 고객명", pos="890,810!", width=2.2];
   order_status [label="주문 상태", pos="990,720!", width=1.6];
+  order_type [label="매장/포장", pos="1060,850!", width=1.6];
+  order_payment_method [label="카운터 결제수단", pos="1080,960!", width=2.15];
+  order_request [label="요청사항", pos="700,960!", width=1.5];
   order_total [label="주문 총액", pos="900,420!", width=1.6];
-  order_reason [label="취소 사유", pos="690,430!", width=1.6];
+  order_created [label="생성 시각", pos="700,250!", width=1.5];
+  order_updated [label="수정 시각", pos="930,250!", width=1.5];
 
   order_item_id [label=<<U>식별자</U>>, pos="1330,790!"];
   order_item_name [label="주문 당시 메뉴명", pos="1500,800!", width=2.35];
@@ -70,32 +78,36 @@ graph ncafe_chen {
   cart_item_id [label=<<U>식별자</U>>, pos="1450,1270!"];
   cart_item_qty [label="수량", pos="1280,1220!"];
   cart_item_temperature [label="온도", pos="1640,1210!", width=1.2];
-  cart_item_order_target [label="주문 대상 여부", pos="1450,960!", width=1.9];
+  cart_item_created [label="생성 시각", pos="1190,1390!", width=1.5];
+  cart_item_updated [label="수정 시각", pos="1460,1430!", width=1.5];
 
   menu_id [label=<<U>식별자</U>>, pos="1820,1050!"];
   menu_slug [label="슬러그", pos="1790,1170!"];
   menu_name [label="메뉴명", pos="1950,1210!"];
-  menu_name_en [label="영문 메뉴명", pos="2120,1180!", width=1.8];
   menu_image [label="메뉴 이미지 주소", pos="2300,1110!", width=2.15];
   menu_description [label="설명", pos="2300,1010!"];
   menu_price [label="가격", pos="2240,750!"];
   menu_available [label="판매 가능 여부", pos="2160,680!", width=1.95];
   menu_supports_hot [label="HOT 제공 여부", pos="1870,620!", width=1.9];
-  menu_supports_ice [label="ICE 제공 여부", pos="2010,620!", width=1.9];
+  menu_supports_iced [label="ICED 제공 여부", pos="2010,620!", width=1.9];
   menu_is_new [label="첫 개시 표시 여부", pos="1870,1350!", width=2.25];
   menu_recommended [label="추천 표시 여부", pos="2130,1350!", width=2.0];
+  menu_created [label="생성 시각", pos="2350,1470!", width=1.5];
+  menu_updated [label="수정 시각", pos="2420,1300!", width=1.5];
 
   category_id [label=<<U>식별자</U>>, pos="2600,1080!"];
   category_name [label="카테고리명", pos="2790,970!", width=1.85];
   category_order [label="표시 순서", pos="2790,830!", width=1.6];
-  category_system [label="시스템 카테고리 여부", pos="2600,710!", width=2.6];
+  category_fallback [label="기타 카테고리 여부", pos="2600,710!", width=2.4];
+  category_created [label="생성 시각", pos="2750,1230!", width=1.5];
+  category_updated [label="수정 시각", pos="2900,1100!", width=1.5];
 
   edge [color="#a8b3bd", penwidth=1.0];
-  users -- {user_id user_email user_name user_role user_status};
-  music_requests -- {music_id music_requester music_title music_artist music_story music_status music_video music_order music_duration music_started};
-  orders -- {order_id order_customer order_status order_total order_reason};
+  users -- {user_id user_email user_name user_role user_status user_created user_updated};
+  music_requests -- {music_id music_requester music_title music_artist music_story music_status music_video music_order music_duration music_started music_created music_updated};
+  orders -- {order_id order_customer order_status order_type order_payment_method order_request order_total order_created order_updated};
   order_items -- {order_item_id order_item_name order_item_image order_item_temperature order_item_qty order_item_price order_item_total};
-  cart_items -- {cart_item_id cart_item_qty cart_item_temperature cart_item_order_target};
-  menus -- {menu_id menu_slug menu_name menu_name_en menu_image menu_description menu_price menu_available menu_supports_hot menu_supports_ice menu_is_new menu_recommended};
-  categories -- {category_id category_name category_order category_system};
+  cart_items -- {cart_item_id cart_item_qty cart_item_temperature cart_item_created cart_item_updated};
+  menus -- {menu_id menu_slug menu_name menu_image menu_description menu_price menu_available menu_supports_hot menu_supports_iced menu_is_new menu_recommended menu_created menu_updated};
+  categories -- {category_id category_name category_order category_fallback category_created category_updated};
 }
