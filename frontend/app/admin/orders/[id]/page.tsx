@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { allowedAdminOrderStatuses, mockOrderRepository } from "@/app/_lib/mock/orders";
-import { orderStatusLabels, type OrderItem } from "@/app/_lib/orders/types";
+import { orderStatusLabels, orderTypeLabels, paymentMethodLabels, type OrderItem } from "@/app/_lib/orders/types";
 import { requireRole } from "@/app/_lib/session/session";
 import { changeAdminOrderStatusFromDetail } from "../_actions";
 import { StatusChangeForm } from "../_components/StatusChangeForm";
@@ -106,6 +106,9 @@ export default async function AdminOrderDetailPage({ params, searchParams }: {
         <footer className={styles.footer}>
           <dl>
             <div><dt>고객</dt><dd>{order.customerName}</dd></div>
+            {order.orderType && <div><dt>수령 방식</dt><dd>{orderTypeLabels[order.orderType]}</dd></div>}
+            {order.paymentMethod && <div><dt>결제 수단</dt><dd>{paymentMethodLabels[order.paymentMethod]}</dd></div>}
+            {order.request && <div><dt>요청사항</dt><dd>{order.request}</dd></div>}
             <div><dt>최근 수정</dt><dd>{orderDate.format(new Date(order.updatedAt))}</dd></div>
           </dl>
         </footer>

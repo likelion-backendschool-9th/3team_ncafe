@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { mockOrderRepository } from "@/app/_lib/mock/orders";
-import { orderStatusLabels } from "@/app/_lib/orders/types";
+import { orderStatusLabels, orderTypeLabels, paymentMethodLabels } from "@/app/_lib/orders/types";
 import { requireRole } from "@/app/_lib/session/session";
 import { cancelCustomerOrder } from "../_actions";
 import { CancelOrderForm } from "../_components/CancelOrderForm";
@@ -33,7 +33,8 @@ export default async function CustomerOrderDetailPage({ params, searchParams }: 
         <Link className={styles.backLink} href="/orders">← 목록으로</Link>
       </div>
 
-      {one(query.canceled) === "1" && <p className={styles.notice} role="status">주문을 취소했습니다.</p>}
+      {one(query.placed) === "1" && <p className={styles.notice} role="status">주문이 접수되었습니다. 결제는 카운터에서 진행해 주세요.</p>}
+      {one(query.canceled) === "1" &&<p className={styles.notice} role="status">주문을 취소했습니다.</p>}
       {one(query.error) === "cancel" && <p className={styles.error} role="alert">주문을 취소할 수 없습니다. 현재 주문 상태를 확인해 주세요.</p>}
 
       <article className={styles.detailSheet}>
@@ -61,6 +62,14 @@ export default async function CustomerOrderDetailPage({ params, searchParams }: 
           </ul>
           <div className={styles.total}><span>총 주문 금액</span><strong>{won.format(order.totalAmount)}원</strong></div>
         </section>
+
+        {order.orderType && (
+          <dl className={styles.checkoutInfo}>
+            <div><dt>수령 방식</dt><dd>{orderTypeLabels[order.orderType]}</dd></div>
+            {order.paymentMethod && <div><dt>결제 수단</dt><dd>{paymentMethodLabels[order.paymentMethod]} (카운터 결제)</dd></div>}
+            <div><dt>요청사항</dt><dd>{order.request || "없음"}</dd></div>
+          </dl>
+        )}
 
         <footer className={styles.detailFooter}>
           <p>최근 상태 변경 <time dateTime={order.updatedAt}>{orderDate.format(new Date(order.updatedAt))}</time></p>

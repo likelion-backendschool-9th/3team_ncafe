@@ -10,7 +10,7 @@ export type CreateCustomerOrderResult =
   | { ok: false; message: string };
 
 export async function createCustomerOrder(input: CreateOrderInput): Promise<CreateCustomerOrderResult> {
-  const customer = await requireRole("customer", "/cart");
+  const customer = await requireRole("customer", "/checkout");
 
   let order;
   try {
@@ -21,7 +21,7 @@ export async function createCustomerOrder(input: CreateOrderInput): Promise<Crea
         return { ok: false, message: "메뉴 가격이 변경되었습니다. 해당 메뉴를 다시 담아 주세요." };
       }
       if (error.code === "MENU_UNAVAILABLE") {
-        return { ok: false, message: "판매하지 않는 메뉴가 포함되어 있습니다. 해당 메뉴를 장바구니에서 삭제해 주세요." };
+        return { ok: false, message: "판매하지 않는 메뉴가 포함되어 있습니다. 해당 메뉴를 장바구니에서 빼고 다시 주문해 주세요." };
       }
       return { ok: false, message: error.message };
     }
