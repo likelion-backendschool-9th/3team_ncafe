@@ -1,0 +1,184 @@
+/* 색 변수(--paper, --ink, --red ...)는 cart.module.css의 .page에서 상속받는다 */
+
+.loading {
+  margin: 0;
+  padding: 3rem 1rem;
+  border: 2px dashed var(--paper);
+  text-align: center;
+}
+
+/* 넓은 화면: 왼쪽 주문서, 오른쪽 결제 금액. 좁은 화면에서는 위아래로 쌓인다 */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  align-items: start;
+  gap: 1.4rem;
+}
+
+.sections { display: grid; gap: 1.1rem; min-width: 0; }
+
+.section {
+  display: grid;
+  gap: 0.9rem;
+  min-width: 0;
+  margin: 0;
+  padding: 1.1rem clamp(1rem, 3vw, 1.4rem) 1.3rem;
+  border: 3px double var(--ink);
+  background: radial-gradient(circle at 18% 12%, #fffaf080, transparent 45%), var(--paper);
+  color: var(--ink);
+  box-shadow: 5px 6px 0 #74452e;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 2px solid var(--ink);
+}
+.sectionHeading h2,
+.legend {
+  margin: 0;
+  font-family: var(--font-menu-name), var(--font-display), "Apple SD Gothic Neo", sans-serif;
+  font-size: 1.3rem;
+  font-weight: 400;
+}
+/* fieldset의 legend는 테두리 위에 걸리므로, 블록으로 바꿔 다른 섹션 제목과 같은 자리에 둔다 */
+.legend {
+  float: left;
+  width: 100%;
+  padding: 0 0 0.55rem;
+  border-bottom: 2px solid var(--ink);
+}
+.legend + * { clear: both; }
+
+.editLink, .optional, .counter { font-size: 0.85rem; font-weight: 700; }
+.editLink { color: var(--red-dark); text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; }
+.optional { margin-left: 0.35rem; color: #8a7462; font-family: var(--font-body), sans-serif; }
+.counter { color: #8a7462; font-family: Arial, sans-serif; }
+
+.itemList { display: grid; margin: 0; padding: 0; list-style: none; }
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px dashed #ad8c68;
+}
+.item:last-child { border-bottom: 0; padding-bottom: 0; }
+.itemInfo { display: grid; flex: 1; gap: 0.2rem; min-width: 0; }
+.itemName {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--font-menu-name), var(--font-display), "Apple SD Gothic Neo", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+.itemMeta { color: #685748; font-size: 0.88rem; }
+.itemTotal { flex: none; font-family: Arial, sans-serif; font-weight: 800; white-space: nowrap; }
+
+.choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.choice {
+  position: relative;
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem;
+  border: 1.5px solid #b8a48d;
+  border-radius: 6px;
+  background: #fff8ec;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+.choice:hover { border-color: var(--ink); }
+.choice[data-checked="true"] {
+  border-color: var(--red);
+  background: #fbe9e2;
+  box-shadow: 0 0 0 2px var(--red) inset;
+}
+.choice:has(input:focus-visible) { outline: 3px solid var(--teal); outline-offset: 2px; }
+/* 라디오 원은 숨기고 카드 전체를 선택 영역으로 쓴다 */
+.choice input { position: absolute; opacity: 0; pointer-events: none; }
+.choiceLabel { font-weight: 800; font-size: 1.02rem; }
+.choice[data-checked="true"] .choiceLabel { color: var(--red-dark); }
+.choiceHint { color: #685748; font-size: 0.84rem; }
+fieldset:disabled .choice { cursor: not-allowed; opacity: 0.7; }
+
+.request {
+  width: 100%;
+  min-height: 5.5rem;
+  padding: 0.75rem 0.9rem;
+  border: 1.5px solid #b8a48d;
+  border-radius: 6px;
+  background: #fff8ec;
+  color: var(--ink);
+  font: inherit;
+  resize: vertical;
+}
+.request:focus { border-color: var(--ink); outline: 2px solid var(--teal); outline-offset: 1px; }
+
+.note { margin: 0; color: #685748; font-size: 0.84rem; }
+
+/* 오른쪽 결제 금액 영역: 영수증처럼 이중선 테두리, 스크롤해도 따라온다 */
+.summary {
+  position: sticky;
+  top: 1.5rem;
+  display: grid;
+  gap: 1rem;
+  padding: 1.3rem 1.4rem;
+  border: 4px double var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 8px 9px 0 #74452e;
+}
+.summaryTitle {
+  margin: 0;
+  padding-bottom: 0.6rem;
+  border-bottom: 2px solid var(--ink);
+  font-family: var(--font-menu-name), var(--font-display), "Apple SD Gothic Neo", sans-serif;
+  font-size: 1.3rem;
+  font-weight: 400;
+}
+.amounts { display: grid; gap: 0.55rem; margin: 0; }
+.amounts > div { display: flex; justify-content: space-between; gap: 1rem; }
+.amounts dt { color: #685748; }
+.amounts dd { margin: 0; font-family: Arial, sans-serif; font-weight: 700; }
+.grandTotal {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed #ad8c68;
+  font-weight: 800;
+}
+.grandTotal strong {
+  color: var(--red-dark);
+  font-family: var(--font-menu-name), Arial, sans-serif;
+  font-size: 1.7rem;
+  font-weight: 400;
+}
+.agree {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 6px;
+  background: #ead4b4;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.agree input { flex: none; width: 1.1rem; height: 1.1rem; margin-top: 0.1rem; accent-color: var(--red); }
+.hint { margin: -0.3rem 0 0; color: #8a7462; font-size: 0.82rem; text-align: center; }
+
+@media (max-width: 860px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .summary { position: static; }
+}
+
+@media (max-width: 480px) {
+  .choices { grid-template-columns: minmax(0, 1fr); }
+}

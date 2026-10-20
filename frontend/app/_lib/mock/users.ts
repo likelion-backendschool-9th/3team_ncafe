@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { readMockData, writeMockData } from "./store";
 
-export type Role = "customer" | "admin" | "driver";
+export type Role = "customer" | "admin";
 
 export type User = {
   id: string;
@@ -10,6 +10,10 @@ export type User = {
   role: Role;
   status: "active" | "suspended";
 };
+
+export type UserStatus = User["status"];
+
+type UserStatusResult = { ok: true } | { ok: false; error: "not-found" | "protected" | "conflict" };
 
 type StoredUser = User & {
   passwordHash: string;
@@ -40,7 +44,6 @@ function users(): StoredUser[] {
   return readMockData(fileName, () => [
     makeUser("관리자", "admin@ncafe.local", "admin", demoPassword),
     makeUser("고객", "customer@ncafe.local", "customer", demoPassword),
-    makeUser("배달기사", "driver@ncafe.local", "driver", demoPassword),
   ]);
 }
 
@@ -56,12 +59,32 @@ function toUser(stored: StoredUser): User {
 
 export function findMockUserById(id: string): User | null {
   const user = users().find((item) => item.id === id);
-  return user ? toUser(user) : null;
+  return user && (user.role === "customer" || user.role === "admin") ? toUser(user) : null;
+}
+
+export function listMockUsers(): User[] {
+  return users()
+    .filter((user) => user.role === "customer" || user.role === "admin")
+    .map(toUser);
+}
+
+export function updateMockUserStatus(id: string, status: UserStatus, expectedStatus: UserStatus): UserStatusResult {
+  const allUsers = users();
+  const user = allUsers.find((item) => item.id === id);
+  if (!user) return { ok: false, error: "not-found" };
+  if (user.role !== "customer") return { ok: false, error: "protected" };
+  if (user.status !== expectedStatus) return { ok: false, error: "conflict" };
+
+  if (user.status !== status) {
+    user.status = status;
+    writeMockData(fileName, allUsers);
+  }
+  return { ok: true };
 }
 
 export function authenticateMockUser(email: string, password: string): User | null {
   const user = users().find((item) => item.email === email.trim().toLowerCase());
-  if (!user || user.status !== "active") return null;
+  if (!user || user.status !== "active" || (user.role !== "customer" && user.role !== "admin")) return null;
 
   const expected = Buffer.from(user.passwordHash, "hex");
   const actual = Buffer.from(hashPassword(password, user.passwordSalt), "hex");

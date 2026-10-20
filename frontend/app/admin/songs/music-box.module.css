@@ -1,0 +1,107 @@
+.page { display: grid; gap: 2rem; }
+.heading h1 { margin: 0.3rem 0; font-size: clamp(2rem, 4vw, 2.8rem); }
+.heading p:last-child { margin: 0; color: var(--muted); }
+.section { display: grid; gap: 0.8rem; }
+.sectionHeading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.7rem; }
+.sectionHeading h2 { margin: 0; font-size: 1.45rem; }
+.count { color: var(--muted); font-weight: 700; }
+.sectionHint { margin-left: auto; color: var(--muted); font-size: 0.82rem; }
+.empty, .history { margin: 0; padding: 1.3rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.empty { color: var(--muted); }
+.cardList { display: grid; gap: 0.7rem; }
+
+/* 현재 선곡·플레이리스트·접수함 공용 카드. 왼쪽 띠와 배지 색으로만 구분한다. */
+.card { --tone: #9a7a55; border: 1px solid var(--border); border-left: 5px solid var(--tone); border-radius: 12px; background: #fbf3e4; }
+.cardPlaying { --tone: #a82b2d; }
+.cardQueued { --tone: #207a72; }
+.cardPending { --tone: #9a7a55; }
+.cardHead { display: grid; grid-template-columns: minmax(0, 1fr) 28px; align-items: center; gap: 0.6rem; padding-right: 1rem; }
+.cardToggle {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 150px 112px 18px;
+  align-items: center;
+  column-gap: 0.9rem;
+  min-height: 64px;
+  padding: 0 0 0 1.25rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+.cardToggle:focus-visible { outline: 3px solid #207a72; outline-offset: -3px; border-radius: 10px; }
+.cardBadge { padding: 0.2rem 0; background: var(--tone); color: #fff; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-align: center; }
+.cardTitle { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cardTitle strong { font-family: var(--font-display), sans-serif; font-size: 1.15rem; font-weight: 400; }
+.cardTitle span, .cardMeta { color: var(--muted); }
+.cardMeta { font-size: 0.82rem; }
+.chip { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.75rem; font-weight: 800; white-space: nowrap; }
+.chipAccent { background: #f6dcd8; color: #9b2924; }
+.chipOk { background: #dfeee9; color: #174b4a; }
+.chipMuted { background: #efe0c4; color: var(--muted); }
+.chevron { color: #583524; transition: transform 0.15s; }
+.cardToggle[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+.cardSide { display: flex; justify-content: center; }
+.cardBody { display: grid; gap: 0.9rem; padding: 0.2rem 1.25rem 1.25rem; }
+
+.reorder { display: grid; gap: 2px; }
+.reorder button { width: 28px; height: 20px; padding: 0; border: 1px solid var(--border); border-radius: 3px; background: #fff8ec; color: #583524; cursor: pointer; font-size: 0.56rem; line-height: 1; }
+.reorder button:hover:not(:disabled) { background: #ead5b7; }
+.reorder button:disabled { border-color: #d6c2a2; background: transparent; color: #c9b08c; cursor: not-allowed; }
+
+.story { margin: 0; padding: 0.7rem 1rem; border-left: 3px solid #207a72; background: #fff8ec; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.linkField { display: grid; gap: 0.4rem; }
+.linkField label { font-size: 0.87rem; font-weight: 700; }
+.linkField > div { display: flex; gap: 0.6rem; }
+.linkField input { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 0 0.75rem; border: 1px solid var(--border); border-radius: 2px; background: #fff8ec; color: var(--text); font: inherit; }
+.linkField .outlineButton { flex: 0 0 112px; }
+.formError { margin: 0; color: #9b2924; font-size: 0.87rem; font-weight: 700; }
+
+/* 영상(356×200)과 설명·버튼을 나란히 두고, 버튼 줄은 영상 아랫선에 맞춘다. */
+.mediaRow { display: flex; gap: 1.25rem; }
+.mediaRow > :first-child { flex: 0 0 356px; }
+.mediaSide { display: flex; flex: 1; flex-direction: column; justify-content: space-between; gap: 0.8rem; min-width: 0; min-height: 200px; }
+.mediaSide p { margin: 0; line-height: 1.6; }
+.hint { margin-top: 0.3rem !important; color: var(--muted); font-size: 0.82rem; }
+.preview { display: grid; gap: 0.35rem; margin: 0; }
+.previewFrame { aspect-ratio: 16 / 9; overflow: hidden; border-radius: 6px; background: #000; }
+.previewFrame iframe { display: block; width: 100%; height: 100%; border: 0; }
+.preview figcaption { color: var(--muted); font-size: 0.8rem; }
+.onAirBar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.soundButton { min-height: 32px; padding: 0 0.75rem; border: 1px solid #207a72; border-radius: 2px; background: #207a72; color: #fff8ec; cursor: pointer; font: inherit; font-weight: 800; }
+.soundButton:hover { background: #174b4a; }
+.soundButton:focus-visible { outline: 3px solid #207a72; outline-offset: 2px; }
+.previewEmpty { display: grid; height: 200px; place-items: center; border: 1px dashed var(--border); border-radius: 6px; background: #f5ead6; color: var(--muted); font-size: 0.85rem; }
+
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.pushEnd { margin-left: auto; }
+.primaryButton, .outlineButton, .dangerButton { min-height: 44px; padding: 0 1rem; border-radius: 2px; cursor: pointer; font: inherit; font-weight: 800; }
+.primaryButton { border: 0; background: #a82b2d; color: #fff8ec; }
+.primaryButton:hover:not(:disabled) { background: #812125; }
+.primaryButton:disabled { opacity: 0.5; cursor: not-allowed; }
+.outlineButton { border: 1px solid #207a72; background: transparent; color: #174b4a; }
+.outlineButton:hover { background: #dfeee9; }
+.dangerButton { border: 1px solid #9b2924; background: transparent; color: #9b2924; font-weight: 700; }
+.dangerButton:hover { background: #f6dcd8; }
+.primaryButton:focus-visible, .outlineButton:focus-visible, .dangerButton:focus-visible, .reorder button:focus-visible, .linkField input:focus-visible { outline: 3px solid #207a72; outline-offset: 2px; }
+
+.history { display: grid; gap: 0.6rem; list-style: none; }
+.history li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.8rem; }
+.historyTitle { min-width: 0; overflow-wrap: anywhere; }
+.historyTime { color: var(--muted); font-size: 0.85rem; }
+
+@media (max-width: 760px) {
+  .sectionHint { margin-left: 0; flex-basis: 100%; }
+  .cardToggle { grid-template-columns: 64px minmax(0, 1fr) 18px; }
+  .cardMeta, .cardToggle > span:nth-child(4) { display: none; }
+  .mediaRow { flex-direction: column; }
+  .mediaRow > :first-child { flex-basis: auto; }
+  .mediaSide { min-height: 0; }
+}
+@media (max-width: 640px) {
+  .history li { grid-template-columns: auto minmax(0, 1fr); }
+  .history li form { grid-row: span 2; }
+  .historyTime { grid-column: 2; }
+}

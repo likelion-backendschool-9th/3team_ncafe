@@ -38,8 +38,8 @@ export function MenuTable({ menus, createdId }: {
                 <td>
                   <div className={styles.menuTitle}>
                     <Link className={styles.menuLink} href={`/admin/menus/${menu.id}`}>{menu.name}</Link>
-                    {menu.isNew && <span className={styles.newBadge}>NEW</span>}
                     {menu.recommended && <span className={styles.recommendedBadge}>추천</span>}
+                    {menu.isNew && <span className={styles.newBadge}>첫 개시</span>}
                   </div>
                   <span className={styles.secondaryName}>{menu.nameEn || "영문명 없음"}</span>
                 </td>

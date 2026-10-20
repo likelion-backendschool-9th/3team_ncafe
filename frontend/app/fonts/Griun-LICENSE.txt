@@ -1,0 +1,12 @@
+그리운 손글씨 폰트 (Griun fonts) — https://www.griun.co.kr
+
+- Griun-HangeulDDURAE-Regular.woff2        그리운X국한박 뚜레 (GriunXHangeul DDURAE)   https://www.griun.co.kr/fonts/hangeulddurae
+- Griun-Hyoje-Regular.woff2                그리운 효제체 (Griun Hyoje)               https://www.griun.co.kr/fonts/hyoje
+- Griun-AhyoungsHandwriteIn2019-Regular.woff2  그리운 2019년도 아영의 손글씨 (Griun Ahyoung's Handwrite In 2019)  https://www.griun.co.kr/fonts/ahyoungshandwritein2019
+- Griun-Hoisin-Regular.woff2               그리운 회민 (Griun Hoisin)                https://www.griun.co.kr/fonts/hoisin
+
+라이선스 (각 폰트 페이지 원문):
+"모든 사용 범위에서 자유롭게 사용이 가능합니다. 다만, 폰트파일 개작⋅수정⋅판매는 금지됩니다."
+
+파일은 위 페이지가 제공하는 공식 woff2를 이름만 바꿔 그대로 넣었습니다. 글자 수 줄이기(서브셋) 등 파일 수정을 하지 않습니다.
+그리운 2019년도 아영의 손글씨는 상업적으로 이용할 때 제작자 네이버 블로그에 댓글을 남겨 달라고 요청합니다.

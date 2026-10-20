@@ -1,0 +1,286 @@
+/* 홈 하단 뮤직박스 칸: 나무 판벽 위 DJ 부스(유리창) + 아래 신청곡 메모 꽂이 */
+/* DJ 부스는 마이페이지에서도 .frame만 따로 쓰므로 색 변수를 둘 다에 둔다. */
+.section, .frame {
+  --paper: #f5e7cf;
+  --ink: #34251d;
+  --muted: #6b5847;
+  --red: #a82b2d;
+  --red-dark: #6d1d25;
+  --teal: #207a72;
+  --gold: #e7bd63;
+  --cream-text: #f4ead6;
+}
+.section {
+  position: relative;
+  padding: clamp(2rem, 5vw, 3.4rem) clamp(1rem, 4vw, 3.6rem) clamp(2rem, 5vw, 3.6rem);
+  background: linear-gradient(0deg, #21150fd9, #21150f26),
+    repeating-linear-gradient(90deg, #5a3927 0 55px, #64432e 55px 57px, #4d3022 57px 110px);
+  color: var(--paper);
+}
+.section::before { content: ""; position: absolute; inset: 12px; border: 1px solid #d6af718a; pointer-events: none; }
+
+.head { position: relative; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1.2rem 2rem; margin-bottom: 2rem; }
+.eyebrow { margin: 0; color: var(--gold); font-family: Arial, "Apple SD Gothic Neo", sans-serif; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.17em; }
+.title { margin: 0.45rem 0 0; font-size: clamp(2rem, 3.4vw, 3rem); line-height: 1.25; letter-spacing: -0.05em; text-wrap: balance; word-break: keep-all; }
+.lead { margin: 0.6rem 0 0; color: #f8efdcd0; font-family: var(--font-serif), serif; word-break: keep-all; }
+.actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.primaryLink { display: inline-flex; align-items: center; min-height: 44px; padding: 0.5rem 1rem; border: 1px solid var(--red); background: var(--red); box-shadow: 3px 4px 0 var(--red-dark); color: var(--paper); font-size: 0.92rem; font-weight: 800; text-decoration: none; }
+.primaryLink:hover { background: #812125; }
+.primaryLink:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+/* ── DJ 부스 ── */
+.frame {
+  position: relative;
+  padding: 22px 22px 0;
+  background: linear-gradient(180deg, #6b4126, #4a2b18);
+  box-shadow: inset 0 0 0 2px #8a5a36, inset 0 0 0 6px #3a2112;
+}
+.window { position: relative; height: 640px; overflow: hidden; border: 6px solid #2b1a10; background: #1c120c; color: var(--cream-text); }
+/* 유리 반사와 가장자리 그늘. 턴테이블·메모지(.stage)보다 아래에 두어 영상을 가리지 않는다. */
+.window::after {
+  content: "";
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(112deg, transparent 0 30%, #ffffff14 34%, transparent 41%, transparent 63%, #ffffff0d 66%, transparent 71%);
+}
+
+/* 뒤 벽: LP가 빽빽이 꽂힌 진열장. 선반 → 머리 위 빈칸 → LP 등판 순서로 한 칸(118px)이 반복된다. */
+.shelves {
+  position: absolute;
+  inset: 0 0 80px;
+  background:
+    repeating-linear-gradient(180deg, #3a2213 0 10px, #0b0604 10px 22px, transparent 22px 118px),
+    repeating-linear-gradient(90deg, #3a2213 0 10px, transparent 10px 214px),
+    repeating-linear-gradient(90deg, #5b3b2e 0 4px, #15100c 4px 5px, #7c6a48 5px 9px, #15100c 9px 10px, #3c4656 10px 13px, #15100c 13px 14px, #8a3a2e 14px 18px, #15100c 18px 19px, #b9a27a 19px 21px, #15100c 21px 22px, #2f3a2c 22px 27px, #15100c 27px 28px, #6a5a7a 28px 31px, #15100c 31px 32px, #a07a3a 32px 36px, #15100c 36px 37px, #4a2a22 37px 42px, #15100c 42px 43px, #d0c2a0 43px 45px, #15100c 45px 46px, #2a2a3a 46px 51px, #15100c 51px 52px, #7a4a2a 52px 57px, #15100c 57px 58px, #3d5a5a 58px 61px, #15100c 61px 62px, #9a6a5a 62px 66px, #15100c 66px 67px),
+    #1a0f08;
+}
+/* 앞면이 보이게 세워 둔 LP 재킷 두 장 */
+.faceOut { position: absolute; width: 86px; height: 86px; box-shadow: 0 0 0 2px #0b0604; }
+.faceOut::after { content: ""; position: absolute; inset: 18px; border-radius: 50%; background: #111; box-shadow: inset 0 0 0 14px #1d1d1d; }
+.faceOutLeft { top: 258px; left: 40px; background: linear-gradient(135deg, #2f5d6b, #6b4a8c); }
+.faceOutRight { top: 140px; right: 46px; background: linear-gradient(135deg, #b5552f, #e7bd63 140%); }
+/* 진열장은 갈색으로 눌러 두고, 턴테이블과 메모지 뒤만 따뜻하게 밝힌다. */
+.dim {
+  position: absolute;
+  z-index: 3;
+  inset: 0 0 80px;
+  pointer-events: none;
+  background: radial-gradient(ellipse 34% 46% at 33% 62%, #ffb24a24, transparent 100%),
+    radial-gradient(ellipse 22% 44% at 81% 62%, #ffb24a1f, transparent 100%),
+    radial-gradient(ellipse 80% 70% at 52% 62%, #2a140840, #2a1408b3 85%);
+}
+
+/* 전구 줄 */
+.bulbs { position: absolute; z-index: 5; display: flex; justify-content: space-between; }
+.bulbsTop { top: -2px; left: 18px; right: 18px; height: 40px; border-top: 2px solid #120a06; }
+.bulbsLeft, .bulbsRight { top: 46px; bottom: 100px; flex-direction: column; width: 34px; }
+.bulbsLeft { left: -2px; border-left: 2px solid #120a06; }
+.bulbsRight { right: -2px; border-right: 2px solid #120a06; }
+.bulb { position: relative; width: 14px; height: 22px; }
+.bulb::before { content: ""; position: absolute; top: 0; left: 3px; width: 8px; height: 6px; border-radius: 1px; background: #c9c1b0; }
+.bulb::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 0;
+  width: 14px;
+  height: 18px;
+  border-radius: 50% 50% 48% 48% / 40% 40% 60% 60%;
+  background: var(--bulb);
+  box-shadow: 0 0 10px 2px var(--bulb), inset -3px -3px 0 #0003, inset 2px 2px 0 #fff6;
+}
+.bulbsTop .bulb:nth-child(odd) { transform: translateY(2px) rotate(8deg); }
+.bulbsTop .bulb:nth-child(even) { transform: translateY(4px) rotate(-8deg); }
+.bulbsLeft .bulb { margin-left: 8px; transform: rotate(-90deg); }
+.bulbsRight .bulb { margin-left: 8px; transform: rotate(90deg); }
+
+/* 유리에 붙인 MUSIC BOX 글자 */
+.arc { position: absolute; z-index: 5; top: 36px; left: 50%; width: min(600px, 82%); transform: translateX(-50%); overflow: visible; }
+.arc text { fill: #f3dfb4; stroke: #2a170c; stroke-width: 1.5px; paint-order: stroke; font-family: Georgia, "Times New Roman", serif; font-size: 64px; font-weight: 700; letter-spacing: 14px; }
+
+/* 책상 */
+.desk {
+  position: absolute;
+  z-index: 4;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 80px;
+  border-top: 5px solid #a7693e;
+  background: repeating-linear-gradient(90deg, #00000012 0 3px, transparent 3px 22px), linear-gradient(180deg, #8a5532, #5e3720);
+  box-shadow: 0 -4px 10px #0007;
+}
+.deskLabel {
+  position: absolute;
+  z-index: 7;
+  bottom: 18px;
+  left: 50%;
+  padding: 0.2rem 0.9rem;
+  border: 1px solid #e7bd6388;
+  background: #2a170ccc;
+  color: #f3d9a8;
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.25em;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+/* 책상 윗면 위에 턴테이블과 메모지를 같은 높이로 나란히 올린다. */
+.stage { position: absolute; z-index: 8; top: 156px; right: 28px; left: 28px; display: flex; gap: 28px; height: 400px; }
+
+/* 턴테이블: 나무 데크 위 은색 판, 재킷 뒤에서 반쯤 나온 LP, 오른쪽 위 톤암 */
+.deck {
+  position: relative;
+  flex: 0 0 580px;
+  border-radius: 8px;
+  background: repeating-linear-gradient(90deg, #00000010 0 2px, transparent 2px 14px), linear-gradient(135deg, #8a5532, #6e4224);
+  box-shadow: inset 0 0 0 3px #c9a45c, inset 0 0 0 7px #4a2b18, inset 0 0 0 10px #7a4a2a, 8px 12px 16px #000b;
+}
+.platter { position: absolute; top: 45px; left: 236px; width: 310px; height: 310px; border-radius: 50%; background: radial-gradient(circle, #9a958c, #c9c3b6 70%, #7d786f); box-shadow: 0 4px 10px #0009; }
+.record {
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: conic-gradient(from 200deg, transparent 0 10%, #ffffff2e 15%, transparent 22% 58%, #ffffff1f 64%, transparent 72%),
+    radial-gradient(circle, #c9c3b6 0 4px, #a82b2d 4.5px 46px, #e7bd63 46px 49px, transparent 49.5px),
+    repeating-radial-gradient(circle, #101010 0 2px, #1c1c1c 2px 4px);
+  animation: spin 3.2s linear infinite;
+  animation-play-state: paused;
+}
+.record span { position: absolute; top: 112px; right: 0; left: 0; color: #f3dfb4; font-family: Georgia, serif; font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-align: center; }
+.window[data-playing="true"] .record { animation-play-state: running; }
+.tonearm {
+  position: absolute;
+  z-index: 1;
+  top: 67px;
+  left: 548px;
+  width: 6px;
+  height: 200px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #8f8a80, #f1ede4, #8f8a80);
+  box-shadow: 2px 3px 4px #0007;
+  /* 멈춰 있을 때는 판 바깥에 걸쳐 두고, 재생하면 판 위로 내려온다. */
+  transform: rotate(5deg);
+  transform-origin: 3px 0;
+  transition: transform 600ms ease;
+}
+.tonearm::before { content: ""; position: absolute; top: -17px; left: -14px; width: 34px; height: 34px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #f4f1ea, #8f8a80); box-shadow: 0 3px 4px #0008; }
+.tonearm::after { content: ""; position: absolute; bottom: -14px; left: -7px; width: 20px; height: 24px; border-radius: 3px; background: #2b2b2b; box-shadow: inset 0 0 0 2px #555; }
+.window[data-playing="true"] .tonearm { transform: rotate(22deg); }
+.speed { position: absolute; right: 18px; bottom: 20px; display: flex; gap: 2px; padding: 2px; border-radius: 3px; background: #2b1a10; font-size: 9px; font-weight: 800; }
+.speed b { padding: 1px 4px; background: var(--gold); color: #2b1a10; }
+.speed i { padding: 1px 4px; color: var(--gold); font-style: normal; }
+
+/* LP 재킷: 앞면이 곧 YouTube 화면이다. */
+.sleeve {
+  position: absolute;
+  z-index: 2;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 384px;
+  height: 360px;
+  padding: 14px;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #f3e3c3, #e2c99d);
+  box-shadow: inset 0 0 0 1px #c9a77066, inset 0 0 40px #a8783b44, 8px 10px 14px #000b;
+  color: var(--ink);
+}
+.sleeveHead { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; min-height: 44px; border-bottom: 3px double var(--red); }
+.sleeveHead h3 { margin: 1px 0 5px; font-size: 1.35rem; line-height: 1.1; overflow-wrap: anywhere; }
+.sleeveLabel { margin: 0; color: var(--red); font-family: Arial, sans-serif; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.2em; }
+.sleeveArtist { flex-shrink: 0; margin: 0 0 6px; font-family: var(--font-serif), serif; font-size: 0.9rem; font-weight: 700; }
+/* YouTube 화면은 정책상 가리지 않고 높이 200px 이상으로 보여 준다. */
+.video { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #000; box-shadow: 0 0 0 2px var(--ink); }
+.video iframe { display: block; width: 100%; height: 100%; border: 0; }
+.videoEmpty { display: grid; width: 100%; aspect-ratio: 16 / 9; place-items: center; margin: 0; padding: 1rem; box-sizing: border-box; background: linear-gradient(135deg, #2b3a44, #141b21 55%, #2a1f18); color: #f4ead6cc; font-size: 0.86rem; text-align: center; }
+.player { display: flex; align-items: center; gap: 10px; }
+.onAir { flex: none; padding: 2px 6px; border: 1.5px solid var(--red); border-radius: 3px; color: var(--red); font-family: Arial, sans-serif; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.12em; white-space: nowrap; }
+.progress { flex: 1; min-width: 0; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--red) var(--progress, 0%), #c9b08c var(--progress, 0%)); }
+.time { color: var(--muted); font-size: 0.7rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.unmuteButton { flex: none; padding: 4px 10px; border: 0; border-radius: 999px; background: var(--red); color: #fff; cursor: pointer; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
+.unmuteButton:hover { background: #812125; }
+.unmuteButton:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.sleeveFoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; font-family: Georgia, serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.2em; }
+.sleeveFoot b { padding: 1px 6px; border: 1.5px solid var(--ink); font-family: Arial, sans-serif; font-size: 0.62rem; letter-spacing: 0.1em; }
+.sleeveError { color: var(--red); font-family: var(--font-body), sans-serif; font-size: 0.78rem; letter-spacing: 0; }
+
+/* 신청곡 메모지: 뮤직박스 페이지의 신청서와 같은 양식에 지금 곡의 신청인과 사연을 적어 둔다. */
+.slip {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding: 22px 22px 12px;
+  box-sizing: border-box;
+  border: 1px solid #b38d61;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-serif), serif;
+  box-shadow: 6px 8px 0 #1b110b, 8px 12px 16px #000a;
+  transform: rotate(1deg);
+}
+.tape { position: absolute; z-index: 1; top: -12px; width: 84px; height: 24px; background: #d9c29acc; box-shadow: 0 1px 2px #0003; }
+.tapeLeft { left: 30px; transform: rotate(-6deg); }
+.tapeRight { right: 30px; transform: rotate(5deg); }
+.slipTitle { width: fit-content; margin: 0 auto 0.6rem; padding: 0 6px 2px; border-bottom: 4px double var(--ink); font-size: 1.5rem; font-weight: 700; letter-spacing: 0.12em; }
+.slipLine { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: end; gap: 8px; min-height: 38px; margin: 0; padding-bottom: 3px; border-bottom: 1px solid #c9b08c; }
+.slipLine strong { color: #1f2a5a; font-size: 1.3rem; font-weight: 400; overflow-wrap: anywhere; }
+.slipStory { flex: 1; min-height: 0; padding-top: 10px; overflow-y: auto; }
+/* 사연은 메모지의 대부분을 차지하도록 크게, 메모지 밑줄에 맞춰 적는다. */
+.slipStory p {
+  margin: 4px 0 0;
+  background: repeating-linear-gradient(180deg, transparent 0 31px, #c9b08c 31px 32px);
+  color: #1f2a5a;
+  font-size: 1.25rem;
+  line-height: 32px;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.speechControls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.55rem; margin-top: 0.4rem; }
+.speechButton { min-height: 36px; padding: 0.3rem 0.65rem; border: 1px solid var(--teal); background: #e8eee6; color: #155e57; font: 700 0.8rem var(--font-body), sans-serif; cursor: pointer; }
+.speechButton:hover { background: #d5e6dc; }
+.speechButton:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.speechButton:disabled { opacity: 0.55; cursor: not-allowed; }
+.speechMessage { color: var(--red-dark); font-size: 0.75rem; line-height: 1.35; }
+.speechLoading { color: var(--muted); font-size: 0.75rem; line-height: 1.35; }
+.speechCredit { display: block; color: var(--muted); font-size: 0.7rem; line-height: 1.5; text-align: left; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
+.slipEmpty { flex: 1; margin: 1rem 0 0; color: var(--muted); }
+.slipFoot { margin-top: 8px; padding-top: 6px; border-top: 2px solid var(--ink); color: var(--muted); text-align: center; }
+.slipFoot p { margin: 0; font-size: 0.75rem; }
+.slipFoot .shopName { color: var(--ink); font-family: var(--font-display), sans-serif; font-size: 1.1rem; letter-spacing: 0.25em; }
+.shopName span { font-family: var(--font-serif), serif; font-size: 0.75rem; letter-spacing: 0.02em; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 부스가 좁아지면 턴테이블과 메모지를 위아래로 쌓는다. */
+@media (max-width: 1100px) {
+  .window { height: auto; padding: 130px 1rem 104px; }
+  .stage { position: relative; inset: auto; flex-direction: column; align-items: center; height: auto; }
+  .deck { flex: none; width: min(580px, 100%); height: 400px; }
+  .slip { flex: none; width: min(480px, 100%); min-height: 320px; transform: none; }
+  .faceOut { display: none; }
+}
+/* 휴대폰: LP판·톤암을 빼고 재킷(영상)을 데크 폭에 맞춘다. */
+@media (max-width: 680px) {
+  .frame { padding: 12px 12px 0; }
+  .window { padding: 96px 0.6rem 100px; }
+  .bulbsLeft, .bulbsRight, .bulbsTop .bulb:nth-child(even) { display: none; }
+  .arc { top: 26px; width: 92%; }
+  .deck { height: auto; padding: 12px; box-sizing: border-box; }
+  .platter, .tonearm, .speed { display: none; }
+  .sleeve { position: relative; inset: auto; width: 100%; height: auto; }
+  .sleeveFoot { margin-top: 4px; }
+  .deskLabel { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .record { animation: none; }
+  .tonearm { transition: none; }
+}

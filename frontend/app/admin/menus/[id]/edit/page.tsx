@@ -28,6 +28,7 @@ export default async function EditMenuPage({ params }: { params: Promise<{ id: s
         cancelHref={`/admin/menus/${id}`}
         submitLabel="변경 저장"
         categoryOptions={categories.map((category) => category.name)}
+        singleCategory
       />
     </div>
   );

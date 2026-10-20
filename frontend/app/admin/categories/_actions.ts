@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { mockCategoryRepository } from "@/app/_lib/mock/categories";
+import { FALLBACK_CATEGORY_NAME, mockCategoryRepository } from "@/app/_lib/mock/categories";
+import { mockMenuRepository } from "@/app/_lib/mock/menus";
 import { requireRole } from "@/app/_lib/session/session";
 
 export type CategoryFormState = { error?: string };
@@ -49,10 +50,19 @@ export async function renameCategory(id: string, _previous: CategoryFormState, f
   return {};
 }
 
-export async function deleteCategory(id: string): Promise<void> {
+export async function deleteCategory(id: string): Promise<CategoryFormState> {
   await requireRole("admin", "/admin/categories");
-  await mockCategoryRepository.remove(id);
+  try {
+    const removed = await mockCategoryRepository.remove(id);
+    if (!removed) return { error: "삭제할 카테고리를 찾을 수 없습니다." };
+    // 지운 카테고리를 쓰던 메뉴는 메뉴판에서 사라지지 않게 기타로 옮긴다.
+    await mockMenuRepository.replaceCategory(removed.name, FALLBACK_CATEGORY_NAME);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "카테고리를 삭제하지 못했습니다." };
+  }
   refresh();
+  revalidatePath("/menus", "layout");
+  return {};
 }
 
 export async function moveCategory(id: string, direction: "up" | "down"): Promise<void> {

@@ -1,36 +1,17 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Black_Han_Sans, Gowun_Batang } from 'next/font/google';
-import {
-  mockMenuRepository,
-  MENU_IMAGE_PLACEHOLDER,
-  type Menu,
-} from '@/app/_lib/mock/menus';
+import { BrandLogo } from '@/app/_components/BrandLogo';
+import { MenuCard } from '@/app/_components/MenuCard';
+import { mockMenuRepository, type Menu } from '@/app/_lib/mock/menus';
 import { getCurrentUser } from '@/app/_lib/session/session';
+import { MusicBoxHighlight } from './musicbox/_components/MusicBoxHighlight';
 import styles from './page.module.css';
 
-const display = Black_Han_Sans({
-  subsets: ['latin'],
-  weight: '400',
-  preload: false,
-  variable: '--font-display',
-});
-const serif = Gowun_Batang({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-  preload: false,
-  variable: '--font-serif',
-});
-
-const won = new Intl.NumberFormat('ko-KR');
 // 이미지를 바꿀 때 이 URL에 로컬 경로나 직접 찾은 이미지 URL을 넣으세요.
-const HERO_IMAGE_URL = '/images/hero/cafe-hero-image.jpg';
+const HERO_IMAGE_URL = '/images/hero/dabang-interior-music-box-booth.png';
 
 function pickFeatured(menus: Menu[]): Menu[] {
-  const available = menus.filter((menu) => menu.available);
-  const featured = available.filter((menu) => menu.recommended || menu.isNew);
-  const rest = available.filter((menu) => !menu.recommended && !menu.isNew);
-  return [...featured, ...rest].slice(0, 16);
+  return menus.filter((menu) => menu.available && menu.recommended).slice(0, 16);
 }
 
 export default async function HomePage() {
@@ -41,12 +22,12 @@ export default async function HomePage() {
   const featuredMenus = pickFeatured(allMenus);
 
   return (
-    <main className={`${styles.home} ${display.variable} ${serif.variable}`}>
+    <main className={styles.home}>
       <section className={styles.hero}>
         <div className={styles.heroArt}>
           <Image
             src={HERO_IMAGE_URL}
-            alt="nCafe의 커피와 매장 분위기"
+            alt="붉은 소파와 청록색 바둑판 바닥을 사이에 두고 독립된 뮤직 박스 부스가 있는 옛 다방 내부"
             fill
             unoptimized
             className={styles.heroPhoto}
@@ -58,21 +39,20 @@ export default async function HomePage() {
         <span className={`${styles.flourish} ${styles.flourishBl}`} aria-hidden="true" />
         <span className={`${styles.flourish} ${styles.flourishBr}`} aria-hidden="true" />
         <span className={styles.heroStamp} aria-hidden="true">
-          <span>SINCE</span>
-          <strong>1987</strong>
+          <BrandLogo compact />
         </span>
         <div className={`container ${styles.heroGrid}`}>
           <div className={styles.heroCopy}>
-            <p className={styles.eyebrow}>· 그 시절 다방, 오늘의 nCafe ·</p>
+            <p className={styles.eyebrow}>· 그 시절 다방, 오늘의 삼다방 ·</p>
             <h1 className={styles.title}>
-              오늘도 좋은 하루,
+              문을 열면,
               <br />
-              커피 한 잔 어때요?
+              그 시절의 온기
             </h1>
             <span className={styles.divider} aria-hidden="true" />
             <p className={styles.tagline}>
-              매일 아침 신선하게 로스팅한 원두와 엄선된 티·에이드·디저트를
-              <br />몇 번의 클릭으로 간편하게 주문해보세요.
+              오래된 다방의 편안함을 한 잔에 담았습니다.
+              <br />커피와 차, 달콤한 메뉴를 천천히 둘러보세요.
             </p>
             {user && (
               <p className={styles.welcome}>{user.name}님, 오늘도 반가워요.</p>
@@ -80,6 +60,9 @@ export default async function HomePage() {
             <div className={styles.ctaRow}>
               <Link className={styles.ctaPrimary} href="/menus">
                 전체 메뉴 보기
+              </Link>
+              <Link className={styles.ctaSecondary} href="/musicbox">
+                뮤직박스 신청곡
               </Link>
               {!user && (
                 <Link className={styles.ctaSecondary} href="/login">
@@ -89,7 +72,7 @@ export default async function HomePage() {
             </div>
             <span className={styles.status}>
               <span className={styles.statusDot} aria-hidden="true" />
-              영업 중 · 매일 09:00 – 22:00
+              삼다방 · 오래 머물고 싶은 한 잔
             </span>
           </div>
         </div>
@@ -100,45 +83,6 @@ export default async function HomePage() {
           <span key={index} />
         ))}
       </div>
-
-      <section className={`container ${styles.usp}`}>
-        <div className={styles.uspHeading}>
-          <p>삼다방의 약속</p>
-          <h2>매일 정성껏 준비합니다</h2>
-          <span aria-hidden="true">✦ · ✦ · ✦</span>
-        </div>
-        <div className={styles.uspItem}>
-          <span className={styles.uspIcon} aria-hidden="true">
-            🌱
-          </span>
-          <h3>매일 로스팅</h3>
-          <p>매장에서 매일 신선하게 로스팅한 원두만 사용해요.</p>
-        </div>
-        <div className={styles.uspItem}>
-          <span className={styles.uspIcon} aria-hidden="true">
-            🛎️
-          </span>
-          <h3>빠른 픽업</h3>
-          <p>미리 담아두고 매장에서 바로 픽업할 수 있어요.</p>
-        </div>
-        <div className={styles.uspItem}>
-          <span className={styles.uspIcon} aria-hidden="true">
-            🧾
-          </span>
-          <h3>간편한 주문</h3>
-          <p>메뉴를 눌러서 담고, 몇 번의 클릭으로 주문 끝.</p>
-        </div>
-        <div className={styles.uspItem}>
-          <span className={styles.uspIcon} aria-hidden="true">
-            🍵
-          </span>
-          <h3>정성 가득 보양차</h3>
-          <p>
-            십전대보탕부터 쌍화차, 생강차까지 — 한의원 저리가라, 매일
-            정성껏 달인 보양차로 몸을 다독여요.
-          </p>
-        </div>
-      </section>
 
       <section
         className={`container ${styles.featured}`}
@@ -152,50 +96,12 @@ export default async function HomePage() {
         </div>
         {featuredMenus.length === 0 ? (
           <p className={styles.empty}>
-            등록된 메뉴가 아직 없어요. 관리자 페이지에서 먼저 메뉴를 등록해
-            주세요.
+            추천 메뉴가 아직 없어요. 전체 메뉴에서 다른 메뉴를 둘러보세요.
           </p>
         ) : (
           <div className={styles.featuredGrid}>
-            {featuredMenus.map((menu, index) => (
-              <Link
-                key={menu.id}
-                href={`/menus/${menu.id}`}
-                className={styles.menuCard}
-              >
-                <div className={styles.menuCardImageWrap}>
-                  <Image
-                    src={menu.imageUrl || MENU_IMAGE_PLACEHOLDER}
-                    alt={`${menu.name} 이미지`}
-                    width={240}
-                    height={180}
-                    unoptimized
-                    className={styles.menuCardImage}
-                  />
-                  {menu.isNew && <span className={styles.badgeNew}>NEW</span>}
-                  {menu.recommended && (
-                    <span className={styles.badgeRecommend}>추천</span>
-                  )}
-                  {index === 0 && (
-                    <span className={styles.starburst} aria-hidden="true">
-                      <span>{won.format(menu.price)}</span>
-                      <small>원</small>
-                    </span>
-                  )}
-                </div>
-                <div className={styles.menuCardBody}>
-                  <p className={styles.menuCardName}>{menu.name}</p>
-                  <p className={styles.menuCardNameEn}>{menu.nameEn}</p>
-                  {index !== 0 && (
-                    <div className={styles.menuCardPriceRow}>
-                      <span className={styles.leader} aria-hidden="true" />
-                      <span className={styles.menuCardPrice}>
-                        {won.format(menu.price)}원
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </Link>
+            {featuredMenus.map((menu) => (
+              <MenuCard key={menu.id} menu={menu} />
             ))}
           </div>
         )}
@@ -204,49 +110,41 @@ export default async function HomePage() {
         </Link>
       </section>
 
-      <section className={`container ${styles.story}`}>
-        <span
-          className={`${styles.flourish} ${styles.flourishTl}`}
-          aria-hidden="true"
-        />
-        <span
-          className={`${styles.flourish} ${styles.flourishTr}`}
-          aria-hidden="true"
-        />
-        <span
-          className={`${styles.flourish} ${styles.flourishBl}`}
-          aria-hidden="true"
-        />
-        <span
-          className={`${styles.flourish} ${styles.flourishBr}`}
-          aria-hidden="true"
-        />
-        <div className={styles.storyText}>
-          <p className={styles.sectionEyebrow}>다방 이야기</p>
-          <h2 className={styles.sectionTitle}>그 시절, 그 자리 그대로</h2>
-          <p>
-            좁은 골목 안, 삐걱이는 나무문을 열고 들어서면{' '}
-            <strong>삼다방</strong>은 늘 그 자리에 있었습니다. 낡은 전축에서
-            흘러나오는 음악과 정성껏 달인 쌍화차 한 잔으로, 단골손님의 하루를
-            다독여온 세월이었지요.
-            <br />
-            변한 건 메뉴판 속 글씨체뿐, 손끝으로 내리는 정성만큼은 그때나
-            지금이나 한결같습니다.
-          </p>
-        </div>
-        <div className={styles.storyArt} aria-hidden="true">
-          <span>🫘</span>
-        </div>
-      </section>
+      <MusicBoxHighlight />
 
-      <section className={`container ${styles.info}`} aria-label="매장 안내">
-        <div className={styles.infoCard}>
-          <span className={styles.infoMark} aria-hidden="true">
-            ✦
+      <section className={`container ${styles.usp}`}>
+        <div className={styles.uspHeading}>
+          <p>삼다방의 약속</p>
+          <h2>매일 정성껏 준비합니다</h2>
+          <span aria-hidden="true">✦ · ✦ · ✦</span>
+        </div>
+        <div className={styles.uspItem}>
+          <span className={styles.uspIcon} aria-hidden="true">
+            ☕
           </span>
-          <h3 className={styles.sectionTitle}>매장 안내</h3>
-          <p>서울 어딘가 카페거리 12길 3 · 매일 09:00 – 22:00</p>
-          <p>전화 문의 02-1234-5678</p>
+          <h3>둘둘둘 다방 커피</h3>
+          <p>커피 둘, 설탕 둘, 프림 둘. 주인장이 그 시절 황금 비율 그대로 달달하게 타 드려요.</p>
+        </div>
+        <div className={styles.uspItem}>
+          <span className={styles.uspIcon} aria-hidden="true">
+            🛎️
+          </span>
+          <h3>기다림 없는 픽업</h3>
+          <p>미리 주문해 두시면 카운터에서 따끈하게 내어 드려요. 바쁜 날에도 한 잔은 챙기셔야지요.</p>
+        </div>
+        <div className={styles.uspItem}>
+          <span className={styles.uspIcon} aria-hidden="true">
+            📻
+          </span>
+          <h3>사연 실은 신청곡</h3>
+          <p>듣고 싶은 노래에 사연 한 줄 적어 보내시면, 뮤직박스 DJ가 차례대로 틀어 드려요.</p>
+        </div>
+        <div className={styles.uspItem}>
+          <span className={styles.uspIcon} aria-hidden="true">
+            🍵
+          </span>
+          <h3>주인장표 보양차</h3>
+          <p>노른자 동동 띄운 쌍화차에 생강차, 율무차까지. 매일 정성껏 달여 몸을 따뜻하게 다독여요.</p>
         </div>
       </section>
     </main>

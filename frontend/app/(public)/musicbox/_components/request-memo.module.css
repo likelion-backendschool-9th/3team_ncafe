@@ -1,0 +1,88 @@
+/* 신청곡 메모 꽂이: 나무 판 위에 압정으로 꽂은 종이 메모 (홈 뮤직박스, 마이페이지 공용) */
+.frontBoard {
+  --paper: #f5e7cf;
+  --ink: #34251d;
+  --muted: #6b5847;
+  --red: #a82b2d;
+  --red-dark: #6d1d25;
+  --teal: #207a72;
+  position: relative;
+  padding: 1.6rem 2.4rem 2.2rem;
+  background: repeating-linear-gradient(0deg, #00000022 0 2px, transparent 2px 34px),
+    repeating-linear-gradient(90deg, #00000018 0 2px, transparent 2px 68px),
+    linear-gradient(180deg, #8a5a38, #6e4428);
+  box-shadow: inset 0 6px 10px #0005;
+}
+.frontHead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.8rem; margin-bottom: 1.4rem; }
+.frontHead h2, .frontHead h3 { margin: 0; color: var(--paper); font-size: 1.5rem; text-shadow: 2px 2px 0 #3a2112; }
+.frontHead span { color: #f3d9a8; font-size: 0.85rem; }
+.memos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.4rem; margin: 0; padding: 0; list-style: none; }
+.memo { position: relative; min-width: 0; padding: 1.4rem 1.2rem 1rem; background: var(--paper); color: var(--ink); font-family: var(--font-serif), serif; box-shadow: 5px 6px 0 #2a170c; }
+.memo:nth-child(3n + 1) { transform: rotate(-1.4deg); }
+.memo:nth-child(3n + 2) { transform: rotate(0.9deg); }
+.memo:nth-child(3n) { transform: rotate(-0.7deg); }
+.memo::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #e46a5c, #a82b2d 60%, #6d1d25);
+  box-shadow: 1px 2px 2px #0006;
+}
+.queueBadge { position: absolute; top: 1rem; right: 1rem; padding: 0.12rem 0.5rem; border: 1px solid var(--teal); border-radius: 999px; color: var(--teal); font-family: var(--font-body), sans-serif; font-size: 0.68rem; font-weight: 800; }
+.queueBadgeNext { background: var(--teal); color: #fff; }
+.queueBadgeMuted { border-color: #9a8a78; color: var(--muted); }
+.memoSong { margin: 0; padding: 0 0 0.45rem; border-bottom: 2px solid var(--ink); font-family: var(--font-display), sans-serif; font-size: 1.12rem; overflow-wrap: anywhere; }
+/* 오른쪽 위 순번 배지와 곡명이 겹치지 않게 비워 둔다. */
+.memoSongWithBadge { padding-right: 4rem; }
+.memoSong small { color: var(--muted); font-family: var(--font-body), sans-serif; font-size: 0.76rem; }
+.memoStory {
+  display: -webkit-box;
+  margin: 0.6rem 0 0;
+  overflow: hidden;
+  /* 손님이 볼펜으로 적은 손글씨(handwriting.ts). 손글씨 폰트는 작아 보여서 조금 키운다. */
+  color: #1f2a5a;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.memoMeta { display: flex; justify-content: space-between; gap: 0.5rem; margin: 0.7rem 0 0; color: var(--muted); font-family: var(--font-body), sans-serif; font-size: 0.75rem; }
+.memoMeta span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.emptyMemo { margin: 0; padding: 1.2rem; background: var(--paper); color: var(--muted); font-family: var(--font-serif), serif; }
+
+/* 메모 오른쪽 위 모서리의 삭제 버튼 */
+.memoAction { position: absolute; z-index: 1; top: -16px; right: -16px; }
+.memoAction ~ .queueBadge { top: 1.4rem; }
+.removeButton {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 2px 3px 0 #2a170c;
+  color: var(--ink);
+  cursor: pointer;
+}
+.removeButton svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; }
+.removeButton:hover:not(:disabled) { border-color: var(--red-dark); background: var(--red); color: #fff; }
+.removeButton:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 0 1px 0 #2a170c; }
+.removeButton:disabled { opacity: 0.55; cursor: wait; }
+.removeButton:focus-visible { outline: 3px solid #e7bd63; outline-offset: 2px; }
+
+@media (max-width: 900px) {
+  .memos { grid-template-columns: 1fr; }
+  .memo:nth-child(n) { transform: none; }
+}
+@media (max-width: 560px) {
+  .frontBoard { padding: 1.4rem 1rem 1.6rem; }
+}

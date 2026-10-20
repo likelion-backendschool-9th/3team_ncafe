@@ -11,7 +11,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
       <div className="auth-card">
         <p className="eyebrow">계정</p>
         <h1>로그인</h1>
-        <p className="muted">nCafe 계정으로 계속하세요.</p>
+        <p className="muted">삼다방 계정으로 계속하세요.</p>
         {error && <p className="form-error" role="alert">이메일 또는 비밀번호를 확인해 주세요.</p>}
         <form action={login} className="form-stack">
           {next && <input type="hidden" name="next" value={next} />}
@@ -31,7 +31,6 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
             <strong>로컬 목 계정</strong>
             <span>관리자: admin@ncafe.local</span>
             <span>고객: customer@ncafe.local</span>
-            <span>기사: driver@ncafe.local</span>
             <span>공통 비밀번호: demo1234!</span>
           </div>
         )}

@@ -1,0 +1,103 @@
+.page {
+  --paper: #f5e7cf;
+  --ink: #34251d;
+  --muted-ink: #685748;
+  --line: #ad8c68;
+  --red: #a82b2d;
+  display: grid;
+  gap: 1.6rem;
+  min-width: 0;
+  padding-block: 2rem clamp(4rem, 8vw, 6rem);
+  color: var(--paper);
+}
+
+.heading {
+  padding: clamp(1.7rem, 4vw, 2.8rem);
+  border: 4px double #e1bd89;
+  background: linear-gradient(0deg, #25150bb8, #25150b70),
+    repeating-linear-gradient(90deg, #70472e 0 48px, #5b3827 48px 96px);
+  text-align: center;
+  box-shadow: 6px 7px 0 #1a100a75;
+}
+.eyebrow { margin: 0; color: #efd28d; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.12em; }
+.heading h1, .detailTop h1 { margin: 0.4rem 0 0; font-size: clamp(2rem, 4.5vw, 3rem); line-height: 1.2; }
+.heading > p:last-child { margin: 0.65rem 0 0; color: #e6ceb0; }
+
+.section { display: grid; gap: 0.9rem; }
+.sectionHeading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; border-bottom: 2px solid #d5b58b; padding-bottom: 0.55rem; }
+.sectionHeading h2 { margin: 0; font-size: 1.55rem; }
+.sectionHeading p { margin: 0.15rem 0 0; color: #d6ba95; font-size: 0.88rem; }
+.count { flex: none; font-weight: 800; }
+.orderList, .itemList { list-style: none; margin: 0; padding: 0; }
+.orderList { display: grid; gap: 0.9rem; }
+.orderCard {
+  display: grid;
+  gap: 1rem;
+  padding: 1.15rem clamp(1rem, 3vw, 1.5rem);
+  border: 3px double var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 5px 6px 0 #74452e;
+}
+.cardTop, .cardBody { display: flex; justify-content: space-between; gap: 1rem; }
+.cardTop { align-items: start; padding-bottom: 0.75rem; border-bottom: 1px dashed var(--line); }
+.cardTop > div { display: grid; gap: 0.15rem; }
+.code { font-size: 1.18rem; }
+.cardTop time { color: var(--muted-ink); font-size: 0.87rem; }
+.status { display: inline-flex; align-items: center; flex: none; width: fit-content; min-height: 2rem; padding: 0.25rem 0.7rem; border-radius: 999px; background: #ead4b4; color: #70451d; font-size: 0.82rem; font-weight: 800; }
+.status[data-status="preparing"] { background: #e8d2a8; color: #6e4515; }
+.status[data-status="ready"] { background: #cee5db; color: #175d52; }
+.status[data-status="completed"] { background: #d8ded0; color: #405247; }
+.status[data-status="canceled"] { background: #eed1cf; color: #8d272b; }
+.cardBody > div { display: grid; gap: 0.15rem; }
+.fieldLabel { color: var(--muted-ink); font-size: 0.8rem; font-weight: 700; }
+.cancelReason { display: grid; gap: 0.2rem; margin: 0; padding: 0.7rem 0.9rem; border-left: 4px solid var(--red); background: #f7e4df; color: #5e2124; font-weight: 700; line-height: 1.55; overflow-wrap: anywhere; }
+.cancelReason .fieldLabel { color: #8d272b; }
+.cancelNotice { display: grid; gap: 0.3rem; margin-top: 1.15rem; padding: 0.8rem 1rem; border-left: 4px solid var(--red); background: #f7e4df; }
+.cancelNotice strong { color: #8d272b; font-size: 1rem; }
+.cancelNotice p { margin: 0; color: #5e2124; font-weight: 700; line-height: 1.55; overflow-wrap: anywhere; white-space: pre-line; }
+.detailLink { width: fit-content; color: var(--red); font-weight: 800; text-underline-offset: 3px; }
+.detailLink:hover, .backLink:hover { text-decoration-thickness: 2px; }
+.sectionEmpty, .empty { margin: 0; padding: 1.5rem; border: 1px dashed #d5b58b; color: #e9cfaa; }
+.empty { display: grid; justify-items: center; gap: 0.65rem; padding: 3rem 1rem; text-align: center; }
+.empty h2, .empty p { margin: 0; }
+.empty a { margin-top: 0.5rem; color: #fff0d2; font-weight: 800; text-underline-offset: 3px; }
+
+.breadcrumb { display: flex; align-items: center; gap: 0.6rem; color: #dbc19a; font-size: 0.88rem; }
+.breadcrumb a { text-underline-offset: 3px; }
+.detailTop { display: flex; align-items: end; justify-content: space-between; gap: 1rem; }
+.backLink { color: #f2d6ae; font-weight: 800; text-underline-offset: 3px; }
+.notice, .error { margin: 0; padding: 0.8rem 1rem; border: 1px solid #7aa696; background: #e1efe7; color: #175d52; font-weight: 800; }
+.error { border-color: #d69b9a; background: #f7e4df; color: #8d272b; }
+.detailSheet { border: 3px double var(--ink); background: var(--paper); color: var(--ink); box-shadow: 6px 7px 0 #74452e; }
+.detailHeader { display: flex; align-items: start; justify-content: space-between; gap: 1rem; padding: clamp(1rem, 3vw, 1.7rem); border-bottom: 1px solid var(--line); }
+.detailHeader > div { display: grid; gap: 0.25rem; min-width: 0; }
+.detailHeader p { margin: 0.55rem 0 0; color: var(--muted-ink); }
+.fullId { overflow-wrap: anywhere; font-size: 1.05rem; }
+.itemsSection { padding: clamp(1rem, 3vw, 1.7rem); }
+.itemsHeading { display: flex; align-items: center; justify-content: space-between; padding-bottom: 0.55rem; border-bottom: 2px solid var(--ink); }
+.itemsHeading h2 { margin: 0; font-size: 1.45rem; }
+.itemsHeading span { color: var(--muted-ink); font-weight: 700; }
+.item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.9rem 0; border-bottom: 1px dashed var(--line); }
+.item > div { min-width: 0; }
+.item strong { font-size: 1rem; }
+.item > strong { flex: none; white-space: nowrap; }
+.item p { margin: 0.15rem 0 0; color: var(--muted-ink); font-size: 0.9rem; }
+.total { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 1.15rem; font-weight: 800; }
+.total strong { color: var(--red); font-size: 1.55rem; }
+.checkoutInfo { display: grid; gap: 0.55rem; margin: 0; padding: 1rem clamp(1rem, 3vw, 1.7rem); border-top: 1px solid var(--line); }
+.checkoutInfo > div { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: 1rem; }
+.checkoutInfo dt { color: var(--muted-ink); font-weight: 700; }
+.checkoutInfo dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.detailFooter { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem clamp(1rem, 3vw, 1.7rem); border-top: 1px solid var(--line); background: #ead4b4; }
+.detailFooter p { margin: 0; color: var(--muted-ink); font-size: 0.87rem; }
+.cancelButton { min-height: 42px; padding: 0.55rem 0.95rem; border: 1px solid var(--red); border-radius: 4px; background: #fff8ec; color: var(--red); font: inherit; font-weight: 800; cursor: pointer; }
+.cancelButton:hover:not(:disabled) { background: #f8e3dc; }
+.cancelButton:disabled { opacity: 0.6; cursor: wait; }
+
+@media (max-width: 600px) {
+  .cardBody, .detailFooter { flex-wrap: wrap; }
+  .detailTop { align-items: start; flex-direction: column; }
+  .item { align-items: start; }
+  .item > strong { font-size: 0.9rem; }
+}

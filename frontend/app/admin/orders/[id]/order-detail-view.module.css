@@ -1,0 +1,49 @@
+.page { display: grid; min-width: 0; gap: 1.1rem; }
+.breadcrumb { display: flex; flex-wrap: wrap; gap: 0.5rem; color: var(--muted); font-size: 0.85rem; }
+.breadcrumb a { text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.topBar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+.backLink { color: var(--accent); font-size: 0.9rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.notice, .error { margin: 0; padding: 0.7rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 700; }
+.notice { background: #e8f4e8; color: #266032; }
+.error { background: #fce9e9; color: #943636; }
+.sheet { width: 100%; max-width: 850px; min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: #fff9ee; box-shadow: 0 12px 28px #34281912; }
+.orderHeader { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding: 1.8rem 2rem 1.6rem; border-bottom: 2px solid var(--border); }
+.kicker { margin: 0; color: var(--accent); font-size: 0.7rem; font-weight: 900; letter-spacing: 0.15em; }
+.orderHeader h1 { margin: 0.15rem 0 0.45rem; font-size: clamp(1.8rem, 4vw, 2.5rem); line-height: 1.2; }
+.orderDate { margin: 0; color: var(--text); font-size: 0.92rem; }
+.orderId { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.75rem; overflow-wrap: anywhere; }
+.statusPanel { width: 220px; max-width: 100%; }
+.items { min-width: 0; }
+.sectionHeading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 1.25rem 2rem 0.4rem; }
+.sectionHeading h2 { margin: 0; font-size: 1.35rem; }
+.sectionHeading span { color: var(--muted); font-size: 0.85rem; }
+.itemList { margin: 0; padding: 0 2rem; list-style: none; }
+.item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.15rem 0; border-bottom: 1px solid #d9c4a8; }
+.itemInfo { min-width: 0; }
+.itemName { display: flex; align-items: center; flex-wrap: wrap; gap: 0.55rem; }
+.itemName strong { font-size: 1.05rem; }
+.itemName span { padding: 0.1rem 0.45rem; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); font-size: 0.72rem; font-weight: 700; }
+.itemInfo p { margin: 0.3rem 0 0; color: var(--muted); font-size: 0.85rem; }
+.itemInfo p span { margin-inline: 0.2rem; }
+.itemAmount { flex-shrink: 0; font-size: 1.05rem; white-space: nowrap; }
+/* 취소 사유: 제목은 '주문 품목'과, 내용은 품목 금액과 같은 글꼴로 맞춘다. */
+.cancelReason { margin: 0 2rem; padding: 1.15rem 0; border-bottom: 1px solid #d9c4a8; font-size: 1.05rem; font-weight: 700; overflow-wrap: anywhere; white-space: pre-line; }
+.total { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem 1rem; padding: 1.25rem 2rem 1.5rem; font-size: 1rem; font-weight: 700; }
+.total strong { color: var(--accent); font-size: clamp(1.4rem, 3vw, 1.8rem); }
+.footer { padding: 1rem 2rem 1.2rem; border-top: 1px solid var(--border); background: #f5e7cf; }
+.footer dl { display: flex; flex-wrap: wrap; gap: 0.5rem 2.5rem; margin: 0; }
+.footer dl > div { display: flex; gap: 0.65rem; font-size: 0.85rem; }
+.footer dt { color: var(--muted); }
+.footer dd { margin: 0; font-weight: 700; }
+@media (max-width: 600px) {
+  .orderHeader { padding: 1.35rem 1.2rem; }
+  .statusPanel { width: 220px; }
+  .sectionHeading { padding: 1.1rem 1.2rem 0.35rem; }
+  .itemList { padding-inline: 1.2rem; }
+  .item { align-items: flex-start; flex-direction: column; gap: 0.35rem; }
+  .itemAmount { align-self: flex-end; }
+  .cancelReason { margin-inline: 1.2rem; }
+  .total { padding: 1.1rem 1.2rem 1.3rem; }
+  .footer { padding: 1rem 1.2rem; }
+}
