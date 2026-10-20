@@ -30,6 +30,6 @@ export async function createCustomerOrder(input: CreateOrderInput): Promise<Crea
 
   revalidatePath("/admin");
   revalidatePath("/admin/orders");
-  revalidatePath("/orders");
+  revalidatePath("/my/orders");
   return { ok: true, orderId: order.id };
 }

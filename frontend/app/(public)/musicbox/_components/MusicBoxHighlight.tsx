@@ -27,7 +27,7 @@ export async function MusicBoxHighlight() {
           <p className={styles.lead}>뮤직박스 DJ가 손님들의 신청곡과 사연을 순서대로 틀어 드려요.</p>
         </div>
         <div className={styles.actions}>
-          <Link className={styles.primaryLink} href="/music-box">사연과 신청곡 보내기 →</Link>
+          <Link className={styles.primaryLink} href="/musicbox">사연과 신청곡 보내기 →</Link>
         </div>
       </div>
 

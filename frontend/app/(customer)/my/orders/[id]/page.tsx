@@ -17,7 +17,7 @@ export default async function CustomerOrderDetailPage({ params, searchParams }: 
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
-  const customer = await requireRole("customer", `/orders/${encodeURIComponent(id)}`);
+  const customer = await requireRole("customer", `/my/orders/${encodeURIComponent(id)}`);
   const order = await mockOrderRepository.getByCustomer(id, customer.id);
   if (!order) notFound();
   const query = await searchParams;
@@ -26,11 +26,11 @@ export default async function CustomerOrderDetailPage({ params, searchParams }: 
   return (
     <div className={styles.page}>
       <nav className={styles.breadcrumb} aria-label="현재 위치">
-        <Link href="/orders">주문 목록</Link><span aria-hidden="true">/</span><span>주문 {code}</span>
+        <Link href="/my/orders">주문 목록</Link><span aria-hidden="true">/</span><span>주문 {code}</span>
       </nav>
       <div className={styles.detailTop}>
         <div><p className={styles.eyebrow}>ORDER DETAIL · 주문 상세</p><h1>주문 {code}</h1></div>
-        <Link className={styles.backLink} href="/orders">← 목록으로</Link>
+        <Link className={styles.backLink} href="/my/orders">← 목록으로</Link>
       </div>
 
       {one(query.placed) === "1" && <p className={styles.notice} role="status">주문이 접수되었습니다. 결제는 카운터에서 진행해 주세요.</p>}

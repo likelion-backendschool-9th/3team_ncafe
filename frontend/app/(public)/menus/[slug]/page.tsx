@@ -15,9 +15,9 @@ const won = new Intl.NumberFormat("ko-KR");
 export default async function MenuDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
+  const { slug: id } = await params;
   const [menu, user] = await Promise.all([
     mockMenuRepository.get(id),
     getCurrentUser(),

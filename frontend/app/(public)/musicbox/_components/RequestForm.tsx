@@ -75,7 +75,7 @@ export function RequestForm({ memberName, requestNumber }: RequestFormProps) {
           <strong>🔒 신청은 회원만 할 수 있어요</strong>
           <p>로그인하면 신청곡 메모지에 노래와 사연을 적을 수 있어요.<br />신청곡 목록과 지금 나오는 음악은 누구나 볼 수 있어요.</p>
           <div className={styles.gateActions}>
-            <Link className={styles.gatePrimary} href="/login?next=%2Fmusic-box">로그인</Link>
+            <Link className={styles.gatePrimary} href="/login?next=%2Fmusicbox">로그인</Link>
             <Link className={styles.gateSecondary} href="/signup">회원가입</Link>
           </div>
         </div>

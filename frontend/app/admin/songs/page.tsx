@@ -1,4 +1,4 @@
-import { MusicBoxRefresher } from "@/app/(public)/music-box/_components/MusicBoxRefresher";
+import { MusicBoxRefresher } from "@/app/(public)/musicbox/_components/MusicBoxRefresher";
 import { inboxOf, mockMusicBoxRepository, musicBoxVersion, onAirOf, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
 import { requireRole } from "@/app/_lib/session/session";
 import { cancelCurrent, cancelRequest, finishCurrent, moveInPlaylist, moveToPlayed, playNow, returnToInbox } from "./_actions";
@@ -32,7 +32,7 @@ function MediaPreview({ request }: { request: MusicRequest }) {
 }
 
 export default async function AdminMusicBoxPage() {
-  await requireRole("admin", "/admin/music-box");
+  await requireRole("admin", "/admin/songs");
   const requests = await mockMusicBoxRepository.list();
   const playing = requests.find((request) => request.status === "playing");
   const playlist = playlistOf(requests);

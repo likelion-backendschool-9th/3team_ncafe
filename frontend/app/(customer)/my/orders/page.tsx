@@ -32,7 +32,7 @@ function OrderSection({ title, description, orders }: {
                   <div><span className={styles.fieldLabel}>주문 메뉴</span><strong>{orderSummary(order)}</strong></div>
                   <div><span className={styles.fieldLabel}>총 주문 금액</span><strong>{won.format(order.totalAmount)}원</strong></div>
                 </div>
-                <Link className={styles.detailLink} href={`/orders/${encodeURIComponent(order.id)}`}>주문 상세보기 <span aria-hidden="true">→</span></Link>
+                <Link className={styles.detailLink} href={`/my/orders/${encodeURIComponent(order.id)}`}>주문 상세보기 <span aria-hidden="true">→</span></Link>
               </article>
             </li>
           ))}
@@ -43,7 +43,7 @@ function OrderSection({ title, description, orders }: {
 }
 
 export default async function CustomerOrdersPage() {
-  const customer = await requireRole("customer", "/orders");
+  const customer = await requireRole("customer", "/my/orders");
   const orders = await mockOrderRepository.listByCustomer(customer.id);
   const active = orders.filter((order) => order.status !== "completed" && order.status !== "canceled");
   const past = orders.filter((order) => order.status === "completed" || order.status === "canceled");

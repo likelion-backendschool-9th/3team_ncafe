@@ -5,7 +5,7 @@ import { isValidDuration, mockMusicBoxRepository } from "@/app/_lib/mock/music-b
 import { requireRole } from "@/app/_lib/session/session";
 import { parseYouTubeVideoId } from "@/app/_lib/youtube";
 
-const pagePath = "/admin/music-box";
+const pagePath = "/admin/songs";
 
 export type PlaylistFormState = { error?: string };
 
@@ -15,7 +15,7 @@ async function requireAdmin(): Promise<void> {
 
 // 뮤직박스 상태가 바뀌면 DJ 부스·신청곡 목록을 보여 주는 화면을 모두 새로 그린다.
 function refreshMusicBox(): void {
-  for (const path of ["/", "/music-box", "/mypage/music-box", pagePath]) revalidatePath(path);
+  for (const path of ["/", "/musicbox", "/my/songs", pagePath]) revalidatePath(path);
 }
 
 export async function addToPlaylist(id: string, _previous: PlaylistFormState, formData: FormData): Promise<PlaylistFormState> {

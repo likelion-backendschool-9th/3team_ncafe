@@ -63,7 +63,7 @@ export default async function AdminPage() {
           <p className={styles.cardLabel}>뮤직박스</p>
           <h2 id="music-management-title">신청곡 <strong className={styles.count}>{pendingMusicCount}</strong>곡 대기 중</h2>
           <p>손님의 사연을 읽고 음원을 연결해 선곡합니다.</p>
-          <Link className={styles.cardLink} href="/admin/music-box">뮤직박스 운영</Link>
+          <Link className={styles.cardLink} href="/admin/songs">뮤직박스 운영</Link>
         </section>
       </div>
     </div>

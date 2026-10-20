@@ -6,7 +6,7 @@ import { mockOrderRepository, OrderError } from "@/app/_lib/mock/orders";
 import { requireRole } from "@/app/_lib/session/session";
 
 export async function cancelCustomerOrder(id: string): Promise<void> {
-  const detailPath = `/orders/${encodeURIComponent(id)}`;
+  const detailPath = `/my/orders/${encodeURIComponent(id)}`;
   const customer = await requireRole("customer", detailPath);
 
   try {
@@ -16,7 +16,7 @@ export async function cancelCustomerOrder(id: string): Promise<void> {
     redirect(`${detailPath}?error=cancel`);
   }
 
-  revalidatePath("/orders");
+  revalidatePath("/my/orders");
   revalidatePath(detailPath);
   revalidatePath("/admin");
   revalidatePath("/admin/orders");
