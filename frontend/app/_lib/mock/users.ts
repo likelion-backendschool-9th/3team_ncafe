@@ -11,6 +11,10 @@ export type User = {
   status: "active" | "suspended";
 };
 
+export type UserStatus = User["status"];
+
+type UserStatusResult = { ok: true } | { ok: false; error: "not-found" | "protected" | "conflict" };
+
 type StoredUser = User & {
   passwordHash: string;
   passwordSalt: string;
@@ -56,6 +60,26 @@ function toUser(stored: StoredUser): User {
 export function findMockUserById(id: string): User | null {
   const user = users().find((item) => item.id === id);
   return user && (user.role === "customer" || user.role === "admin") ? toUser(user) : null;
+}
+
+export function listMockUsers(): User[] {
+  return users()
+    .filter((user) => user.role === "customer" || user.role === "admin")
+    .map(toUser);
+}
+
+export function updateMockUserStatus(id: string, status: UserStatus, expectedStatus: UserStatus): UserStatusResult {
+  const allUsers = users();
+  const user = allUsers.find((item) => item.id === id);
+  if (!user) return { ok: false, error: "not-found" };
+  if (user.role !== "customer") return { ok: false, error: "protected" };
+  if (user.status !== expectedStatus) return { ok: false, error: "conflict" };
+
+  if (user.status !== status) {
+    user.status = status;
+    writeMockData(fileName, allUsers);
+  }
+  return { ok: true };
 }
 
 export function authenticateMockUser(email: string, password: string): User | null {

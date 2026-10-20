@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const links = [
   { href: "/admin", label: "관리자 홈" },
+  { href: "/admin/users", label: "회원 관리" },
   { href: "/admin/menus", label: "메뉴 목록" },
   { href: "/admin/orders", label: "주문 관리" },
   { href: "/admin/categories", label: "카테고리 관리" },
