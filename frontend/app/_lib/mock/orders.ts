@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { mockMenuRepository } from "./menus";
 import { readMockData, writeMockData } from "./store";
-import { MAX_ORDER_REQUEST_LENGTH, type CreateOrderInput, type Order, type OrderItem, type OrderStatus } from "../orders/types";
+import { MAX_CANCEL_REASON_LENGTH, MAX_ORDER_REQUEST_LENGTH, type CreateOrderInput, type Order, type OrderItem, type OrderStatus } from "../orders/types";
 
 const fileName = "orders.json";
 const maxItems = 50;
@@ -123,7 +123,11 @@ export const mockOrderRepository = {
     return orders().find((order) => order.id === id) ?? null;
   },
 
-  async changeStatus(id: string, expectedStatus: OrderStatus, nextStatus: OrderStatus): Promise<Order> {
+  async changeStatus(id: string, expectedStatus: OrderStatus, nextStatus: OrderStatus, cancelReason = ""): Promise<Order> {
+    const reason = cancelReason.trim();
+    if (nextStatus === "canceled" && (!reason || reason.length > MAX_CANCEL_REASON_LENGTH)) {
+      throw new OrderError("INVALID_INPUT", `취소 사유를 ${MAX_CANCEL_REASON_LENGTH}자 이내로 입력해 주세요.`);
+    }
     const all = orders();
     const order = all.find((item) => item.id === id);
     if (!order) throw new OrderError("NOT_FOUND", "주문을 찾을 수 없습니다.");
@@ -134,6 +138,7 @@ export const mockOrderRepository = {
       throw new OrderError("INVALID_STATUS", "현재 상태에서 선택할 수 없는 주문 상태입니다.");
     }
     order.status = nextStatus;
+    if (nextStatus === "canceled") order.cancelReason = reason;
     order.updatedAt = new Date().toISOString();
     writeMockData(fileName, all);
     return order;

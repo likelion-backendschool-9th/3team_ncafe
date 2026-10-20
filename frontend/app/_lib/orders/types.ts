@@ -14,6 +14,7 @@ export type OrderType = "dine-in" | "takeout";
 export type PaymentMethod = "card" | "cash";
 
 export const MAX_ORDER_REQUEST_LENGTH = 100;
+export const MAX_CANCEL_REASON_LENGTH = 200;
 
 export type CreateOrderInput = {
   items: CreateOrderItem[];
@@ -43,6 +44,8 @@ export type Order = {
   orderType?: OrderType;
   paymentMethod?: PaymentMethod;
   request?: string;
+  // 관리자가 주문을 취소할 때 남긴 사유. 고객이 직접 취소한 주문에는 없다.
+  cancelReason?: string;
   createdAt: string;
   updatedAt: string;
 };

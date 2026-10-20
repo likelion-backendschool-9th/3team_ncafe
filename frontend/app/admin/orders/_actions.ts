@@ -39,8 +39,9 @@ export async function changeAdminOrderStatus(
 ): Promise<void> {
   await requireRole("admin", "/admin/orders");
   const nextStatus = String(formData.get("nextStatus") ?? "") as OrderStatus;
+  const cancelReason = String(formData.get("cancelReason") ?? "");
   try {
-    await mockOrderRepository.changeStatus(id, expectedStatus, nextStatus);
+    await mockOrderRepository.changeStatus(id, expectedStatus, nextStatus, cancelReason);
   } catch (error) {
     const code = error instanceof OrderError ? error.code : "UNKNOWN";
     redirect(destination(query, code));
@@ -60,8 +61,9 @@ export async function changeAdminOrderStatusFromDetail(
 ): Promise<void> {
   await requireRole("admin", `/admin/orders/${encodeURIComponent(id)}`);
   const nextStatus = String(formData.get("nextStatus") ?? "") as OrderStatus;
+  const cancelReason = String(formData.get("cancelReason") ?? "");
   try {
-    await mockOrderRepository.changeStatus(id, expectedStatus, nextStatus);
+    await mockOrderRepository.changeStatus(id, expectedStatus, nextStatus, cancelReason);
   } catch (error) {
     const code = error instanceof OrderError ? error.code : "UNKNOWN";
     redirect(detailDestination(id, query, code));

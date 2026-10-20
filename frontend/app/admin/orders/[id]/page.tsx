@@ -61,7 +61,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }: {
       </div>
 
       {one(raw.updated) === "1" && <p className={styles.notice} role="status">주문 상태를 변경했습니다.</p>}
-      {one(raw.error) && <p className={styles.error} role="alert">{one(raw.error) === "STALE_STATUS" ? "주문 상태가 이미 변경됐습니다. 현재 상태를 확인해 주세요." : one(raw.error) === "INVALID_STATUS" ? "해당 상태로 변경할 수 없습니다." : "상태를 변경하지 못했습니다. 다시 시도해 주세요."}</p>}
+      {one(raw.error) && <p className={styles.error} role="alert">{one(raw.error) === "STALE_STATUS" ? "주문 상태가 이미 변경됐습니다. 현재 상태를 확인해 주세요." : one(raw.error) === "INVALID_STATUS" ? "해당 상태로 변경할 수 없습니다." : one(raw.error) === "INVALID_INPUT" ? "주문을 취소하려면 취소 사유를 입력해 주세요." : "상태를 변경하지 못했습니다. 다시 시도해 주세요."}</p>}
 
       <article className={styles.sheet}>
         <header className={styles.orderHeader}>
@@ -100,6 +100,12 @@ export default async function AdminOrderDetailPage({ params, searchParams }: {
               </li>
             ))}
           </ul>
+          {status === "canceled" && order.cancelReason && (
+            <section aria-labelledby="order-cancel-title">
+              <div className={styles.sectionHeading}><h2 id="order-cancel-title">주문 취소</h2></div>
+              <p className={styles.cancelReason}>{order.cancelReason}</p>
+            </section>
+          )}
           <div className={styles.total}><span>총 주문 금액</span><strong>{won.format(order.totalAmount)}원</strong></div>
         </section>
 
@@ -108,8 +114,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }: {
             <div><dt>고객</dt><dd>{order.customerName}</dd></div>
             {order.orderType && <div><dt>수령 방식</dt><dd>{orderTypeLabels[order.orderType]}</dd></div>}
             {order.paymentMethod && <div><dt>결제 수단</dt><dd>{paymentMethodLabels[order.paymentMethod]}</dd></div>}
-            {order.request && <div><dt>요청사항</dt><dd>{order.request}</dd></div>}
-            <div><dt>최근 수정</dt><dd>{orderDate.format(new Date(order.updatedAt))}</dd></div>
+            {order.request && <div><dt>요청사항</dt><dd>{order.request}</dd></div>}            <div><dt>최근 수정</dt><dd>{orderDate.format(new Date(order.updatedAt))}</dd></div>
           </dl>
         </footer>
       </article>
