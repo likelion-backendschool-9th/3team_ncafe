@@ -20,7 +20,7 @@ export default async function AdminPage() {
         <p className={styles.eyebrow}>관리자 인덱스</p>
         <h1>삼다방 관리</h1>
         <span className={styles.divider} aria-hidden="true" />
-        <p>메뉴부터 관리해 보세요. 현재 등록된 메뉴와 판매 상태를 확인할 수 있습니다.</p>
+        <p>회원과 메뉴, 주문, 뮤직박스의 운영 현황을 확인하고 관리합니다.</p>
         <p className={styles.today}><span className={styles.todayDot} aria-hidden="true" />{todayFormat.format(new Date())} 영업 장부</p>
       </header>
 
@@ -31,6 +31,13 @@ export default async function AdminPage() {
       </section>
 
       <div className={styles.cards}>
+        <section className={`${styles.card} ${styles.cardTeal}`} aria-labelledby="user-management-title">
+          <p className={styles.cardLabel}>회원 관리</p>
+          <h2 id="user-management-title">회원 목록</h2>
+          <p>회원 정보를 조회하고 계정의 이용 정지와 해제를 관리합니다.</p>
+          <Link className={styles.cardLink} href="/admin/users">회원 목록 보기</Link>
+        </section>
+
         <section className={`${styles.card} ${styles.cardRed}`} aria-labelledby="menu-management-title">
           <p className={styles.cardLabel}>메뉴 관리</p>
           <h2 id="menu-management-title">메뉴 목록</h2>
