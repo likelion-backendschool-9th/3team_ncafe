@@ -149,7 +149,7 @@ Boot 4.1에서는 기존 `spring-boot-starter-web`보다 `spring-boot-starter-we
 
 ## 3계층 아키텍처
 
-요청 흐름은 **Controller → Service → Repository → PostgreSQL**로 고정한다. Controller는 페이지를 기준으로 만들되 **같은 대상의 목록·상세·등록·수정 페이지는 하나의 Controller·Service 쌍**에서 다룬다. 일반 페이지는 `controller/`·`service/` 바로 아래에, 관리자 페이지만 각 `admin/` 하위 폴더에 둔다. 비회원과 회원은 폴더로 나누지 않고 메서드별 인증·권한으로 구분한다. Repository와 Entity는 여러 페이지가 공유한다.
+요청 흐름은 **Controller → Service → Repository → PostgreSQL**로 고정한다. Controller는 **시스템 단위**로 나눈다. 같은 시스템의 목록·상세·등록·수정 API는 하나의 Controller에서 다루고, 파일명은 `도메인명 + 계층명`으로 짓는다(예: `MenusController.java`·`MenusService.java`·`MenuRepository.java`). 여러 도메인의 데이터를 조합하는 화면은 `HomeController`처럼 화면 이름을 쓴다. `/musicbox`는 화면 경로이며 곡 관련 API는 `SongsController`가 담당한다. `/checkout`의 주문 확정은 주문 시스템의 기능이므로 `my/OrdersController`가 담당한다. 공개 조회 시스템은 `controller/`·`service/` 바로 아래에, 로그인한 회원의 장바구니·주문·곡 신청과 마이페이지는 각 `my/`, 관리자 시스템은 각 `admin/` 하위 폴더에 둔다. 폴더는 화면 URL이 아니라 API의 사용 권한과 업무 범위에 따라 정하며, 메서드별 인증·권한도 검사한다. Repository와 Entity는 여러 시스템이 공유한다.
 
 ```text
 backend/
@@ -157,56 +157,64 @@ backend/
 ├─ src/main/java/com/newcafe/backend/
 │  ├─ BackendApplication.java
 │  ├─ controller/
-│  │  ├─ HomeController.java, LoginController.java, SignupController.java
-│  │  ├─ MyController.java
-│  │  ├─ MenusController.java, CartController.java
-│  │  ├─ CheckoutController.java, OrdersController.java
-│  │  ├─ MusicBoxController.java, MySongsController.java
+│  │  ├─ HomeController.java, AuthController.java
+│  │  ├─ CategoriesController.java, MenusController.java, SongsController.java
+│  │  ├─ my/UsersController.java, CartController.java
+│  │  │     OrdersController.java, SongsController.java
 │  │  └─ admin/UsersController.java, CategoriesController.java
-│  │           MenusController.java
-│  │           OrdersController.java, SongsController.java
+│  │           MenusController.java, OrdersController.java
+│  │           SongsController.java
 │  ├─ service/
-│  │  ├─ HomeService.java, LoginService.java, SignupService.java
-│  │  ├─ MyService.java
-│  │  ├─ MenusService.java, CartService.java
-│  │  ├─ CheckoutService.java, OrdersService.java
-│  │  ├─ MusicBoxService.java, MySongsService.java
+│  │  ├─ HomeService.java, AuthService.java
+│  │  ├─ CategoriesService.java, MenusService.java, SongsService.java
+│  │  ├─ my/UsersService.java, CartService.java
+│  │  │     OrdersService.java, SongsService.java
 │  │  └─ admin/UsersService.java, CategoriesService.java
-│  │           MenusService.java
-│  │           OrdersService.java, SongsService.java
+│  │           MenusService.java, OrdersService.java
+│  │           SongsService.java
 │  ├─ repository/
 │  │  ├─ UserRepository.java, CategoryRepository.java, MenuRepository.java
 │  │  ├─ CartItemRepository.java, OrderRepository.java
-│  │  └─ MusicRequestRepository.java, MusicBoxStateRepository.java
+│  │  └─ SongRepository.java, MusicBoxStateRepository.java
 │  ├─ entity/
 │  │  ├─ User.java, Category.java, Menu.java, CartItem.java
-│  │  └─ Order.java, OrderItem.java, MusicRequest.java, MusicBoxState.java
+│  │  └─ Order.java, OrderItem.java, Song.java, MusicBoxState.java
 │  ├─ dto/
-│  │  ├─ LoginRequest.java, SignupRequest.java, AuthResponse.java, MenuResponse.java
-│  │  ├─ UpdateProfileRequest.java, CartItemRequest.java, CartResponse.java
-│  │  ├─ CreateOrderRequest.java, OrderResponse.java, SongRequest.java, NowPlayingResponse.java
-│  │  └─ admin/CategoryRequest.java, MenuRequest.java, OrderResponse.java
-│  │           ChangeOrderStatusRequest.java, SongRequest.java
+│  │  ├─ auth/LoginRequest.java, SignupRequest.java, AuthResponse.java
+│  │  ├─ users/UserResponse.java, UpdateProfileRequest.java
+│  │  │        CreateUserRequest.java, UpdateUserStatusRequest.java
+│  │  ├─ categories/CategoryRequest.java, CategoryResponse.java
+│  │  ├─ menus/MenuRequest.java, MenuResponse.java
+│  │  ├─ cart/CartItemRequest.java, CartResponse.java
+│  │  ├─ orders/CreateOrderRequest.java, OrderResponse.java
+│  │  │         AdminOrderResponse.java, ChangeOrderStatusRequest.java
+│  │  └─ songs/CreateSongRequest.java, SongResponse.java
+│  │           PlaylistItemRequest.java, NowPlayingResponse.java
 │  └─ common/
 │     ├─ error/ApiExceptionHandler.java, ErrorResponse.java
 │     └─ security/SecurityConfig.java, CurrentUser.java
 ├─ src/main/resources/application.yml
 └─ src/test/java/com/newcafe/backend/
+   ├─ controller/AuthControllerTest.java
    ├─ controller/MenusControllerTest.java
-   ├─ controller/CheckoutControllerTest.java
+   ├─ controller/my/CartControllerTest.java
+   ├─ controller/my/OrdersControllerTest.java
    ├─ controller/admin/OrdersControllerTest.java
-   ├─ service/CheckoutServiceTest.java
+   ├─ service/my/OrdersServiceTest.java
    └─ repository/MenuRepositoryTest.java
 ```
 
-Controller와 Service의 **파일명 앞부분은 서로 같다**. 현재 프론트 페이지 및 WBS 화면과 대응은 다음과 같다.
+Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요청 주체인 `my/`·`admin/`이 아닌 **데이터 도메인** 아래에 둔다. 예를 들어 관리자 메뉴 등록과 공개 메뉴 조회의 DTO는 모두 `dto/menus/`에 두고, 관리자 전용 주문 응답은 `dto/orders/AdminOrderResponse.java`로 구별한다. 곡 신청·재생 목록·현재 곡의 DTO는 `dto/songs/`에 모은다. `Song.java`는 DB의 `music_requests`에 매핑되고, `MusicBoxState.java`는 재생 전환용 내부 상태를 나타낸다. 재생 목록은 별도 테이블 없이 곡의 상태·순서로 다룬다. 위 트리의 파일은 최초 구현 위치를 나타내며 필요한 요청·응답 DTO는 해당 도메인 폴더에 추가한다. 현재 프론트 페이지 및 WBS 화면과 대응은 다음과 같다.
 
-| 위치 | 프론트 페이지 → 클래스명 앞부분 (`*Controller.java`, `*Service.java`) |
+같은 클래스명이 여러 패키지에 있으면 `@RestController("publicCategoriesController")`·`@RestController("adminCategoriesController")`처럼 역할별 Bean 이름을 어노테이션에 지정하고, Service도 `@Service`에 고유 이름을 지정한다. 이 규칙은 `Users`·`Menus`·`Orders`·`Songs`에도 적용한다.
+
+| 위치 | 프론트 페이지 → 시스템 이름 (`*Controller.java`, `*Service.java`) |
 | --- | --- |
-| 기본 | `/` → `Home`, `/login` → `Login`, `/signup` → `Signup`, `/my`·`/profile/update` → `My`(`profile/update`는 WBS 화면, 추가 예정), `/menus`·`/menus/[slug]` → `Menus`, `/cart` → `Cart`, `/checkout` → `Checkout`, `/my/orders`·`/my/orders/[id]` → `Orders`, `/musicbox` → `MusicBox`, `/my/songs` → `MySongs` |
+| 기본 | `/` → `Home`, `/login`·`/signup` 및 `/my`의 로그아웃 동작 → `Auth`, `/menus`의 필터 목록 → `Categories`(공개 조회), `/menus`·`/menus/[slug]` → `Menus`(조회), `/musicbox` → `Songs`(공개 목록·현재 곡) |
+| `my/` | `/my`·`/profile/update` → `Users`(`profile/update`는 WBS 화면, 추가 예정), `/menus/[slug]`의 담기 동작·`/cart` → `Cart`, `/checkout`·`/my/orders`·`/my/orders/[id]` → `Orders`, `/musicbox`의 곡 신청·`/my/songs` → `Songs` |
 | `admin/` | `/admin/users`·`/admin/users/[id]`·`/admin/users/new` → `Users`(`users/new`는 DB 설계 확장, 추가 예정), `/admin/categories` → `Categories`, `/admin/menus`·`/admin/menus/[id]`·`/admin/menus/new`·`/admin/menus/[id]/edit` → `Menus`, `/admin/orders`·`/admin/orders/[id]` → `Orders`, `/admin/songs` → `Songs` |
 
-이 트리는 **구현될 파일의 위치와 이름**이다. 관리자 메뉴의 목록·상세·등록·수정은 모두 `controller/admin/MenusController.java` → `service/admin/MenusService.java` → 공통 `repository/MenuRepository.java`를 사용한다. 관리자 회원의 목록·상세·등록·수정도 `admin/UsersController.java`와 `admin/UsersService.java`에서 다룬다. `/my` 조회와 `/profile/update` 수정은 `MyController.java`와 `MyService.java`에서 다룬다. `/admin` 대시보드는 WBS에 전용 API가 없어 기존 메뉴·주문·신청곡 API를 조합하며 빈 DashboardController를 만들지 않는다. 스키마 파일의 위치·이름은 Q4 결정 후 정한다.
+`controller/my/`와 `service/my/`는 로그인한 회원의 개인 데이터를 다루는 시스템을 담당한다. `/cart`와 `/checkout`이 `/my` URL 아래에 있지 않아도 장바구니와 주문 생성은 `my/CartController.java`·`my/OrdersController.java`가 받는다. 주문 생성·내 주문 목록·상세는 한 `my/OrdersController.java` → `my/OrdersService.java` → `OrderRepository.java` 흐름으로 처리한다. 공개 곡 목록·현재 곡은 공통 `SongsController.java`, 회원 곡 신청·내 곡 관리는 `my/SongsController.java`가 받는다. 인증 시스템의 로그인·회원가입·로그아웃은 화면 위치와 관계없이 공통 `AuthController.java`가 담당한다. 관리자 메뉴의 목록·상세·등록·수정은 모두 `controller/admin/MenusController.java` → `service/admin/MenusService.java` → 공통 `repository/MenuRepository.java`를 사용한다. 관리자 회원 시스템은 `admin/UsersController.java`·`admin/UsersService.java`, 마이페이지 회원 정보 시스템은 `my/UsersController.java`·`my/UsersService.java`를 사용하며 두 시스템은 `UserRepository.java`를 공유한다. `/admin` 대시보드는 WBS에 전용 API가 없어 기존 메뉴·주문·신청곡 API를 조합하며 빈 DashboardController를 만들지 않는다. 스키마 파일의 위치·이름은 Q4 결정 후 정한다.
 
 | 계층 | 책임 |
 | --- | --- |
@@ -214,24 +222,28 @@ Controller와 Service의 **파일명 앞부분은 서로 같다**. 현재 프론
 | Service | 권한·업무 규칙, 가격 재검증, 상태 전이, 트랜잭션·중복 요청 제어 |
 | Repository | JPA 조회·저장 및 필요한 잠금·검색 쿼리. PostgreSQL 전용 제약은 Q4에서 정한 스키마 파일로 관리 |
 
-`controller`는 `repository`를 직접 호출하지 않고, `service`는 HTTP 객체에 의존하지 않는다. 로그인은 `LoginController`, `/my`의 로그아웃은 `MyController`, 메뉴 상세의 장바구니 담기는 `MenusController`, 뮤직박스 신청은 `MusicBoxController`에 둔다. 관리자의 메뉴 삭제는 `admin/MenusController`, 주문 상태 변경은 `admin/OrdersController`, 회원 상태 변경은 `admin/UsersController`가 소유한다. API 경로는 WBS의 `/api/v1/...`를 기준으로 하되 화면 URL을 그대로 복제하지 않는다. 인증은 폴더가 아니라 메서드별로 검사한다. 공통 예외 형식과 페이지네이션을 API 계약으로 통일한다. ID는 `BIGINT IDENTITY`, 금액은 원 단위 정수, 시각은 DB `TIMESTAMPTZ`·API ISO 8601로 다룬다. DB 접속 정보와 첫 관리자 비밀번호는 환경 변수로만 주입한다.
+`controller`는 `repository`를 직접 호출하지 않고, `service`는 HTTP 객체에 의존하지 않는다. 로그인·회원가입·로그아웃은 `AuthController`, 메뉴 상세에서 시작하는 장바구니 담기는 `my/CartController`, 곡 신청은 `my/SongsController`, 현재 곡 조회는 공통 `SongsController`에 둔다. 관리자의 메뉴 삭제는 `admin/MenusController`, 주문 상태 변경은 `admin/OrdersController`, 회원 상태 변경은 `admin/UsersController`가 소유한다. API 경로는 WBS의 `/api/v1/...`를 기준으로 하되 화면 URL을 그대로 복제하지 않는다. 인증은 폴더가 아니라 메서드별로 검사한다. 공통 예외 형식과 페이지네이션을 API 계약으로 통일한다. ID는 `BIGINT IDENTITY`, 금액은 원 단위 정수, 시각은 DB `TIMESTAMPTZ`·API ISO 8601로 다룬다. DB 접속 정보와 첫 관리자 비밀번호는 환경 변수로만 주입한다.
+
+`music_box_state.id`는 고정값 `1`로 두며 일반 ID 자동 생성 규칙을 적용하지 않는다. 공개 메뉴의 카테고리 필터 데이터는 `CategoriesController` → `CategoriesService` → `CategoryRepository`가 조회한다.
 
 ### WBS API와 Controller 대응
 
-아래는 WBS `전체` 시트의 API 열을 페이지별로 배정한 결과다. 목록의 쿼리 문자열은 각 GET 요청의 선택 매개변수다.
+아래는 WBS `전체` 시트의 API 열을 시스템별 Controller에 배정한 결과다. 목록의 쿼리 문자열은 각 GET 요청의 선택 매개변수다.
 
-| 일반 페이지 Controller | 담당 API | WBS |
+| 공통 시스템 Controller | 담당 API | WBS |
 | --- | --- | --- |
 | `HomeController` | `GET /api/v1/index/menus`, `GET /api/v1/index/songs` | 인덱스 조회 |
-| `LoginController` | `POST /api/v1/auth/login` | 1.1 |
-| `SignupController` | `POST /api/v1/auth/signup` | 1.3 |
-| `MyController` | `GET /api/v1/my`, `PUT /api/v1/users/{id}`, `POST /api/v1/auth/logout` | 1.5, 1.4, 1.2 |
-| `MenusController` | `GET /api/v1/menus` (`q`, `category`, `status`, `sort`), `GET /api/v1/menus/{slug}`, `POST /api/v1/menus/{id}/cart/items`(회원 인증) | 4.1~4.3, 14.1 |
-| `CartController` | `GET /api/v1/cart/items`, `PUT/DELETE /api/v1/cart/items/{id}` | 14.2~14.4 |
-| `CheckoutController` | `POST /api/v1/orders`(실제 결제 없이 주문 접수) | 6.1 |
-| `OrdersController` | `GET /api/v1/orders`, `GET /api/v1/orders/{id}` | 6.3~6.4 |
-| `MusicBoxController` | `POST/GET /api/v1/musicbox/songs`, `GET /api/v1/songs/now`(POST는 회원 인증) | 11.1~11.3 |
-| `MySongsController` | `GET /api/v1/my/songs`, `DELETE /api/v1/my/songs/{id}` | 11.4~11.5 |
+| `AuthController` | `POST /api/v1/auth/login`, `POST /api/v1/auth/signup`, `POST /api/v1/auth/logout` | 1.1~1.3 |
+| `CategoriesController` | `GET /api/v1/categories`(공개 메뉴 필터용 추가 계약) | 화면 연동 |
+| `MenusController` | `GET /api/v1/menus` (`q`, `category`, `status`, `sort`), `GET /api/v1/menus/{slug}` | 4.1~4.3 |
+| `SongsController` | `GET /api/v1/musicbox/songs`, `GET /api/v1/songs/now` | 11.2~11.3 |
+
+| `my/` Controller | 담당 API | WBS |
+| --- | --- | --- |
+| `UsersController` | `GET /api/v1/my`, `PUT /api/v1/users/{id}` | 1.5, 1.4 |
+| `CartController` | `POST /api/v1/menus/{id}/cart/items`, `GET /api/v1/cart/items`, `PUT/DELETE /api/v1/cart/items/{id}` | 14.1~14.4 |
+| `OrdersController` | `POST /api/v1/orders`(실제 결제 없이 주문 접수), `GET /api/v1/orders`, `GET /api/v1/orders/{id}` | 6.1, 6.3~6.4 |
+| `SongsController` | `POST /api/v1/musicbox/songs`, `GET /api/v1/my/songs`, `DELETE /api/v1/my/songs/{id}` | 11.1, 11.4~11.5 |
 
 | `admin/` Controller | 담당 API | WBS |
 | --- | --- | --- |
@@ -276,62 +288,87 @@ WBS 5.3의 `/api/v1/admin/orders/focus`와 12.3의 `/api/v1/admin/orders/status`
 | 프론트엔드 목 데이터 | UUID 메뉴 ID, `ice`, 영문 메뉴명·복수 카테고리와 DB 설계의 BIGINT ID, `iced`, `slug`·단일 카테고리가 충돌한다. API DTO를 확정한 뒤 프론트 어댑터를 교체한다. |
 | 배달·리뷰 | 현재 WBS에 없으므로 이번 백엔드 범위에서 제외한다. |
 
-## 개발 순서 TODO
+## 개발 TODO
 
-각 단계는 DB 스키마 → Repository → Service → Controller·DTO → API 테스트를 하나의 기능으로 완성한다. 완료 조건은 해당 API 테스트와 실제 화면 호출이다.
+아래 제목 하나가 구현·검증할 **작업 단위**다. 각 작업에서 필요한 스키마 → Repository → Service → Controller·DTO → API 테스트를 끝내고, 바로 연결할 수 있는 프론트 화면까지 확인한다. 목록 순서는 실제 사용 흐름을 따른다.
 
-### 0. 기반 구축 (S1~S2)
+### 프로젝트 실행 환경
 
 - [ ] `backend/`에 Gradle Wrapper·Java 21·Boot 4.1.1 프로젝트와 기본 의존성을 만든다. `./gradlew test`를 실행한다.
+
+### PostgreSQL 연결과 공통 API
+
 - [ ] Q4의 스키마 적용 방식을 정하고 PostgreSQL 버전·DB 환경 변수·`application.yml`을 구성한다. DB 연결을 확인한다.
 - [ ] 공통 오류 응답·입력 검증·`/api/v1` 규칙을 만든다. `./gradlew bootRun`과 잘못된 요청의 400 응답을 확인한다.
 
-### 1. 회원가입과 회원 관리 (S3~S4, WBS 1.x/2.x)
+### 회원가입·로그인·로그아웃 (WBS 1.1~1.3)
 
-- [ ] `users` 스키마와 회원가입·로그인·로그아웃·내 정보 조회·수정 API를 만들고 본인/타인 권한 테스트를 통과시킨다.
-- [ ] `frontend/app/(public)/login`, `signup`, `frontend/app/(customer)/my`의 목 세션 호출과 쿠키 전달을 API 계약으로 바꾸고 WBS의 `/profile/update` 화면을 추가한다. 가입 → 로그인 → 내 정보 수정 → 로그아웃을 확인한다.
-- [ ] 비밀 값을 읽는 첫 관리자 생성 절차와 관리자 회원 목록·상세·생성·고객 정지·해제 API를 만든다. 관리자 계정 상태 변경은 거부한다.
-- [ ] `frontend/app/admin/users`를 API에 연결하고 `/admin/users/new`를 추가한다. 관리자로 다른 관리자를 생성하거나 고객을 정지한 결과를 화면에서 확인한다.
+- [ ] `users` 스키마와 가입·로그인·로그아웃 API를 만들고 인증·정지 회원 접근 테스트를 통과시킨다.
+- [ ] `frontend/app/(public)/signup`, `login`과 `/my`의 목 세션 호출·쿠키 전달을 API 계약으로 바꾼다. 가입 → 로그인 → 로그아웃을 브라우저에서 확인한다.
 
-### 2. 관리자가 메뉴를 준비하고 방문자가 조회 (S5~S6, WBS 3.x/4.x/13.x)
+### 내 정보 조회·수정 (WBS 1.4~1.5)
 
-- [ ] `categories` 스키마와 보호된 `기타`를 만들고 카테고리 조회·등록·이름 수정·순서 변경·삭제 API를 구현한다. `기타` 보호와 메뉴 이동을 검증한다.
-- [ ] `frontend/app/admin/categories`를 API에 연결한다. 카테고리 등록과 순서 변경을 화면에서 확인한다.
-- [ ] 관리자 메뉴 등록·목록·상세·수정·숨김과 공개 메뉴 검색·상세·추천 API를 만든다. `slug`·가격·온도 옵션을 검증한다.
-- [ ] `frontend/app/admin/menus`, `frontend/app/(public)/menus/[slug]`, `/`의 목 호출을 API로 바꾼다. 등록·수정 결과가 방문자 화면에 반영되고, 카테고리 삭제 시 메뉴가 `기타`로 이동하는지 확인한다.
+- [ ] 내 정보 조회·수정 API를 만들고 본인·타인 접근 권한을 검증한다.
+- [ ] `frontend/app/(customer)/my`를 API에 연결하고 WBS의 `/profile/update` 화면을 추가한다. 수정 결과와 새로고침 후 유지 여부를 확인한다.
 
-### 3. 장바구니에서 주문 확인까지 (S7~S11, WBS 6.1/6.3/6.4/14.x)
+### 관리자 회원 관리 (WBS 2.x, 관리자 생성은 DB 설계 확장)
 
-- [ ] 장바구니 담기·조회·수량 변경·삭제 API를 만든다. 회원·메뉴·온도별 한 줄 제약과 다른 기기 동기화를 검증한다.
+- [ ] 비밀 값을 읽는 첫 관리자 생성 절차와 관리자 회원 목록·상세·생성·고객 정지·해제 API를 만든다. 관리자 계정의 상태 변경은 거부한다.
+- [ ] `frontend/app/admin/users`를 API에 연결하고 `/admin/users/new`를 추가한다. 고객 정지·해제와 다른 관리자 생성 결과를 확인한다.
+
+### 카테고리 관리 (WBS 13.x)
+
+- [ ] `categories` 스키마와 보호된 `기타`를 만들고 공개 카테고리 조회 및 관리자 조회·등록·이름 수정·순서 변경·삭제 API를 구현한다. `기타` 보호를 검증한다.
+- [ ] `frontend/app/admin/categories`를 API에 연결한다. 등록·순서 변경·삭제 결과를 화면에서 확인한다.
+
+### 메뉴 등록·수정과 공개 조회 (WBS 3.x/4.x)
+
+- [ ] 관리자 메뉴 등록·목록·상세·수정·숨김과 공개 메뉴 검색·상세·추천 API를 만든다. `slug`·가격·온도 옵션과 카테고리 삭제 시 연결 메뉴가 `기타`로 이동하는지 검증한다.
+- [ ] `frontend/app/admin/menus`, `frontend/app/(public)/menus`의 목록·상세, `/`의 목 호출을 API로 바꾼다. 검색·필터·정렬과 관리자 변경이 방문자 화면에 반영되는지 확인한다.
+
+### 회원 장바구니 (WBS 14.1~14.4)
+
+- [ ] `my/CartController`의 담기·조회·수량 변경·삭제 API를 만든다. 회원·메뉴·온도별 한 줄 제약과 다른 기기 동기화를 검증한다.
 - [ ] `frontend/app/_lib/cart/CartContext.tsx`의 `localStorage` 저장을 회원별 API로 바꾼다. 메뉴 상세 → `/cart`에서 수량·삭제·새로고침 후 유지 여부를 확인한다.
-- [ ] 선택된 `cartItemIds`, 매장/포장, `card`/`cash`, 요청사항을 받는 주문 생성 API와 내 주문 목록·상세 API를 만든다. 금액 재검증·스냅샷·중복 제출을 검증한다.
+
+### 주문 생성과 내 주문 조회 (WBS 6.1/6.3/6.4)
+
+- [ ] `my/OrdersController`에 선택된 `cartItemIds`, 매장/포장, `card`/`cash`, 요청사항을 받는 주문 생성과 내 주문 목록·상세 API를 만든다. 금액 재검증·스냅샷·중복 제출을 검증한다.
 - [ ] `frontend/app/(customer)/checkout`, `my/orders`를 API에 연결한다. 선택 항목만 주문되고 `/my/orders/[id]`에 `received` 상태와 주문서 값이 보이는지 확인한다.
 
-### 4. 관리자가 주문을 처리 (WBS 5.x/12.x)
+### 관리자 주문 처리 (WBS 5.x/12.x)
 
 - [ ] 관리자 주문 검색·상세·인접 상태 변경·`received` 취소 API를 만든다. `status_version` 충돌과 취소 권한을 검증한다.
-- [ ] `frontend/app/admin/orders`를 API에 연결한다. 관리자 상태 변경 결과가 `/my/orders/[id]`에 반영되는지 고객 화면에서 확인한다.
+- [ ] `frontend/app/admin/orders`를 API에 연결한다. 관리자 상태 변경 결과가 `/my/orders/[id]`에 반영되는지 확인한다.
 
-### 5. 신청곡 접수부터 재생까지 (S12~S13, WBS 10.x/11.x)
+### 곡 신청과 내 신청곡 (WBS 11.x)
 
-- [ ] 회원 신청·목록·내 신청 조회·삭제, 홈 요약·현재 곡 조회 API를 만든다. 신청자 권한을 검증한다.
-- [ ] `frontend/app/(public)/musicbox`, `frontend/app/(customer)/my/songs`와 홈의 목 호출을 API로 바꾼다. 신청 직후 목록과 내 신청 내역을 확인한다.
+- [ ] `SongsController`의 공개 목록·현재 곡 조회와 `my/SongsController`의 회원 신청·내 신청 조회·삭제 API를 만든다. 신청자 권한을 검증한다.
+- [ ] `frontend/app/(public)/musicbox`, `frontend/app/(customer)/my/songs`와 홈의 목 호출을 API로 바꾼다. 신청 직후 공개 목록과 내 신청 내역을 확인한다.
+
+### 관리자 선곡·재생 (WBS 10.x)
+
 - [ ] 관리자 신청 취소·재생 목록 추가·순서·상태·지금 재생·완료 API를 만든다. 단일 재생과 자동 다음 곡을 검증한다.
 - [ ] `frontend/app/admin/songs`를 API에 연결한다. 관리자가 선곡하면 `/musicbox`의 현재 곡과 대기 목록이 갱신되는지 확인한다.
 
-### 프론트엔드에서 테스트할 수 있는 구간
+### 프론트엔드에서 테스트할 수 있는 작업
 
-각 단계의 프론트 체크 항목까지 완료해야 그 단계가 끝난다. 화면 연결은 마지막으로 미루지 않는다. 기존 목 데이터는 이관하지 않으며, 화면별 기존 목 저장소 호출을 해당 API 어댑터로 교체한다. 각 구간에서 `frontend`의 `npm run lint`, `npm run typecheck`와 브라우저 사용 흐름을 확인한다.
+각 작업의 프론트 체크 항목까지 완료해야 해당 작업이 끝난다. 기존 목 데이터는 이관하지 않으며, 화면별 목 저장소 호출을 해당 API 어댑터로 교체한다. 화면 연결 작업에서는 `frontend`의 `npm run lint`, `npm run typecheck`와 브라우저 사용 흐름을 확인한다.
 
-| 단계 완료 후 | 브라우저에서 열 화면 | 확인할 결과 |
+| 작업 | 브라우저에서 열 화면 | 확인할 결과 |
 | --- | --- | --- |
-| 1 | `/signup` → `/login` → `/my` → `/profile/update`, `/admin/users` → `/admin/users/new` | 가입·로그인·본인 정보 수정·고객 정지·관리자 생성 |
-| 2 | `/admin/categories` → `/admin/menus` → `/menus/[slug]`, `/` | 관리자가 등록한 메뉴가 방문자에게 보임 |
-| 3 | `/menus/[slug]` → `/cart` → `/checkout` → `/my/orders/[id]` | 선택 품목만 `received` 주문으로 저장됨 |
-| 4 | `/admin/orders/[id]` → `/my/orders/[id]` | 관리자가 바꾼 주문 상태를 고객이 확인함 |
-| 5 | `/musicbox` → `/my/songs` → `/admin/songs` | 신청·선곡·현재 곡이 같은 데이터로 보임 |
+| 회원 인증 | `/signup` → `/login` → `/my` | 가입·로그인·로그아웃 |
+| 내 정보 | `/my` → `/profile/update` | 본인 정보 수정·새로고침 후 유지 |
+| 관리자 회원 | `/admin/users` → `/admin/users/new` | 고객 정지·해제와 관리자 생성 |
+| 카테고리 | `/admin/categories` | 등록·순서 변경·삭제 |
+| 메뉴 | `/admin/menus` → `/menus` → `/menus/[slug]`, `/` | 등록·수정 결과와 검색·필터·정렬이 방문자에게 보임 |
+| 장바구니 | `/menus/[slug]` → `/cart` | 회원별 담기·수량 변경·삭제·새로고침 후 유지 |
+| 내 주문 | `/cart` → `/checkout` → `/my/orders/[id]` | 선택 품목만 `received` 주문으로 저장됨 |
+| 관리자 주문 | `/admin/orders/[id]` → `/my/orders/[id]` | 관리자 상태 변경을 고객이 확인함 |
+| 곡 신청 | `/musicbox` → `/my/songs` | 신청곡이 공개 목록과 내 신청 내역에 보임 |
+| 관리자 선곡 | `/admin/songs` → `/musicbox` | 선곡·재생 결과가 현재 곡과 대기 목록에 반영됨 |
 
-### 후속: WBS에는 있으나 현재 DB 설계에서 보류
+### 후속 작업: WBS에는 있으나 현재 DB 설계에서 보류
 
 - [ ] Q1 결정 후 WBS 7~8의 실제 주문 결제·결제 취소·결제수단 CRUD를 별도 스키마와 API로 설계한다. 카드 원문은 저장하지 않는다.
 - [ ] Q2 결정 후 WBS 6.2 고객 주문 취소를 추가한다. 결제 상태·환불 규칙과 함께 테스트한다.
@@ -339,8 +376,8 @@ WBS 5.3의 `/api/v1/admin/orders/focus`와 12.3의 `/api/v1/admin/orders/status`
 
 ## 브랜치·커밋
 
-- 현재 브랜치 `feature/backend-project-setup`에서 청사진을 작성한다. 구현은 기능별 `feature/*` 브랜치와 PR로 나누고 `main`·`develop`에는 직접 커밋하지 않는다.
-- 이 문서 커밋 예: `docs: 백엔드 개발 청사진 추가`.
+- 청사진 수정과 기능 구현은 각각 `feature/*` 브랜치에서 작업하고 PR로 `develop`에 제안한다. `main`·`develop`에는 직접 커밋하지 않는다.
+- 청사진 수정 커밋 예: `docs: 백엔드 아키텍처 청사진 수정`.
 
 ## 가정과 출처
 
