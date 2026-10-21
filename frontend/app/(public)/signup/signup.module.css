@@ -1,0 +1,215 @@
+/* 회원가입: 왼쪽은 입력하는 대로 채워지는 단골 회원증, 오른쪽은 손님 명부 종이 */
+.page {
+  --paper: #f5e7cf;
+  --paper-light: #fcf4e3;
+  --ink: #34251d;
+  --muted: #685748;
+  --red: #a82b2d;
+  --red-dark: #812125;
+  --teal: #207a72;
+  --teal-dark: #174b4a;
+  --gold: #e7bd63;
+  --gold-light: #f8d986;
+  padding-block: clamp(2.5rem, 6vw, 5rem);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(2rem, 5vw, 4.5rem);
+  max-width: 1000px;
+  margin-inline: auto;
+}
+
+/* ── 회원증 ── */
+.cardSide { position: sticky; top: 2rem; display: grid; gap: 2rem; padding-top: 1.5rem; }
+
+.card {
+  position: relative;
+  padding: 1.6rem 1.6rem 1.8rem;
+  border: 3px solid var(--gold);
+  border-radius: 18px;
+  outline: 2px solid var(--red-dark);
+  outline-offset: 3px;
+  background: radial-gradient(circle at 85% 0%, #ffffff1f, transparent 45%),
+    repeating-linear-gradient(135deg, #ffffff08 0 2px, transparent 2px 9px),
+    var(--red);
+  box-shadow: inset 0 0 0 2px #fff3cd, 8px 10px 0 var(--teal-dark);
+  color: #fff8e5;
+  transform: rotate(-2deg);
+}
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border: 1px dashed #f8d98699;
+  border-radius: 11px;
+  pointer-events: none;
+}
+
+.cardHead { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #f8d98680; }
+.cardHead :global(.brand-logo) { box-shadow: inset 0 0 0 2px #fff3cd, 3px 4px 0 #6d1d25; }
+.cardTitle { display: grid; justify-items: end; gap: 0.2rem; text-align: right; }
+.cardTitle strong { font-family: var(--font-display), sans-serif; font-size: 1.6rem; font-weight: 400; line-height: 1; text-shadow: 2px 2px 0 #6d1d25; }
+.cardTitle span { color: var(--gold-light); font-size: 0.62rem; font-weight: 800; letter-spacing: 0.16em; }
+
+.cardRows { display: grid; gap: 0.75rem; margin: 1.2rem 0 0; padding-right: 5.5rem; }
+.cardRows div { display: grid; grid-template-columns: 3.6rem minmax(0, 1fr); align-items: baseline; gap: 0.6rem; }
+.cardRows dt { color: var(--gold-light); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; }
+.cardRows dd {
+  margin: 0;
+  overflow: hidden;
+  padding-bottom: 0.2rem;
+  border-bottom: 1px dotted #f8d986b3;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cardName { font-family: var(--font-menu-name), var(--font-display), sans-serif; font-size: 1.5rem; line-height: 1.2; }
+.cardEmail { font-size: 0.9rem; }
+.cardBlank { color: #f6d7c8; font-size: 0.9rem; font-style: italic; }
+
+/* 닉네임을 2자 이상 적으면 도장이 찍힌다 */
+.stamp {
+  position: absolute;
+  right: 1.4rem;
+  bottom: 1.3rem;
+  display: grid;
+  width: 82px;
+  height: 82px;
+  place-content: center;
+  border: 3px double var(--gold-light);
+  border-radius: 50%;
+  color: var(--gold-light);
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.45rem;
+  line-height: 1;
+  text-align: center;
+  opacity: 0.22;
+  transform: rotate(-14deg);
+}
+.stamp small { margin-bottom: 0.2rem; font-family: var(--font-body), sans-serif; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.2em; }
+.stampOn { opacity: 1; animation: stampIn 360ms cubic-bezier(0.2, 0.9, 0.3, 1.3); }
+
+@keyframes stampIn {
+  0% { opacity: 0; transform: rotate(-14deg) scale(1.7); }
+  70% { opacity: 1; transform: rotate(-14deg) scale(0.92); }
+  100% { opacity: 1; transform: rotate(-14deg) scale(1); }
+}
+
+.perks { color: var(--paper); }
+.perks p { margin: 0 0 0.8rem; color: var(--gold); font-size: 0.8rem; font-weight: 800; letter-spacing: 0.16em; }
+.perks ul { display: grid; gap: 0.65rem; margin: 0; padding: 0; list-style: none; }
+.perks li { display: flex; align-items: center; gap: 0.75rem; font-family: var(--font-serif), serif; font-size: 0.98rem; color: #f8efdcea; }
+.perks li span { display: grid; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; border: 1px solid #d6af718a; border-radius: 50%; font-size: 1.05rem; }
+
+/* ── 손님 명부 ── */
+.sheet {
+  position: relative;
+  padding: clamp(1.8rem, 4vw, 2.6rem);
+  border: 2px solid #63422f;
+  background: repeating-linear-gradient(0deg, #ad8c6814 0 1px, transparent 1px 30px),
+    linear-gradient(140deg, var(--paper-light), var(--paper));
+  box-shadow: 9px 9px 0 #74452e;
+  color: var(--ink);
+}
+.sheet::before {
+  content: "GUEST BOOK · SINCE 1987";
+  position: absolute;
+  top: -0.8rem;
+  left: 2rem;
+  padding: 0.18rem 0.7rem;
+  background: var(--red);
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+}
+.sheet::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid #ad8c6880;
+  pointer-events: none;
+}
+
+.eyebrow { margin: 0; color: var(--red); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.17em; }
+.title { margin: 0.4rem 0 0.5rem; font-size: clamp(1.6rem, 3.2vw, 2.1rem); line-height: 1.2; letter-spacing: -0.05em; }
+.lead { margin: 0; color: var(--muted); font-family: var(--font-serif), serif; }
+
+.error {
+  position: relative;
+  z-index: 1;
+  margin: 1.4rem 0 0;
+  padding: 0.8rem 0.9rem;
+  border-left: 4px solid var(--red);
+  background: #fce9e9;
+  color: var(--red-dark);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.form { position: relative; z-index: 1; display: grid; gap: 1.15rem; margin-top: 1.8rem; }
+.field { display: grid; gap: 0.35rem; }
+.field label { font-weight: 800; }
+.field input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--muted);
+  border-bottom: 2px solid var(--ink);
+  border-radius: 2px;
+  background: #fffaf0;
+  color: var(--ink);
+}
+.field input:hover { border-color: var(--ink); }
+.field input:focus-visible { outline: 3px solid var(--teal-dark); outline-offset: 2px; }
+
+.hint { margin: 0; color: var(--muted); font-size: 0.82rem; }
+.hint span { display: inline-block; width: 1em; font-weight: 800; text-align: center; }
+.hintOk { color: var(--teal-dark); font-weight: 700; }
+.hintWarn { color: var(--red-dark); font-weight: 700; }
+
+.submit {
+  min-height: 52px;
+  margin-top: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--red-dark);
+  border-radius: 2px;
+  background: var(--red);
+  box-shadow: 4px 4px 0 var(--ink);
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+.submit:hover:not(:disabled) { background: var(--red-dark); }
+.submit:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+.submit:focus-visible { outline: 3px solid var(--teal-dark); outline-offset: 3px; }
+.submit:disabled { opacity: 0.7; cursor: wait; }
+
+.aside { position: relative; z-index: 1; margin: 1.6rem 0 0; padding-top: 1.2rem; border-top: 1px dashed #ad8c68; text-align: center; }
+.aside a { color: var(--red); font-weight: 800; }
+
+@media (max-width: 860px) {
+  .layout { grid-template-columns: minmax(0, 1fr); max-width: 520px; }
+  .cardSide { position: static; padding-top: 0; }
+  .perks { display: none; }
+}
+
+@media (max-width: 480px) {
+  .card { padding: 1.3rem 1.2rem 1.5rem; transform: rotate(-1deg); }
+  .cardTitle strong { font-size: 1.3rem; }
+  .cardRows { padding-right: 4.4rem; }
+  .cardRows div { grid-template-columns: 3rem minmax(0, 1fr); }
+  .stamp { right: 1rem; bottom: 1rem; width: 68px; height: 68px; font-size: 1.2rem; }
+  .sheet { padding-inline: 1.3rem; box-shadow: 6px 6px 0 #74452e; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stampOn { animation: none; }
+  .submit { transition: none; }
+}
