@@ -27,6 +27,8 @@
 .itemInfo p { margin: 0.3rem 0 0; color: var(--muted); font-size: 0.85rem; }
 .itemInfo p span { margin-inline: 0.2rem; }
 .itemAmount { flex-shrink: 0; font-size: 1.05rem; white-space: nowrap; }
+/* 취소 사유: 제목은 '주문 품목'과, 내용은 품목 금액과 같은 글꼴로 맞춘다. */
+.cancelReason { margin: 0 2rem; padding: 1.15rem 0; border-bottom: 1px solid #d9c4a8; font-size: 1.05rem; font-weight: 700; overflow-wrap: anywhere; white-space: pre-line; }
 .total { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem 1rem; padding: 1.25rem 2rem 1.5rem; font-size: 1rem; font-weight: 700; }
 .total strong { color: var(--accent); font-size: clamp(1.4rem, 3vw, 1.8rem); }
 .footer { padding: 1rem 2rem 1.2rem; border-top: 1px solid var(--border); background: #f5e7cf; }
@@ -41,6 +43,7 @@
   .itemList { padding-inline: 1.2rem; }
   .item { align-items: flex-start; flex-direction: column; gap: 0.35rem; }
   .itemAmount { align-self: flex-end; }
+  .cancelReason { margin-inline: 1.2rem; }
   .total { padding: 1.1rem 1.2rem 1.3rem; }
   .footer { padding: 1rem 1.2rem; }
 }

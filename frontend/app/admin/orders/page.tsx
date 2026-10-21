@@ -89,6 +89,7 @@ function Receipt({ order, query }: { order: Order; query: string }) {
         ))}
       </div>
       <div className={styles.receiptTotal}><span>총 금액</span><strong>{won.format(order.totalAmount)}원</strong></div>
+      {order.cancelReason && <p className={styles.receiptCancelReason}><span>취소 사유</span>{order.cancelReason}</p>}
       <Link className={`${controls.linkButton} ${styles.receiptDetailLink}`} href={detailHref(order, query)}>주문 상세보기</Link>
     </article>
   );
@@ -120,14 +121,14 @@ function OrderSection({
       ) : (
         <div className={styles.tableWrap} role="region" aria-label={`${title} 주문 목록 표`} tabIndex={0}>
           <table className={styles.table}>
-            <thead><tr><th scope="col">주문번호</th><th scope="col">주문일시</th><th scope="col">고객</th><th scope="col">주문 메뉴</th><th scope="col">금액</th><th scope="col">상태</th></tr></thead>
+            <thead><tr><th scope="col"><span className={styles.codeBox}>주문번호</span></th><th scope="col">주문일시</th><th scope="col">고객</th><th scope="col">주문 메뉴</th><th scope="col">금액</th><th scope="col"><span className={styles.statusBox}>상태</span></th></tr></thead>
             <tbody>{visible.map((order) => <tr key={order.id}>
-              <td title={order.id} className={styles.code}><Link href={detailHref(order, query)}>{orderCode(order)}</Link></td>
+              <td title={order.id} className={styles.code}><Link className={styles.codeBox} href={detailHref(order, query)}>{orderCode(order)}</Link></td>
               <td>{orderDate.format(new Date(order.createdAt))}</td>
               <td>{order.customerName}</td>
               <td>{summary(order)}</td>
               <td>{won.format(order.totalAmount)}원</td>
-              <td><StatusControls order={order} query={query} /></td>
+              <td><div className={styles.statusBox}><StatusControls order={order} query={query} /></div></td>
             </tr>)}</tbody>
           </table>
         </div>
@@ -198,7 +199,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
       </section>
 
       {one(raw.updated) === "1" && <p className={styles.notice} role="status">주문 상태를 변경했습니다.</p>}
-      {error && <p className={styles.error} role="alert">{error === "STALE_STATUS" ? "주문 상태가 이미 변경됐습니다. 현재 상태를 확인해 주세요." : error === "INVALID_STATUS" ? "해당 상태로 변경할 수 없습니다." : error === "NOT_FOUND" ? "주문을 찾을 수 없습니다." : "상태를 변경하지 못했습니다. 다시 시도해 주세요."}</p>}
+      {error && <p className={styles.error} role="alert">{error === "STALE_STATUS" ? "주문 상태가 이미 변경됐습니다. 현재 상태를 확인해 주세요." : error === "INVALID_STATUS" ? "해당 상태로 변경할 수 없습니다." : error === "NOT_FOUND" ? "주문을 찾을 수 없습니다." : error === "INVALID_INPUT" ? "주문을 취소하려면 취소 사유를 입력해 주세요." : "상태를 변경하지 못했습니다. 다시 시도해 주세요."}</p>}
 
       <form className={styles.filters} method="get" role="search">
         <input type="hidden" name="view" value={view} />

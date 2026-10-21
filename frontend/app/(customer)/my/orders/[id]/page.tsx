@@ -60,6 +60,12 @@ export default async function CustomerOrderDetailPage({ params, searchParams }: 
               </li>
             ))}
           </ul>
+          {order.status === "canceled" && order.cancelReason && (
+            <div className={styles.cancelNotice}>
+              <strong>주문 취소</strong>
+              <p>{order.cancelReason}</p>
+            </div>
+          )}
           <div className={styles.total}><span>총 주문 금액</span><strong>{won.format(order.totalAmount)}원</strong></div>
         </section>
 
