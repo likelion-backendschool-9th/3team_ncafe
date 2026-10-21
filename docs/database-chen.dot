@@ -3,13 +3,14 @@ graph ncafe_chen {
   node [fontname="NanumSquare Neo", fontsize=19, color="#536778", penwidth=1.6, style=filled, fillcolor="white", pin=true];
   edge [fontname="NanumSquare Neo", fontsize=14, color="#617486", penwidth=1.5];
 
-  users [shape=box, label="회원", pos="250,850!", width=1.8, height=0.7, fillcolor="#dcebf4"];
-  music_requests [shape=box, label="신청곡", pos="250,250!", width=2.0, height=0.7, fillcolor="#e9e1f3"];
-  orders [shape=box, label="주문", pos="850,600!", width=1.8, height=0.7, fillcolor="#f5e0df"];
-  order_items [shape=box, label="주문 항목", pos="1450,600!", width=2.1, height=0.7, fillcolor="#f5e0df"];
-  cart_items [shape=box, label="장바구니 항목", pos="1450,1100!", width=2.1, height=0.7, fillcolor="#f7e8d7"];
-  menus [shape=box, label="메뉴", pos="1950,900!", width=1.8, height=0.7, fillcolor="#e5f1df"];
-  categories [shape=box, label="카테고리", pos="2600,900!", width=2.0, height=0.7, fillcolor="#e5f1df"];
+  users [shape=box, label="User", pos="250,850!", width=1.8, height=0.7, fillcolor="#dcebf4"];
+  music_requests [shape=box, label="Song", pos="250,250!", width=2.0, height=0.7, fillcolor="#e9e1f3"];
+  orders [shape=box, label="Order", pos="850,600!", width=1.8, height=0.7, fillcolor="#f5e0df"];
+  order_items [shape=box, label="OrderItem", pos="1450,600!", width=2.1, height=0.7, fillcolor="#f5e0df"];
+  cart_items [shape=box, label="CartItem", pos="1450,1100!", width=2.1, height=0.7, fillcolor="#f7e8d7"];
+  menus [shape=box, label="Menu", pos="1950,900!", width=1.8, height=0.7, fillcolor="#e5f1df"];
+  categories [shape=box, label="Category", pos="2600,900!", width=2.0, height=0.7, fillcolor="#e5f1df"];
+  music_box_state [shape=box, label="MusicBoxState", pos="660,1360!", width=2.4, height=0.7, fillcolor="#e9e1f3"];
 
   node [shape=diamond, fontsize=14, height=0.82, width=1.55, fillcolor="#fffaf0"];
   submits [label="신청", pos="250,550!"];
@@ -102,6 +103,10 @@ graph ncafe_chen {
   category_created [label="생성 시각", pos="2750,1230!", width=1.5];
   category_updated [label="수정 시각", pos="2900,1100!", width=1.5];
 
+  music_box_state_id [label=<<U>식별자 1</U>>, pos="480,1460!", width=1.6];
+  music_box_state_revision [label="변경 버전", pos="660,1500!", width=1.6];
+  music_box_state_updated [label="수정 시각", pos="880,1460!", width=1.5];
+
   edge [color="#a8b3bd", penwidth=1.0];
   users -- {user_id user_email user_name user_role user_status user_created user_updated};
   music_requests -- {music_id music_requester music_title music_artist music_story music_status music_video music_order music_duration music_started music_created music_updated};
@@ -110,4 +115,5 @@ graph ncafe_chen {
   cart_items -- {cart_item_id cart_item_qty cart_item_temperature cart_item_created cart_item_updated};
   menus -- {menu_id menu_slug menu_name menu_image menu_description menu_price menu_available menu_supports_hot menu_supports_iced menu_is_new menu_recommended menu_created menu_updated};
   categories -- {category_id category_name category_order category_fallback category_created category_updated};
+  music_box_state -- {music_box_state_id music_box_state_revision music_box_state_updated};
 }

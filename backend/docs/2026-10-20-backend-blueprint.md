@@ -12,9 +12,8 @@
 1. Q1 — WBS 7~8의 실제 결제와 결제수단 CRUD를 별도 단계로 진행할 때, 사용할 PG와 토큰화·환불 규칙은 무엇인가?
 2. Q2 — WBS 6.2의 고객 주문 취소를 다시 포함할 때, 허용 상태와 이미 지불한 주문의 환불 규칙은 무엇인가?
 3. Q3 — WBS 11의 반복 모드를 다시 포함할 때, 현재 곡 반복과 전체 목록 반복 중 무엇을 뜻하는가?
-4. Q4 — PostgreSQL 스키마 변경을 어떤 방식으로 적용하고 버전을 관리할 것인가? DB 설계는 도구 선정을 구현 전 작업으로 남겨 두었다.
 
-현재 DB 설계에 따라 주문 확정 시 실제 청구 없이 `received`가 된다. 주문서의 `card`/`cash`는 카운터에서 사용할 결제수단 선택값이다. 질문 1~3은 이번 기반·핵심 API 구현의 선행 조건이 아니다. Q4는 DB 테이블을 만들기 전에 정한다.
+현재 DB 설계에 따라 주문 확정 시 실제 청구 없이 `received`가 된다. 주문서의 `card`/`cash`는 카운터에서 사용할 결제수단 선택값이다. 질문 1~3은 이번 기반·핵심 API 구현의 선행 조건이 아니다. 테이블은 Spring Boot 배포 시 Hibernate가 생성·갱신한다.
 
 ## 요구사항과 검증 시나리오
 
@@ -25,7 +24,7 @@
 S1 정상
 - Given PostgreSQL의 빈 개발 DB와 환경 변수 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`가 있다.
 - When `cd backend && ./gradlew test bootRun`을 실행한다.
-- Then 테스트가 통과하고 API가 시작되며 DB 연결 오류가 없다.
+- Then 테스트가 통과하고 API가 시작되며 DB 연결 오류가 없고 엔티티에 대응하는 테이블이 생성된다.
 
 S2 실패
 - Given DB가 중지되어 있다.
@@ -116,7 +115,7 @@ S13 경계
 | 프로젝트 | `backend`, Gradle Wrapper, Groovy DSL, 실행형 JAR |
 | Java | JDK 21 toolchain |
 | Spring Boot | **4.1.1**로 시작. `4.1.x`의 확인된 안정 릴리스이며 패치 업그레이드는 별도 검증 후 진행 |
-| DB | PostgreSQL. 버전은 `NULLS NOT DISTINCT` 등 필요한 제약을 확인 후 고정. 스키마 변경 도구는 미정 |
+| DB | PostgreSQL. 버전은 `NULLS NOT DISTINCT` 등 필요한 제약을 확인 후 고정. Spring Boot 시작 시 Hibernate `ddl-auto=update`로 테이블 생성·갱신 |
 | 패키지 | `com.newcafe.backend` (`backend-지시서.txt`의 `com.new-cafe.backend`는 Java 패키지에 `-`를 쓸 수 없어 교정) |
 
 초기 `build.gradle`에 넣을 항목:
@@ -145,7 +144,7 @@ dependencies {
 tasks.named('test') { useJUnitPlatform() }
 ```
 
-Boot 4.1에서는 기존 `spring-boot-starter-web`보다 `spring-boot-starter-webmvc`를 사용한다. JUnit Jupiter는 `starter-test`에 포함되므로 별도 JUnit 버전을 넣지 않는다. 입력 검증용 `validation`을 추가한다. 인증을 구현할 때 `spring-boot-starter-security`와 `spring-boot-starter-security-test`를 추가하고, 비밀번호 해시·세션/쿠키·CSRF 정책을 정한다. 스키마 적용 방식을 Q4에서 정한 뒤 JPA의 `ddl-auto=validate`로 실제 스키마와 엔티티의 일치를 검사한다. 실제 PostgreSQL 통합 테스트는 Testcontainers로 확인한다.
+Boot 4.1에서는 기존 `spring-boot-starter-web`보다 `spring-boot-starter-webmvc`를 사용한다. JUnit Jupiter는 `starter-test`에 포함되므로 별도 JUnit 버전을 넣지 않는다. 입력 검증용 `validation`을 추가한다. 인증을 구현할 때 `spring-boot-starter-security`와 `spring-boot-starter-security-test`를 추가하고, 비밀번호 해시·세션/쿠키·CSRF 정책을 정한다. `application.yml`에 `spring.jpa.hibernate.ddl-auto: update`를 명시해 배포 시 엔티티에 대응하는 테이블을 생성·갱신한다. `create`·`create-drop`은 재시작 때 데이터를 지우므로 사용하지 않는다. 실제 PostgreSQL 통합 테스트는 Testcontainers로 확인한다.
 
 ## 3계층 아키텍처
 
@@ -158,16 +157,16 @@ backend/
 │  ├─ BackendApplication.java
 │  ├─ controller/
 │  │  ├─ HomeController.java, AuthController.java
-│  │  ├─ CategoriesController.java, MenusController.java, SongsController.java
-│  │  ├─ my/UsersController.java, CartController.java
+│  │  ├─ MenusController.java, SongsController.java
+│  │  ├─ my/UsersController.java, CartItemsController.java
 │  │  │     OrdersController.java, SongsController.java
 │  │  └─ admin/UsersController.java, CategoriesController.java
 │  │           MenusController.java, OrdersController.java
 │  │           SongsController.java
 │  ├─ service/
 │  │  ├─ HomeService.java, AuthService.java
-│  │  ├─ CategoriesService.java, MenusService.java, SongsService.java
-│  │  ├─ my/UsersService.java, CartService.java
+│  │  ├─ MenusService.java, SongsService.java
+│  │  ├─ my/UsersService.java, CartItemsService.java
 │  │  │     OrdersService.java, SongsService.java
 │  │  └─ admin/UsersService.java, CategoriesService.java
 │  │           MenusService.java, OrdersService.java
@@ -185,7 +184,7 @@ backend/
 │  │  │        CreateUserRequest.java, UpdateUserStatusRequest.java
 │  │  ├─ categories/CategoryRequest.java, CategoryResponse.java
 │  │  ├─ menus/MenuRequest.java, MenuResponse.java
-│  │  ├─ cart/CartItemRequest.java, CartResponse.java
+│  │  ├─ cartitems/CartItemRequest.java, CartItemsResponse.java
 │  │  ├─ orders/CreateOrderRequest.java, OrderResponse.java
 │  │  │         AdminOrderResponse.java, ChangeOrderStatusRequest.java
 │  │  └─ songs/CreateSongRequest.java, SongResponse.java
@@ -197,7 +196,7 @@ backend/
 └─ src/test/java/com/newcafe/backend/
    ├─ controller/AuthControllerTest.java
    ├─ controller/MenusControllerTest.java
-   ├─ controller/my/CartControllerTest.java
+   ├─ controller/my/CartItemsControllerTest.java
    ├─ controller/my/OrdersControllerTest.java
    ├─ controller/admin/OrdersControllerTest.java
    ├─ service/my/OrdersServiceTest.java
@@ -206,25 +205,27 @@ backend/
 
 Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요청 주체인 `my/`·`admin/`이 아닌 **데이터 도메인** 아래에 둔다. 예를 들어 관리자 메뉴 등록과 공개 메뉴 조회의 DTO는 모두 `dto/menus/`에 두고, 관리자 전용 주문 응답은 `dto/orders/AdminOrderResponse.java`로 구별한다. 곡 신청·재생 목록·현재 곡의 DTO는 `dto/songs/`에 모은다. `Song.java`는 DB의 `music_requests`에 매핑되고, `MusicBoxState.java`는 재생 전환용 내부 상태를 나타낸다. 재생 목록은 별도 테이블 없이 곡의 상태·순서로 다룬다. 위 트리의 파일은 최초 구현 위치를 나타내며 필요한 요청·응답 DTO는 해당 도메인 폴더에 추가한다. 현재 프론트 페이지 및 WBS 화면과 대응은 다음과 같다.
 
-같은 클래스명이 여러 패키지에 있으면 `@RestController("publicCategoriesController")`·`@RestController("adminCategoriesController")`처럼 역할별 Bean 이름을 어노테이션에 지정하고, Service도 `@Service`에 고유 이름을 지정한다. 이 규칙은 `Users`·`Menus`·`Orders`·`Songs`에도 적용한다.
+같은 클래스명이 여러 패키지에 있으면 `@RestController("publicMenusController")`·`@RestController("adminMenusController")`처럼 역할별 Bean 이름을 어노테이션에 지정하고, Service도 `@Service`에 고유 이름을 지정한다. 이 규칙은 `Users`·`Menus`·`Orders`·`Songs`에도 적용한다.
+
+장바구니 항목 API 시스템은 `CartItemsController`·`CartItemsService`, 목록 응답은 `CartItemsResponse`로 이름을 맞춘다. 항목 한 건을 나타내는 `CartItem` 엔티티·`CartItemRepository`·`CartItemRequest`는 단수형을 사용한다.
 
 | 위치 | 프론트 페이지 → 시스템 이름 (`*Controller.java`, `*Service.java`) |
 | --- | --- |
-| 기본 | `/` → `Home`, `/login`·`/signup` 및 `/my`의 로그아웃 동작 → `Auth`, `/menus`의 필터 목록 → `Categories`(공개 조회), `/menus`·`/menus/[slug]` → `Menus`(조회), `/musicbox` → `Songs`(공개 목록·현재 곡) |
-| `my/` | `/my`·`/profile/update` → `Users`(`profile/update`는 WBS 화면, 추가 예정), `/menus/[slug]`의 담기 동작·`/cart` → `Cart`, `/checkout`·`/my/orders`·`/my/orders/[id]` → `Orders`, `/musicbox`의 곡 신청·`/my/songs` → `Songs` |
+| 기본 | `/` → `Home`, `/login`·`/signup` 및 `/my`의 로그아웃 동작 → `Auth`, `/menus`의 카테고리 필터·목록과 `/menus/[slug]` → `Menus`(조회), `/musicbox` → `Songs`(공개 목록·현재 곡) |
+| `my/` | `/my`·`/profile/update` → `Users`(`profile/update`는 WBS 화면, 추가 예정), `/menus/[slug]`의 담기 동작·`/cart` → `CartItems`, `/checkout`·`/my/orders`·`/my/orders/[id]` → `Orders`, `/musicbox`의 곡 신청·`/my/songs` → `Songs` |
 | `admin/` | `/admin/users`·`/admin/users/[id]`·`/admin/users/new` → `Users`(`users/new`는 DB 설계 확장, 추가 예정), `/admin/categories` → `Categories`, `/admin/menus`·`/admin/menus/[id]`·`/admin/menus/new`·`/admin/menus/[id]/edit` → `Menus`, `/admin/orders`·`/admin/orders/[id]` → `Orders`, `/admin/songs` → `Songs` |
 
-`controller/my/`와 `service/my/`는 로그인한 회원의 개인 데이터를 다루는 시스템을 담당한다. `/cart`와 `/checkout`이 `/my` URL 아래에 있지 않아도 장바구니와 주문 생성은 `my/CartController.java`·`my/OrdersController.java`가 받는다. 주문 생성·내 주문 목록·상세는 한 `my/OrdersController.java` → `my/OrdersService.java` → `OrderRepository.java` 흐름으로 처리한다. 공개 곡 목록·현재 곡은 공통 `SongsController.java`, 회원 곡 신청·내 곡 관리는 `my/SongsController.java`가 받는다. 인증 시스템의 로그인·회원가입·로그아웃은 화면 위치와 관계없이 공통 `AuthController.java`가 담당한다. 관리자 메뉴의 목록·상세·등록·수정은 모두 `controller/admin/MenusController.java` → `service/admin/MenusService.java` → 공통 `repository/MenuRepository.java`를 사용한다. 관리자 회원 시스템은 `admin/UsersController.java`·`admin/UsersService.java`, 마이페이지 회원 정보 시스템은 `my/UsersController.java`·`my/UsersService.java`를 사용하며 두 시스템은 `UserRepository.java`를 공유한다. `/admin` 대시보드는 WBS에 전용 API가 없어 기존 메뉴·주문·신청곡 API를 조합하며 빈 DashboardController를 만들지 않는다. 스키마 파일의 위치·이름은 Q4 결정 후 정한다.
+`controller/my/`와 `service/my/`는 로그인한 회원의 개인 데이터를 다루는 시스템을 담당한다. `/cart`와 `/checkout`이 `/my` URL 아래에 있지 않아도 장바구니와 주문 생성은 `my/CartItemsController.java`·`my/OrdersController.java`가 받는다. 주문 생성·내 주문 목록·상세는 한 `my/OrdersController.java` → `my/OrdersService.java` → `OrderRepository.java` 흐름으로 처리한다. 공개 곡 목록·현재 곡은 공통 `SongsController.java`, 회원 곡 신청·내 곡 관리는 `my/SongsController.java`가 받는다. 인증 시스템의 로그인·회원가입·로그아웃은 화면 위치와 관계없이 공통 `AuthController.java`가 담당한다. 관리자 메뉴의 목록·상세·등록·수정은 모두 `controller/admin/MenusController.java` → `service/admin/MenusService.java` → 공통 `repository/MenuRepository.java`를 사용한다. 관리자 회원 시스템은 `admin/UsersController.java`·`admin/UsersService.java`, 마이페이지 회원 정보 시스템은 `my/UsersController.java`·`my/UsersService.java`를 사용하며 두 시스템은 `UserRepository.java`를 공유한다. `/admin` 대시보드는 WBS에 전용 API가 없어 기존 메뉴·주문·신청곡 API를 조합하며 빈 DashboardController를 만들지 않는다. 테이블 생성은 Hibernate의 JPA 자동 스키마 갱신이 맡는다.
 
 | 계층 | 책임 |
 | --- | --- |
 | Controller | `/api/v1` 요청·응답, DTO 검증, HTTP 상태와 오류 변환. Entity를 직접 반환하지 않음 |
 | Service | 권한·업무 규칙, 가격 재검증, 상태 전이, 트랜잭션·중복 요청 제어 |
-| Repository | JPA 조회·저장 및 필요한 잠금·검색 쿼리. PostgreSQL 전용 제약은 Q4에서 정한 스키마 파일로 관리 |
+| Repository | JPA 조회·저장 및 필요한 잠금·검색 쿼리 |
 
-`controller`는 `repository`를 직접 호출하지 않고, `service`는 HTTP 객체에 의존하지 않는다. 로그인·회원가입·로그아웃은 `AuthController`, 메뉴 상세에서 시작하는 장바구니 담기는 `my/CartController`, 곡 신청은 `my/SongsController`, 현재 곡 조회는 공통 `SongsController`에 둔다. 관리자의 메뉴 삭제는 `admin/MenusController`, 주문 상태 변경은 `admin/OrdersController`, 회원 상태 변경은 `admin/UsersController`가 소유한다. API 경로는 WBS의 `/api/v1/...`를 기준으로 하되 화면 URL을 그대로 복제하지 않는다. 인증은 폴더가 아니라 메서드별로 검사한다. 공통 예외 형식과 페이지네이션을 API 계약으로 통일한다. ID는 `BIGINT IDENTITY`, 금액은 원 단위 정수, 시각은 DB `TIMESTAMPTZ`·API ISO 8601로 다룬다. DB 접속 정보와 첫 관리자 비밀번호는 환경 변수로만 주입한다.
+`controller`는 `repository`를 직접 호출하지 않고, `service`는 HTTP 객체에 의존하지 않는다. 로그인·회원가입·로그아웃은 `AuthController`, 메뉴 상세에서 시작하는 장바구니 담기는 `my/CartItemsController`, 곡 신청은 `my/SongsController`, 현재 곡 조회는 공통 `SongsController`에 둔다. 관리자의 메뉴 삭제는 `admin/MenusController`, 주문 상태 변경은 `admin/OrdersController`, 회원 상태 변경은 `admin/UsersController`가 소유한다. API 경로는 WBS의 `/api/v1/...`를 기준으로 하되 화면 URL을 그대로 복제하지 않는다. 인증은 폴더가 아니라 메서드별로 검사한다. 공통 예외 형식과 페이지네이션을 API 계약으로 통일한다. ID는 `BIGINT IDENTITY`, 금액은 원 단위 정수, 시각은 DB `TIMESTAMPTZ`·API ISO 8601로 다룬다. DB 접속 정보와 첫 관리자 비밀번호는 환경 변수로만 주입한다.
 
-`music_box_state.id`는 고정값 `1`로 두며 일반 ID 자동 생성 규칙을 적용하지 않는다. 공개 메뉴의 카테고리 필터 데이터는 `CategoriesController` → `CategoriesService` → `CategoryRepository`가 조회한다.
+`music_box_state.id`는 고정값 `1`로 두며 일반 ID 자동 생성 규칙을 적용하지 않는다. 공개 메뉴의 카테고리 필터 데이터는 `MenusController` → `MenusService` → `CategoryRepository`가 조회한다. 메뉴 상세의 `/{slug}`와 경로가 겹치지 않도록 `categories`는 메뉴 slug로 사용하지 않는다.
 
 ### WBS API와 Controller 대응
 
@@ -234,14 +235,13 @@ Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요
 | --- | --- | --- |
 | `HomeController` | `GET /api/v1/index/menus`, `GET /api/v1/index/songs` | 인덱스 조회 |
 | `AuthController` | `POST /api/v1/auth/login`, `POST /api/v1/auth/signup`, `POST /api/v1/auth/logout` | 1.1~1.3 |
-| `CategoriesController` | `GET /api/v1/categories`(공개 메뉴 필터용 추가 계약) | 화면 연동 |
-| `MenusController` | `GET /api/v1/menus` (`q`, `category`, `status`, `sort`), `GET /api/v1/menus/{slug}` | 4.1~4.3 |
+| `MenusController` | `GET /api/v1/menus` (`q`, `category`, `status`, `sort`), `GET /api/v1/menus/categories`(공개 메뉴 필터용 추가 계약), `GET /api/v1/menus/{slug}` | 4.1~4.3, 화면 연동 |
 | `SongsController` | `GET /api/v1/musicbox/songs`, `GET /api/v1/songs/now` | 11.2~11.3 |
 
 | `my/` Controller | 담당 API | WBS |
 | --- | --- | --- |
 | `UsersController` | `GET /api/v1/my`, `PUT /api/v1/users/{id}` | 1.5, 1.4 |
-| `CartController` | `POST /api/v1/menus/{id}/cart/items`, `GET /api/v1/cart/items`, `PUT/DELETE /api/v1/cart/items/{id}` | 14.1~14.4 |
+| `CartItemsController` | `POST /api/v1/menus/{id}/cart/items`, `GET /api/v1/cart/items`, `PUT/DELETE /api/v1/cart/items/{id}` | 14.1~14.4 |
 | `OrdersController` | `POST /api/v1/orders`(실제 결제 없이 주문 접수), `GET /api/v1/orders`, `GET /api/v1/orders/{id}` | 6.1, 6.3~6.4 |
 | `SongsController` | `POST /api/v1/musicbox/songs`, `GET /api/v1/my/songs`, `DELETE /api/v1/my/songs/{id}` | 11.1, 11.4~11.5 |
 
@@ -275,7 +275,7 @@ WBS 5.3의 `/api/v1/admin/orders/focus`와 12.3의 `/api/v1/admin/orders/status`
 3. **상태:** `received ↔ preparing ↔ ready ↔ completed`에서 한 단계씩 이동한다. 관리자는 `received → canceled`만 취소할 수 있다. `status_version`으로 두 관리자의 충돌을 감지한다. 고객은 취소 상태를 조회하지만 이번 버전의 취소 API는 제공하지 않는다.
 4. **뮤직박스:** `music_box_state` 단일 행 잠금과 `revision` 증가를 한 트랜잭션에 묶고, `queued` 순서 유일·`playing` 최대 한 건을 DB 인덱스로 보장한다. 서버가 `started_at + duration_seconds`로 종료·다음 곡을 계산하고 `serverNow`·종료 예정 시각을 응답한다.
 
-이 제약은 JPA 어노테이션만으로 끝내지 않고 Q4에서 정한 스키마 적용 방식에 따라 FK·CHECK·UNIQUE·부분 인덱스로 명시한다. PostgreSQL의 `NULLS NOT DISTINCT` 지원 여부를 버전 선정 때 확인한다.
+테이블과 JPA로 표현 가능한 제약은 Hibernate가 애플리케이션 시작 시 생성·갱신한다. `NULL` 안전 유니크·부분 인덱스 등 PostgreSQL 전용 제약은 이 설정만으로 생성된다고 가정하지 않는다. 해당 기능을 구현할 때 제약을 유지할 방법을 따로 정하고 PostgreSQL 통합 테스트로 확인한다. 별도 `sql/` 폴더나 마이그레이션 도구는 현재 사용하지 않는다.
 
 ## WBS와 현재 코드의 차이
 
@@ -298,7 +298,7 @@ WBS 5.3의 `/api/v1/admin/orders/focus`와 12.3의 `/api/v1/admin/orders/status`
 
 ### PostgreSQL 연결과 공통 API
 
-- [ ] Q4의 스키마 적용 방식을 정하고 PostgreSQL 버전·DB 환경 변수·`application.yml`을 구성한다. DB 연결을 확인한다.
+- [ ] PostgreSQL 버전·DB 환경 변수·`application.yml`의 `ddl-auto=update`를 구성한다. 빈 DB에 배포해 테이블 생성과 재시작 후 데이터 유지를 확인한다.
 - [ ] 공통 오류 응답·입력 검증·`/api/v1` 규칙을 만든다. `./gradlew bootRun`과 잘못된 요청의 400 응답을 확인한다.
 
 ### 회원가입·로그인·로그아웃 (WBS 1.1~1.3)
@@ -318,17 +318,17 @@ WBS 5.3의 `/api/v1/admin/orders/focus`와 12.3의 `/api/v1/admin/orders/status`
 
 ### 카테고리 관리 (WBS 13.x)
 
-- [ ] `categories` 스키마와 보호된 `기타`를 만들고 공개 카테고리 조회 및 관리자 조회·등록·이름 수정·순서 변경·삭제 API를 구현한다. `기타` 보호를 검증한다.
+- [ ] `categories` 스키마와 보호된 `기타`를 만들고 관리자 조회·등록·이름 수정·순서 변경·삭제 API를 구현한다. `기타` 보호를 검증한다.
 - [ ] `frontend/app/admin/categories`를 API에 연결한다. 등록·순서 변경·삭제 결과를 화면에서 확인한다.
 
 ### 메뉴 등록·수정과 공개 조회 (WBS 3.x/4.x)
 
-- [ ] 관리자 메뉴 등록·목록·상세·수정·숨김과 공개 메뉴 검색·상세·추천 API를 만든다. `slug`·가격·온도 옵션과 카테고리 삭제 시 연결 메뉴가 `기타`로 이동하는지 검증한다.
+- [ ] 관리자 메뉴 등록·목록·상세·수정·숨김과 공개 메뉴 검색·상세·추천 및 `GET /api/v1/menus/categories`를 만든다. 예약 slug `categories`·가격·온도 옵션과 카테고리 삭제 시 연결 메뉴가 `기타`로 이동하는지 검증한다.
 - [ ] `frontend/app/admin/menus`, `frontend/app/(public)/menus`의 목록·상세, `/`의 목 호출을 API로 바꾼다. 검색·필터·정렬과 관리자 변경이 방문자 화면에 반영되는지 확인한다.
 
 ### 회원 장바구니 (WBS 14.1~14.4)
 
-- [ ] `my/CartController`의 담기·조회·수량 변경·삭제 API를 만든다. 회원·메뉴·온도별 한 줄 제약과 다른 기기 동기화를 검증한다.
+- [ ] `my/CartItemsController`의 담기·조회·수량 변경·삭제 API를 만든다. 회원·메뉴·온도별 한 줄 제약과 다른 기기 동기화를 검증한다.
 - [ ] `frontend/app/_lib/cart/CartContext.tsx`의 `localStorage` 저장을 회원별 API로 바꾼다. 메뉴 상세 → `/cart`에서 수량·삭제·새로고침 후 유지 여부를 확인한다.
 
 ### 주문 생성과 내 주문 조회 (WBS 6.1/6.3/6.4)

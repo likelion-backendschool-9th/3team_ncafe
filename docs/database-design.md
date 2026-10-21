@@ -1,6 +1,6 @@
 # 삼다방 데이터베이스 설계 초안
 
-기준: 2026-10-20 `origin/develop` (`3563407`, 주문·결제 페이지 PR #45 포함). 대상 DB는 PostgreSQL이다. 이 문서는 구현 전 데이터 계약이며, 아직 실행 가능한 마이그레이션은 아니다.
+기준: 2026-10-20 `origin/develop` (`3563407`, 주문·결제 페이지 PR #45 포함). 대상 DB는 PostgreSQL이다. 이 문서는 구현 전 데이터 계약이다. 테이블은 Spring Boot 배포 시 엔티티를 기준으로 생성·갱신한다.
 
 ## 1. 범위와 결정
 
@@ -20,25 +20,27 @@
 
 ### 개념 ERD — Chen 표기법
 
-![한국어로 표기한 삼다방 Chen ERD](database-chen.svg)
+![Java 엔티티 이름으로 표기한 삼다방 Chen ERD](database-chen.svg)
 
 [Chen ERD 크게 열기](database-chen.svg) · [그림 원본 열기](database-chen.dot)
 
-네모는 엔티티, 마름모는 관계, 타원은 속성이다. 밑줄 친 속성은 식별자이며 선의 `1`, `N`, `1..N`은 관계의 개수를 나타낸다. 모든 관계를 연결된 한 그림에 담았고 각 엔티티는 한 번씩 표시했다. 메뉴의 '첫 개시 표시 여부'와 '추천 표시 여부'는 화면 배지 설정이다. 장바구니의 체크 상태는 주문 화면에서만 쓰므로 저장 속성에서 제외했다. 주문 항목은 주문의 생성 시각을 공유하는 불변 스냅샷이다.
+이 문서의 주 도식은 Chen ERD다. 네모는 엔티티, 마름모는 관계, 타원은 속성이다. 밑줄 친 속성은 식별자이며 선의 `1`, `N`, `1..N`은 관계의 개수를 나타낸다. 업무 엔티티의 관계를 연결된 한 그림에 담았고 각 엔티티는 한 번씩 표시했다. 단일 잠금 행인 `MusicBoxState`는 다른 엔티티와 FK 관계가 없어 관계선 없는 별도 네모로 표시한다. 메뉴의 '첫 개시 표시 여부'와 '추천 표시 여부'는 화면 배지 설정이다. 장바구니의 체크 상태는 주문 화면에서만 쓰므로 저장 속성에서 제외했다. 주문 항목은 주문의 생성 시각을 공유하는 불변 스냅샷이다.
 
-### Mermaid 관계도
+### 보조 Mermaid 관계도
+
+다이어그램의 이름은 Java 엔티티명이다. DB 테이블은 각각 `User`→`users`, `Category`→`categories`, `Menu`→`menus`, `CartItem`→`cart_items`, `Order`→`orders`, `OrderItem`→`order_items`, `Song`→`music_requests`, `MusicBoxState`→`music_box_state`로 매핑한다. 속성은 DB 컬럼명으로 적었다.
 
 ```mermaid
 erDiagram
-    users ||--o{ cart_items : holds
-    users ||--o{ orders : places
-    users ||--o{ music_requests : submits
-    categories ||--o{ menus : contains
-    menus ||--o{ cart_items : referenced_by
-    orders ||--|{ order_items : contains
-    menus ||--o{ order_items : source_of
+    User ||--o{ CartItem : holds
+    User ||--o{ Order : places
+    User ||--o{ Song : submits
+    Category ||--o{ Menu : contains
+    Menu ||--o{ CartItem : referenced_by
+    Order ||--|{ OrderItem : contains
+    Menu ||--o{ OrderItem : source_of
 
-    users {
+    User {
       bigint id PK
       varchar email UK
       varchar password_hash
@@ -48,7 +50,7 @@ erDiagram
       timestamptz created_at
       timestamptz updated_at
     }
-    categories {
+    Category {
       bigint id PK
       varchar name UK
       integer display_order
@@ -56,7 +58,7 @@ erDiagram
       timestamptz created_at
       timestamptz updated_at
     }
-    menus {
+    Menu {
       bigint id PK
       bigint category_id FK
       varchar slug UK
@@ -73,7 +75,7 @@ erDiagram
       timestamptz created_at
       timestamptz updated_at
     }
-    cart_items {
+    CartItem {
       bigint id PK
       bigint user_id FK
       bigint menu_id FK
@@ -82,7 +84,7 @@ erDiagram
       timestamptz created_at
       timestamptz updated_at
     }
-    orders {
+    Order {
       bigint id PK
       bigint customer_id FK
       varchar status
@@ -95,7 +97,7 @@ erDiagram
       timestamptz created_at
       timestamptz updated_at
     }
-    order_items {
+    OrderItem {
       bigint id PK
       bigint order_id FK
       bigint menu_id FK
@@ -106,12 +108,12 @@ erDiagram
       integer quantity
       integer line_total
     }
-    music_box_state {
+    MusicBoxState {
       smallint id PK
       bigint revision
       timestamptz updated_at
     }
-    music_requests {
+    Song {
       bigint id PK
       bigint user_id FK
       varchar requester_name
@@ -141,7 +143,7 @@ erDiagram
 | `users` | `id`, `email`, `password_hash`, `name`, `role`, `status`, `created_at`, `updated_at` | 이메일은 소문자 정규화 후 유일해야 한다. `role IN ('customer','admin')`, `status IN ('active','suspended')`. 정지된 회원은 새 로그인과 기존 세션의 회원 서비스 접근을 막는다. 관리자 계정의 정지·해제 API는 거부한다. 비밀번호 원문은 저장하지 않는다. |
 | `categories` | `id`, `name`, `display_order`, `is_fallback`, `created_at`, `updated_at` | 이름 유일, 순서 유일. `is_fallback`은 카테고리 삭제 시 메뉴를 받을 단 하나의 `기타` 카테고리에서만 참이다. 그 밖의 카테고리는 모두 거짓이며, 메뉴별 이동 여부를 나타내지 않는다. `기타`의 이름 수정·삭제를 거부한다. 다른 카테고리를 삭제할 때 해당 메뉴를 `기타`로 옮기고 카테고리를 삭제하는 작업을 한 트랜잭션으로 처리한다. |
 
-첫 관리자의 비밀번호는 소스·마이그레이션에 넣지 않는다. 운영자가 제공한 비밀 값을 읽는 초기 설정 명령으로 만들고, 이후 관리자 전용 계정 생성 기능을 사용한다. 관리자 생성 API는 고객 공개 가입 API와 분리한다.
+첫 관리자의 비밀번호는 소스·설정 파일에 넣지 않는다. 운영자가 제공한 비밀 값을 읽는 초기 설정 명령으로 만들고, 이후 관리자 전용 계정 생성 기능을 사용한다. 관리자 생성 API는 고객 공개 가입 API와 분리한다.
 
 ### 메뉴와 장바구니
 
@@ -195,8 +197,8 @@ erDiagram
 
 ## 6. 구현 순서와 검증
 
-1. 이 문서의 데이터 계약을 팀이 확인한 뒤 PostgreSQL 버전과 마이그레이션 도구를 정한다. 보호된 `기타`와 첫 관리자 생성 절차를 준비한다.
-2. 회원·카테고리·메뉴 → 장바구니 → 주문 → 뮤직박스 순서로 마이그레이션과 API를 작은 PR로 만든다. 결제 관련 마이그레이션은 만들지 않는다.
+1. 이 문서의 데이터 계약을 팀이 확인한 뒤 PostgreSQL 버전과 Spring Boot의 `ddl-auto=update`를 설정한다. 보호된 `기타`와 첫 관리자 생성 절차를 준비한다.
+2. 회원·카테고리·메뉴 → 장바구니 → 주문 → 뮤직박스 순서로 엔티티와 API를 작은 PR로 만든다. 애플리케이션 시작 시 Hibernate가 JPA 엔티티에 대응하는 테이블을 생성·갱신한다. PostgreSQL 전용 제약은 JPA 자동 생성 범위 밖이므로 해당 기능을 구현할 때 적용 방법을 정한다. 결제 관련 테이블은 만들지 않는다.
 3. 각 영역에서 FK/유니크/체크 제약, 트랜잭션, 권한을 검증한다. 특히 두 기기의 동일 장바구니 수정, 두 관리자의 주문 상태 변경, 동시 재생 시작을 확인한다.
 4. 화면의 목 저장소를 API로 교체하고 빈 DB에서 관리자 생성 → 카테고리·메뉴 등록 → 장바구니 → 주문 → 선곡까지 확인한다. 기존 목 데이터 이관 스크립트는 만들지 않는다.
 
