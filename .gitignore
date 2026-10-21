@@ -1,5 +1,7 @@
 application.yml
+!backend/src/main/resources/application.yml
 application-local.properties
+.env
 
 .gradle/
 build/
