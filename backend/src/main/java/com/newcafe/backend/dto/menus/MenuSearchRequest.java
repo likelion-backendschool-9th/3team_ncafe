@@ -5,8 +5,10 @@ import com.newcafe.backend.entity.menu.MenuFields;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public record MenuSearchRequest(
+        @Size(max = MenuSearchRequest.SEARCH_MAX_LENGTH, message = "검색어는 100자 이하로 입력해 주세요.")
         String q,
 
         Long categoryId,
@@ -21,20 +23,22 @@ public record MenuSearchRequest(
         Integer page,
 
         @Min(value = 1, message = "size는 1~100 사이여야 합니다.")
-        @Max(value = MenuFields.PAGE_SIZE_MAX, message = "size는 1~100 사이여야 합니다.")
+        @Max(value = MenuSearchRequest.PAGE_SIZE_MAX, message = "size는 1~100 사이여야 합니다.")
         Integer size
 ) {
+    public static final int SEARCH_MAX_LENGTH = 100;
+    public static final int PAGE_SIZE_DEFAULT = 20;
+    public static final int PAGE_SIZE_MAX = 100;
+
     public MenuSearchRequest {
         q = MenuFields.normalize(q);
         if (q != null && q.isEmpty()) {
             q = null;
-        } else if (q != null && q.length() > MenuFields.SEARCH_MAX_LENGTH) {
-            q = q.substring(0, MenuFields.SEARCH_MAX_LENGTH);
         }
 
         sort = sort == null ? "newest" : sort;
         page = page == null ? 0 : page;
-        size = size == null ? MenuFields.PAGE_SIZE_DEFAULT : size;
+        size = size == null ? PAGE_SIZE_DEFAULT : size;
     }
 
     public Boolean available() {

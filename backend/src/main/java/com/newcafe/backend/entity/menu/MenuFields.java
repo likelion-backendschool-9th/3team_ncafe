@@ -11,9 +11,6 @@ public final class MenuFields {
             "^(https://\\S+|/images/menus/[a-zA-Z0-9/_-]+\\.(svg|png|jpe?g|webp))$";
     public static final int PRICE_MIN = 1;
     public static final int PRICE_MAX = 1_000_000;
-    public static final int SEARCH_MAX_LENGTH = 100;
-    public static final int PAGE_SIZE_DEFAULT = 20;
-    public static final int PAGE_SIZE_MAX = 100;
 
     private MenuFields() {
     }

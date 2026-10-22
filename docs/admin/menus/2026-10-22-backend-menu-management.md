@@ -65,7 +65,7 @@ S10 정렬
 - Then 5000, 4500, 3000 순서로 반환한다. (`newest`, `oldest`, `name`, `price-low`, `price-high` 지원)
 
 S11 잘못된 조건
-- When `sort=cheap`, `status=sold`, `page=-1`, `size=0`, `size=101` 중 하나로 조회한다.
+- When `sort=cheap`, `status=sold`, `page=-1`, `size=0`, `size=101`, 101자 `q` 중 하나로 조회한다.
 - Then `400`을 반환한다.
 
 ## 3. 메뉴 상세 (R3)
@@ -176,7 +176,7 @@ S19 카테고리 메뉴 수 (R5·카테고리 R3)
 - R1: `imageUrl`은 필수, 2048자 이하, `https://` 또는 `/images/menus/…` 경로. 빈 값이면 프론트가 placeholder를 보낸다.
 - R1: `price`는 1~1,000,000 정수(원).
 - R1·R4: 요청 본문의 없는 `categoryId`는 경로 자원이 아니므로 `404`가 아닌 `400`.
-- R2: `size` 기본 20, 최대 100. `page`는 0부터. `q`는 trim 후 100자까지 이름·slug 부분 일치(대소문자 무시).
+- R2: `size` 기본 20, 최대 100. `page`는 0부터. `q`는 trim 후 100자까지 이름·slug 부분 일치(대소문자 무시)하고, 100자를 넘으면 `400`. (고침 10-22: 리뷰 반영, 잘라서 검색하지 않음)
 - R2: `status`가 없으면 판매 중·판매 중지 모두. 숨긴 메뉴는 항상 제외 (10-22 답변).
 - R4: 동시 수정은 마지막 요청이 이긴다. 메뉴 단위 수정이라 카테고리처럼 잠금을 쓰지 않는다 (기준 5). slug 동시 등록은 DB 유일 제약 → 기존 `DataIntegrityViolationException` 처리로 `409`.
 - R4: 카테고리 삭제와 메뉴 등록이 겹쳐 FK 위반이 나면 같은 처리로 `409`.

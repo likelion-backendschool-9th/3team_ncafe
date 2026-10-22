@@ -32,7 +32,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -303,6 +302,14 @@ class MenusControllerTest {
     }
 
     @Test
+    void s11QueryWithExactlyMaxLengthIsAccepted() throws Exception {
+        listReturns(0, 0);
+
+        mockMvc.perform(get("/api/v1/admin/menus").param("q", " " + "가".repeat(100) + " "))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void s10PriceHighSortsByPriceDescending() throws Exception {
         listReturns(3, 3);
 
@@ -312,11 +319,15 @@ class MenusControllerTest {
         assertEquals(Sort.by(Sort.Order.desc("price"), Sort.Order.desc("id")), capturedPageable().getSort());
     }
 
+    static Stream<String> invalidListConditions() {
+        return Stream.of("sort=cheap", "status=sold", "page=-1", "size=0", "size=101", "q=" + "가".repeat(101));
+    }
+
     @ParameterizedTest
-    @ValueSource(strings = {"sort=cheap", "status=sold", "page=-1", "size=0", "size=101"})
+    @MethodSource("invalidListConditions")
     @SuppressWarnings("unchecked")
     void s11InvalidListConditionReturnsBadRequest(String condition) throws Exception {
-        String[] pair = condition.split("=");
+        String[] pair = condition.split("=", 2);
 
         mockMvc.perform(get("/api/v1/admin/menus").param(pair[0], pair[1]))
                 .andExpect(status().isBadRequest())
