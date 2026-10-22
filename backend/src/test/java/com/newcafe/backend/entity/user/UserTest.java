@@ -41,7 +41,8 @@ class UserTest {
     @ParameterizedTest
     @NullSource
     @ValueSource(strings = {"", " ", "guest", "guest@example", "guest@@example.com",
-            "guest @example.com", "guest@example. com", "guest\u00a0@example.com"})
+            "guest @example.com", "guest@example. com", "guest\u00a0@example.com",
+            "a\u0000@example.com", "a\uD800@example.com", "a\uDC00@example.com"})
     void rejectsMissingOrInvalidEmail(String email) {
         assertThrows(IllegalArgumentException.class, () -> User.createCustomer("단골", email, HASH));
     }
@@ -55,8 +56,8 @@ class UserTest {
 
     @ParameterizedTest
     @NullSource
-    @ValueSource(strings = {"", " ", "가", "😀"})
-    void rejectsNamesWithFewerThanTwoCodePoints(String name) {
+    @ValueSource(strings = {"", " ", "가", "😀", "a\u0000", "a\uD800", "a\uDC00"})
+    void rejectsMissingOrInvalidNames(String name) {
         assertThrows(IllegalArgumentException.class, () -> User.createCustomer(name, "guest@example.com", HASH));
     }
 

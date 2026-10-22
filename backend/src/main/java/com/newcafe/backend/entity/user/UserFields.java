@@ -22,7 +22,8 @@ public final class UserFields {
         }
 
         String normalized = value.strip().toLowerCase(Locale.ROOT);
-        if (normalized.length() > EMAIL_MAX_LENGTH || !EMAIL.matcher(normalized).matches()) {
+        if (normalized.length() > EMAIL_MAX_LENGTH || !isPersistableText(normalized)
+                || !EMAIL.matcher(normalized).matches()) {
             throw new IllegalArgumentException("이메일 형식과 최대 254자 제한을 확인해 주세요.");
         }
         return normalized;
@@ -35,8 +36,8 @@ public final class UserFields {
 
         String normalized = value.strip();
         int length = normalized.codePointCount(0, normalized.length());
-        if (length < 2 || length > NAME_MAX_LENGTH) {
-            throw new IllegalArgumentException("이름은 2~50자로 입력해 주세요.");
+        if (length < 2 || length > NAME_MAX_LENGTH || !isPersistableText(normalized)) {
+            throw new IllegalArgumentException("이름은 올바른 문자로 2~50자 입력해 주세요.");
         }
         return normalized;
     }
@@ -46,5 +47,10 @@ public final class UserFields {
             throw new IllegalArgumentException("인코딩된 비밀번호 형식을 확인해 주세요.");
         }
         return value;
+    }
+
+    private static boolean isPersistableText(String value) {
+        return value.codePoints().noneMatch(codePoint -> codePoint == 0
+                || (codePoint >= Character.MIN_SURROGATE && codePoint <= Character.MAX_SURROGATE));
     }
 }
