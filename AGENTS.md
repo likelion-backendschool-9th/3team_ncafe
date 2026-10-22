@@ -3,6 +3,8 @@
 이 문서는 Codex, Claude Code 등 모든 AI 에이전트와 팀원이 따르는 Git 규칙이다.
 AI 에이전트는 커밋 → 푸시 → PR 생성까지 수행하고, **머지는 사람이 한다.**
 
+> `frontend/` 파일을 수정할 때는 작업 위치와 관계없이 [`frontend/AGENTS.md`](frontend/AGENTS.md)를 먼저 읽고, 그 안내에 따라 [`docs/FRONTEND.md`](docs/FRONTEND.md)를 기준으로 작업한다.
+
 ---
 
 ## 1. 브랜치 전략 (Git Flow)
