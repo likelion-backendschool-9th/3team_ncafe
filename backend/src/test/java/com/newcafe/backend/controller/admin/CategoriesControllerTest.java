@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.newcafe.backend.common.error.CategoryErrorHandler;
+import com.newcafe.backend.common.error.ApiExceptionHandler;
 import com.newcafe.backend.entity.Category;
 import com.newcafe.backend.repository.CategoryRepository;
 import com.newcafe.backend.repository.MenuRepository;
@@ -33,7 +33,7 @@ class CategoriesControllerTest {
         MenuRepository menuRepository = org.mockito.Mockito.mock(MenuRepository.class);
         CategoriesService categoriesService = new CategoriesService(categoryRepository, menuRepository);
         mockMvc = MockMvcBuilders.standaloneSetup(new CategoriesController(categoriesService))
-                .setControllerAdvice(new CategoryErrorHandler())
+                .setControllerAdvice(new ApiExceptionHandler())
                 .build();
     }
 

@@ -1,6 +1,5 @@
 package com.newcafe.backend.common.error;
 
-import com.newcafe.backend.controller.admin.CategoriesController;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,11 +9,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-@RestControllerAdvice(assignableTypes = CategoriesController.class)
-public class CategoryErrorHandler {
-
-    public record ErrorResponse(String code, String message) {
-    }
+@RestControllerAdvice
+public class ApiExceptionHandler {
 
     @ExceptionHandler(CategoryException.class)
     public ResponseEntity<ErrorResponse> handleCategoryException(CategoryException exception) {
