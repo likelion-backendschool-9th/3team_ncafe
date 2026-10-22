@@ -225,6 +225,8 @@ Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요
 
 `controller`는 `repository`를 직접 호출하지 않고, `service`는 HTTP 객체에 의존하지 않는다. 로그인·회원가입·로그아웃은 `AuthController`, 메뉴 상세에서 시작하는 장바구니 담기는 `my/CartItemsController`, 곡 신청은 `my/SongsController`, 현재 곡 조회는 공통 `SongsController`에 둔다. 관리자의 메뉴 삭제는 `admin/MenusController`, 주문 상태 변경은 `admin/OrdersController`, 회원 상태 변경은 `admin/UsersController`가 소유한다. API 경로는 WBS의 `/api/v1/...`를 기준으로 하되 화면 URL을 그대로 복제하지 않는다. 인증은 폴더가 아니라 메서드별로 검사한다. 공통 예외 형식과 페이지네이션을 API 계약으로 통일한다. ID는 `BIGINT IDENTITY`, 금액은 원 단위 정수, 시각은 DB `TIMESTAMPTZ`·API ISO 8601로 다룬다. DB 접속 정보와 첫 관리자 비밀번호는 환경 변수로만 주입한다.
 
+계층별 책임, 입력 정규화, 공통 오류, 전체 목록 변경 검증, 잠금·flush 사용 기준은 [관리자 카테고리 백엔드 계획](../../docs/admin/categories/2026-10-21-backend-category-management.md)의 구현 기준을 참고한다. 카테고리의 잠금 방식은 다른 도메인에 그대로 적용하지 않고 해당 도메인의 동시 수정 규칙에 맞춰 결정한다.
+
 `music_box_state.id`는 고정값 `1`로 두며 일반 ID 자동 생성 규칙을 적용하지 않는다. 공개 메뉴의 카테고리 필터 데이터는 `MenusController` → `MenusService` → `CategoryRepository`가 조회한다. 메뉴 상세의 `/{slug}`와 경로가 겹치지 않도록 `categories`는 메뉴 slug로 사용하지 않는다.
 
 ### WBS API와 Controller 대응

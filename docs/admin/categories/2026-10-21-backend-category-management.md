@@ -3,9 +3,20 @@
 ## 한눈에
 
 - 끝나면: 초기 관리자 계정으로 로그인해 카테고리 목록·등록·이름 수정·순서 변경·삭제 API를 사용할 수 있고, 삭제한 카테고리의 메뉴는 `기타`로 이동한다.
-- 결정 필요: 없음. 아래 가정은 구현 전에 이 계획을 검토하며 조정할 수 있다.
-- 규모: 5단계, 약 2~3일.
+- 현재: 카테고리 API와 단위·MockMvc 테스트는 작성했다. 관리자 인증, 실제 PostgreSQL 제약·트랜잭션 검증, 프론트엔드 연결은 남아 있다.
+- 결정 필요: PostgreSQL 전용 `is_fallback=true` 부분 유니크 인덱스를 배포 시 어떻게 적용할지 정한다.
 - 위치: 이 파일은 `docs/admin/categories/`의 백엔드 계획이다. 프론트엔드 계획은 같은 폴더에 별도 파일로 작성한다.
+
+## 구현 현황 (2026-10-22)
+
+| 영역 | 현재 상태 | 남은 확인 |
+| --- | --- | --- |
+| 카테고리 목록·등록·이름 수정·순서 변경·삭제 | Controller → Service → Repository와 Entity·DTO 구현, 단위·MockMvc 테스트 통과 | 실제 PostgreSQL에서 S8·S11~S21 검증 |
+| `기타` 초기화·보호 | 애플리케이션 시작 시 초기화, 이름 변경·삭제 거부 | 동시 시작과 `is_fallback=true` 부분 유니크 제약 검증 |
+| 관리자 계정·접근 제어 | 미구현 | S1~S7 및 세션·CSRF 검증 |
+| 프론트엔드 연결 | 목 저장소 사용 중 | 인증 구현 후 관리자 카테고리 화면에서 API 확인 |
+
+현재 `./gradlew test`는 통과하지만 PostgreSQL을 띄우는 통합 테스트는 없다. 카테고리 API에 아직 관리자 인증이 적용되지 않았으므로 접근 제어가 완료된 것으로 취급하지 않는다.
 
 ## 1. 초기 관리자 계정과 로그인 (R1)
 
@@ -148,40 +159,44 @@ S21 원자성
 | R5 | `PUT /api/v1/admin/categories/order` | `orderedIds: number[]` | `200`, 정렬된 배열 |
 | R6 | `DELETE /api/v1/admin/categories/{id}` | 없음 | `204` |
 
-R3·R4·R5의 카테고리 응답 필드는 `id`, `name`, `displayOrder`, `isFallback`, `menuCount`, `createdAt`, `updatedAt`이다. `id`는 숫자이며 시각은 ISO 8601 문자열이다. R2·R4·R5·R6의 오류는 공통 형식 `{code, message}`로 반환한다. 변경 요청은 세션 인증과 CSRF 검사를 거친다.
+R3·R4·R5의 카테고리 응답 필드는 `id`, `name`, `displayOrder`, `isFallback`, `menuCount`, `createdAt`, `updatedAt`이다. `id`는 숫자이며 시각은 ISO 8601 문자열이다. R4·R5·R6의 오류는 현재 공통 형식 `{code, message}`로 반환한다. R2의 인증·권한 오류와 변경 요청의 세션 인증·CSRF 검사는 인증 구현 후 확인한다.
+
+## 다른 기능 개발에 적용할 구현 기준
+
+1. **계층별 역할:** 같은 `rename` 이름을 써도 Controller는 HTTP 요청·DTO 검증, Service는 트랜잭션·조회·중복 확인, Entity는 자신의 상태와 불변식 변경을 담당한다. 메서드 이름이 같은 것만으로 중복 로직으로 보지 않는다. Controller가 Repository를 직접 호출하거나 Entity를 응답으로 반환하지 않는다.
+2. **입력과 불변식:** `CategoryRequest`는 `CategoryName.normalize`로 앞뒤 공백을 제거하고 Bean Validation으로 빈 값·길이를 검사한다. Entity도 직접 생성·변경될 때 이름과 `기타` 보호 규칙을 지킨다. Service는 DB에 있는 다른 이름과 충돌하는지 확인하고, 최종 유일성은 DB 제약으로 보장한다. 다른 도메인에서도 입력 경계의 검증과 Entity 불변식을 구분한다.
+3. **공통 오류:** Service·Entity의 업무 충돌은 `CategoryException`으로 표현하고 `ApiExceptionHandler`에서 HTTP 상태로 변환한다. 현재 `NOT_FOUND`는 `404`, `CONFLICT`는 `409`, `INVALID_ORDER`와 Bean Validation 실패는 `400`, DB 유일 제약 충돌은 `409`다. 다른 도메인에도 `{code, message}` 형식을 유지하되 카테고리 전용 예외를 그대로 재사용하지 않는다.
+4. **전체 목록 변경:** 순서 요청의 `orderedIds`에서 빈 목록·중복·잘못된 ID는 `400`으로 거절한다. 누락되거나 현재 목록에 없는 ID가 있으면 `409`로 거절한 뒤에만 ID를 Entity로 바꾼다. 이는 오래된 화면을 처리하며, 행 잠금만으로 대체할 수 없다. 다른 전체 목록 변경에도 요청이 전체 스냅샷인지 확인한다.
+5. **잠금과 트랜잭션:** 카테고리 변경은 `@Transactional` 안에서 `기타` 행의 `PESSIMISTIC_WRITE` 잠금을 먼저 획득해 같은 경로의 변경을 직렬화한다. 삭제에서는 메뉴를 `기타`로 이동하고 카테고리를 삭제·재정렬한다. 이 잠금은 카테고리 작업의 선택이므로 다른 도메인에 무조건 복사하지 않고 동시 수정 규칙을 먼저 정한다.
+6. **flush 최소화:** JPA는 보통 커밋 전이나 필요한 쿼리 전에 자동으로 flush한다. 초기화·등록은 `save`, 이름 변경은 관리 중인 Entity 수정만 사용한다. 카테고리 순서의 유일 제약 때문에 임시 순서를 DB에 먼저 반영하는 중간 `flush()` 한 번만 명시적으로 유지한다. 최종 순서는 트랜잭션 커밋에 맡긴다. 다른 기능에서도 DB가 중간 상태를 먼저 봐야 하는 경우에만 명시적 flush를 쓴다.
+7. **조회와 검증:** 목록의 `menuCount`는 카테고리마다 조회하지 않고 집계 쿼리 한 번으로 가져온다. Controller·Service 테스트는 요청 형식과 업무 규칙을 확인하고, 실제 PostgreSQL 통합 테스트로 유일 제약·잠금·롤백·순서 재배치를 별도로 확인한다.
+8. **코드 간격:** import의 출처와 메서드 안의 검증·조회·저장 구간을 빈 줄로 구분한다. 동작과 무관한 서식 변경은 별도 커밋으로 분리한다.
 
 ## 범위 밖
 
 - 고객 회원가입·고객 인증 흐름, 관리자 추가 생성·관리 화면.
-- 메뉴 등록·수정·숨김 API와 카테고리 화면의 프론트엔드 API 연결. 단, R3·R6 검증에 필요한 메뉴 FK와 테스트 데이터는 포함한다.
+- 메뉴 등록·수정·숨김 API. R3·R6 검증에 필요한 최소 메뉴 FK만 포함한다. 카테고리 화면의 프론트엔드 구현은 별도 계획으로 진행하며, 이 문서에는 연동 확인 조건만 기록한다.
 - 공개 메뉴 카테고리 필터 API `GET /api/v1/menus/categories`. 메뉴 조회 계획에서 다룬다.
 - 기존 프론트엔드 목 데이터 이관 및 기본 카테고리 여러 개 자동 생성.
 
-## 작업 순서
+## 남은 작업 순서
 
-1. 카테고리 저장·초기화·목록 구축 — S8~S10
-   - 파일: `backend/src/main/java/com/newcafe/backend/{entity/Category.java,repository/CategoryRepository.java,controller/admin/CategoriesController.java,service/admin/CategoriesService.java,dto/categories/*,config/PluralTableNamingStrategy.java}`, `backend/src/main/resources/application.yml`, 보호 `기타` 초기화 및 관련 테스트.
-   - 확인: `cd backend && ./gradlew test --tests '*Categories*'`.
-2. 등록·수정과 이름 제약 구축 — S11~S14
-   - 파일: 단계 1의 Controller·Service·DTO·Repository와 입력·DB 제약 테스트.
-   - 확인: `cd backend && ./gradlew test --tests '*Categories*'`.
-3. 순서 변경과 동시성 구축 — S15~S17
-   - 파일: 단계 1의 Service·Repository, PostgreSQL 순서 유일 제약 및 통합 테스트.
-   - 확인: `cd backend && ./gradlew test --tests '*Categories*'`.
-4. 삭제·메뉴 이동 구축 — S18~S21
-   - 파일: `backend/src/main/java/com/newcafe/backend/{entity/Menu.java,repository/MenuRepository.java}`의 최소 FK 모델, 카테고리 Service·통합 테스트.
+1. [ ] PostgreSQL 제약·트랜잭션 검증 — S8·S11~S21
+   - `is_fallback=true` 부분 유니크 인덱스의 적용 방법을 정하고, 초기화 재실행·이름/순서 유일성·임시 순서 flush·동시 변경·메뉴 이동 롤백을 실제 DB에서 검증한다.
    - 확인: PostgreSQL 테스트 DB에서 `cd backend && ./gradlew test`.
-5. 초기 관리자와 인증 경로 구축 — S1~S7
-   - 파일: `backend/build.gradle`, `backend/src/main/java/com/newcafe/backend/{entity/User.java,repository/UserRepository.java,controller/AuthController.java,service/AuthService.java,common/security/*}`, 관련 DTO·테스트.
+2. [ ] 초기 관리자와 인증 경로 구축 — S1~S7
+   - `backend/build.gradle`에 인증 의존성을 추가하고 `User`·인증 Controller/Service·세션·CSRF·권한 테스트를 만든다. 공개 고객 회원가입은 이 작업에 포함하지 않는다.
    - 확인: `cd backend && ./gradlew test --tests '*Auth*' --tests '*Security*'`.
+3. [ ] 관리자 카테고리 화면 연결 — S9~S21
+   - 별도 프론트엔드 계획에서 목 저장소 호출을 API로 교체하고, 로그인한 관리자 화면에서 목록·등록·수정·순서 변경·삭제를 확인한다.
 
-각 S 번호에 대응하는 테스트를 하나 이상 둔다. 특히 S8·S15~S21은 실제 PostgreSQL에서 제약과 트랜잭션을 확인한다.
+카테고리 API와 단위·MockMvc 테스트는 S8~S21의 주요 경로 일부를 확인했다. 남은 시나리오는 실제 DB와 인증이 있는 환경에서 검증한다.
 
 ## 브랜치·커밋
 
 - 브랜치: `feature/admin-category-menu-management`.
 - 계획 문서 커밋: `docs: 관리자 카테고리 백엔드 계획 추가`.
-- 구현 시 논리적 단위에 맞춰 인증·카테고리 저장·순서·삭제를 각각 커밋한다. PR 대상은 `develop`이며 머지는 사람이 수행한다.
+- 남은 검증·인증·프론트엔드 연결은 각각 논리적 변경 단위로 커밋한다. PR 대상은 `develop`이며 머지는 사람이 수행한다.
 
 ## 가정
 
@@ -198,4 +213,4 @@ R3·R4·R5의 카테고리 응답 필드는 `id`, `name`, `displayOrder`, `isFal
 - 2026-10-21 확인: [DB 설계](../../database-design.md)는 이름·순서 유일, 보호 `기타`, 메뉴 이동 트랜잭션을 정한다.
 - 2026-10-21 확인: [백엔드 청사진](../../../backend/docs/2026-10-20-backend-blueprint.md)은 관리자 카테고리 API와 Controller → Service → Repository 구조를 정한다.
 - 2026-10-21 확인: `frontend/app/admin/categories/`는 이름 1~40자, 이동 버튼·드래그, `기타` 수정·삭제 금지와 메뉴 수 표시를 사용한다.
-- 2026-10-21 확인: `backend/src/main/java`에는 실행용 메인 클래스만 있어 인증·카테고리·메뉴 엔티티는 아직 없다.
+- 2026-10-22 확인: `backend/src/main/java`에 카테고리 API·Entity·Repository·공통 오류 처리가 있다. `./gradlew test`는 통과했으며 테스트는 MockMvc·Mockito·Hibernate 메타데이터 중심이다. PostgreSQL 통합 테스트와 관리자 인증 코드는 아직 없다.
