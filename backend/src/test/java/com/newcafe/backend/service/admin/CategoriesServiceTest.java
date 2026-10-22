@@ -85,6 +85,7 @@ class CategoriesServiceTest {
     void protectedFallbackNameCannotBeCreatedAgain() {
         Category fallback = fallback(1L, 1);
         when(categoryRepository.findFallbackForUpdate()).thenReturn(Optional.of(fallback));
+        when(categoryRepository.existsByName(Category.FALLBACK_NAME)).thenReturn(true);
 
         CategoryException exception = assertThrows(CategoryException.class,
                 () -> service.create(new CategoryRequest(" 기타 ")));
@@ -92,6 +93,36 @@ class CategoriesServiceTest {
         assertEquals(Reason.CONFLICT, exception.getReason());
         org.mockito.Mockito.verify(categoryRepository, org.mockito.Mockito.never())
                 .saveAndFlush(org.mockito.ArgumentMatchers.any(Category.class));
+    }
+
+    @Test
+    void protectedFallbackCannotBeRenamed() {
+        Category fallback = fallback(1L, 1);
+        when(categoryRepository.findFallbackForUpdate()).thenReturn(Optional.of(fallback));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(fallback));
+
+        CategoryException exception = assertThrows(CategoryException.class,
+                () -> service.rename(1L, new CategoryRequest("커피")));
+
+        assertEquals(Reason.CONFLICT, exception.getReason());
+        assertEquals(Category.FALLBACK_NAME, fallback.getName());
+        verify(categoryRepository, never()).flush();
+    }
+
+    @Test
+    void fallbackNameCannotBeUsedForRename() {
+        Category fallback = fallback(1L, 1);
+        Category coffee = category(10L, "커피", 2);
+        when(categoryRepository.findFallbackForUpdate()).thenReturn(Optional.of(fallback));
+        when(categoryRepository.findById(10L)).thenReturn(Optional.of(coffee));
+        when(categoryRepository.existsByNameAndIdNot(Category.FALLBACK_NAME, 10L)).thenReturn(true);
+
+        CategoryException exception = assertThrows(CategoryException.class,
+                () -> service.rename(10L, new CategoryRequest("기타")));
+
+        assertEquals(Reason.CONFLICT, exception.getReason());
+        assertEquals("커피", coffee.getName());
+        verify(categoryRepository, never()).flush();
     }
 
     @Test

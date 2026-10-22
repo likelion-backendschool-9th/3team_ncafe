@@ -32,11 +32,7 @@ public class CategoriesService {
         if (categoryRepository.existsByName(Category.FALLBACK_NAME)) {
             throw new CategoryException(Reason.CONFLICT, "기타 카테고리의 보호 상태가 올바르지 않습니다.");
         }
-        int lastOrder = categoryRepository.findAllByOrderByDisplayOrderAsc().stream()
-                .mapToInt(Category::getDisplayOrder)
-                .max()
-                .orElse(0);
-        categoryRepository.saveAndFlush(Category.createFallback(lastOrder + 1));
+        categoryRepository.saveAndFlush(Category.createFallback(nextOrder()));
     }
 
     @Transactional(readOnly = true)
@@ -48,8 +44,7 @@ public class CategoriesService {
     public CategoryResponse create(CategoryRequest request) {
         lockFallback();
         String normalizedName = request.name();
-        if (Category.FALLBACK_NAME.equals(normalizedName)
-                || (normalizedName != null && categoryRepository.existsByName(normalizedName))) {
+        if (normalizedName != null && categoryRepository.existsByName(normalizedName)) {
             throw new CategoryException(Reason.CONFLICT, "이미 존재하는 카테고리입니다.");
         }
         Category category = Category.create(normalizedName, nextOrder());
@@ -61,12 +56,6 @@ public class CategoriesService {
         lockFallback();
         Category category = findCategory(id);
         String normalizedName = request.name();
-        if (category.isFallback()) {
-            throw new CategoryException(Reason.CONFLICT, "기타 카테고리는 수정할 수 없습니다.");
-        }
-        if (Category.FALLBACK_NAME.equals(normalizedName)) {
-            throw new CategoryException(Reason.CONFLICT, "기타는 보호된 카테고리 이름입니다.");
-        }
         if (normalizedName != null && categoryRepository.existsByNameAndIdNot(normalizedName, id)) {
             throw new CategoryException(Reason.CONFLICT, "이미 존재하는 카테고리입니다.");
         }

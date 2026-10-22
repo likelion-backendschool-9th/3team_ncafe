@@ -1,5 +1,7 @@
 package com.newcafe.backend.entity;
 
+import com.newcafe.backend.common.error.CategoryException;
+import com.newcafe.backend.common.error.CategoryException.Reason;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -60,11 +62,11 @@ public class Category {
 
     public void rename(String name) {
         if (isFallback) {
-            throw new IllegalStateException("기타 카테고리는 수정할 수 없습니다.");
+            throw new CategoryException(Reason.CONFLICT, "기타 카테고리는 수정할 수 없습니다.");
         }
         String normalized = normalizeName(name);
         if (FALLBACK_NAME.equals(normalized)) {
-            throw new IllegalArgumentException("기타는 보호된 카테고리 이름입니다.");
+            throw new CategoryException(Reason.CONFLICT, "기타는 보호된 카테고리 이름입니다.");
         }
         this.name = normalized;
     }
