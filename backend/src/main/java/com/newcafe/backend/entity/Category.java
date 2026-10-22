@@ -80,7 +80,7 @@ public class Category {
         if (name == null) {
             throw new IllegalArgumentException("카테고리명을 입력해 주세요.");
         }
-        String normalized = name.trim();
+        String normalized = CategoryName.normalize(name);
         if (normalized.isEmpty() || normalized.length() > 40) {
             throw new IllegalArgumentException("카테고리명은 1~40자로 입력해 주세요.");
         }
