@@ -9,7 +9,7 @@
 Spring Security로 이메일·비밀번호를 인증하고, 서버 세션과 브라우저 쿠키로 로그인 상태를 유지한다. 회원가입 → 로그인 → 내 정보 확인 → 로그아웃을 실제 PostgreSQL과 연결해 검증하는 것이 목표다.
 
 - 백엔드는 Java 21, Spring Boot 4.1.1, Gradle Groovy DSL, JPA, PostgreSQL을 사용한다.
-- 회원 엔티티·저장소와 비밀번호 해시 처리는 구현했다. 웹 Security 설정과 관리자 메뉴·카테고리 API 인증은 2단계부터 적용한다.
+- 회원 엔티티·저장소·비밀번호 해시와 회원가입 API를 구현했다. 웹 Security·CSRF와 관리자 메뉴·카테고리 접근 제어를 적용했으며 로그인은 3단계에서 연결한다.
 - 프론트엔드는 현재 목 회원 저장소와 `ncafe_mock_session` 쿠키를 사용한다.
 - 데이터 기준은 [DB 설계](../../docs/database-design.md), 기존 경로와 계층 기준은 [백엔드 전체 청사진](2026-10-20-backend-blueprint.md)이다.
 - 이번 범위는 공개 회원가입, 로그인·로그아웃, 현재 회원 조회, 세션·CSRF·권한 검사다. 프로필 수정, 관리자 생성·정지 관리 화면, 소셜 로그인, 비밀번호 재설정, 이메일 인증은 후속 작업이다.
@@ -128,14 +128,16 @@ CSRF 토큰을 받기 위한 익명 세션과 인증된 세션은 구별한다. 
 
 ### 2단계 — Security·CSRF·회원가입의 최소 흐름
 
-- [ ] Boot 관리 버전으로 `spring-boot-starter-security`, `spring-boot-starter-security-test`를 추가한다. starter가 제공하는 crypto 의존성의 별도 선언은 정리하고 Security 버전은 별도 고정하지 않는다. [Boot 의존성 기준](https://docs.spring.io/spring-boot/appendix/dependency-versions/coordinates.html)
-- [ ] `SecurityFilterChain`, 세션 저장 정책, 공통 JSON 오류 핸들러를 추가하고 기본 HTTP Basic 인증을 사용하지 않는다.
-- [ ] `HttpSessionCsrfTokenRepository`와 `GET /api/v1/auth/csrf`를 구성한다. 지연 토큰을 응답에서 실제로 읽어 저장되게 한다.
-- [ ] CORS·쿠키 속성을 로컬/운영 환경에 맞게 설정한다.
-- [ ] `SignupRequest/Response`, `AuthService`, 회원가입 Controller를 추가한다. 입력 검증 후 고객 계정만 저장한다.
-- [ ] 사전 중복 조회와 DB 유니크 제약을 함께 사용하고 동시 가입 시 한 요청만 성공하게 한다. 이메일 중복에 해당하는 제약 위반만 중복 가입 오류로 변환한다.
-- [ ] CSRF·가입·로그인 경로는 익명 접근을 허용하되 CSRF 검사를 유지한다. 아직 사용자 조회용 공개 API가 없는 경로를 임의로 `permitAll`하지 않는다.
-- [ ] 기존 `/api/v1/admin/**`는 관리자 권한으로 보호한다. 로그인 구현 전 기존 MockMvc 테스트는 필요한 테스트 인증과 CSRF를 사용하도록 함께 조정한다.
+구현과 검증 내용은 [2단계 작업 기록](2026-10-23-auth-step2.md)에 정리한다.
+
+- [x] Boot 관리 버전으로 `spring-boot-starter-security`, `spring-boot-starter-security-test`를 추가한다. starter가 제공하는 crypto 의존성의 별도 선언은 정리하고 Security 버전은 별도 고정하지 않는다. [Boot 의존성 기준](https://docs.spring.io/spring-boot/appendix/dependency-versions/coordinates.html)
+- [x] `SecurityFilterChain`, 세션 저장 정책, 공통 JSON 오류 핸들러를 추가하고 기본 HTTP Basic 인증을 사용하지 않는다.
+- [x] `HttpSessionCsrfTokenRepository`와 `GET /api/v1/auth/csrf`를 구성한다. 지연 토큰을 응답에서 실제로 읽어 저장되게 한다.
+- [x] CORS·쿠키 속성을 로컬/운영 환경에 맞게 설정한다.
+- [x] `SignupRequest/Response`, `AuthService`, 회원가입 Controller를 추가한다. 입력 검증 후 고객 계정만 저장한다.
+- [x] 사전 중복 조회와 DB 유니크 제약을 함께 사용하고 동시 가입 시 한 요청만 성공하게 한다. 이메일 중복에 해당하는 제약 위반만 중복 가입 오류로 변환한다.
+- [x] CSRF·가입·로그인 경로는 익명 접근을 허용하되 CSRF 검사를 유지한다. 아직 사용자 조회용 공개 API가 없는 경로를 임의로 `permitAll`하지 않는다.
+- [x] 기존 `/api/v1/admin/**`는 관리자 권한으로 보호한다. 로그인 구현 전 기존 MockMvc 테스트는 필요한 테스트 인증과 CSRF를 사용하도록 함께 조정한다.
 
 완료 기준: CSRF 조회 → 쿠키·토큰 전달 → 회원가입이 `201`이며, 세션에는 인증 정보가 없다. 잘못된 입력 `400`, 중복 `409`, CSRF 누락 `403`을 검증한다.
 
@@ -212,4 +214,4 @@ CSRF 토큰을 받기 위한 익명 세션과 인증된 세션은 구별한다. 
 
 2026-10-22의 단계별 통합 요청에 따라 에이전트는 **단계 브랜치에서 `feature/session-auth`로의 통합만** 수행한다. `develop`·`main`에는 직접 커밋·푸시하거나 PR을 머지하지 않는다. 최종 `feature/session-auth` → `develop` PR의 머지는 사람이 한다.
 
-**0단계 실행·격리 검증과 1단계 회원 도메인·비밀번호 저장을 완료했다.** 다음은 2단계 Security·CSRF·회원가입 API다.
+**0~2단계를 완료했다.** 다음은 3단계 로그인·현재 회원 조회다.
