@@ -47,7 +47,7 @@ class CategoriesControllerTest {
 
         when(categoryRepository.findFallbackForUpdate()).thenReturn(Optional.of(fallback));
         when(categoryRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(List.of(fallback));
-        when(categoryRepository.saveAndFlush(any(Category.class))).thenAnswer(invocation -> {
+        when(categoryRepository.save(any(Category.class))).thenAnswer(invocation -> {
             Category category = invocation.getArgument(0);
             ReflectionTestUtils.setField(category, "id", 10L);
             return category;

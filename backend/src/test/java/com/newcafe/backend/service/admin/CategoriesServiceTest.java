@@ -2,8 +2,8 @@ package com.newcafe.backend.service.admin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -63,6 +63,12 @@ class CategoriesServiceTest {
         Category fallback = fallback(1L, 3);
         when(categoryRepository.findFallbackForUpdate()).thenReturn(Optional.of(fallback));
         when(categoryRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(List.of(coffee, tea, fallback));
+        doAnswer(invocation -> {
+            assertEquals(5, coffee.getDisplayOrder());
+            assertEquals(4, tea.getDisplayOrder());
+            assertEquals(6, fallback.getDisplayOrder());
+            return null;
+        }).when(categoryRepository).flush();
 
         service.reorder(new CategoryOrderRequest(List.of(11L, 10L, 1L)));
 
@@ -70,7 +76,7 @@ class CategoriesServiceTest {
         assertEquals(1, tea.getDisplayOrder());
         assertEquals(3, fallback.getDisplayOrder());
 
-        verify(categoryRepository, times(2)).flush();
+        verify(categoryRepository).flush();
     }
 
     @Test
@@ -100,7 +106,7 @@ class CategoriesServiceTest {
         assertEquals(Reason.CONFLICT, exception.getReason());
 
         org.mockito.Mockito.verify(categoryRepository, org.mockito.Mockito.never())
-                .saveAndFlush(org.mockito.ArgumentMatchers.any(Category.class));
+                .save(org.mockito.ArgumentMatchers.any(Category.class));
     }
 
     @Test
@@ -151,7 +157,7 @@ class CategoriesServiceTest {
         order.verify(categoryRepository).delete(coffee);
 
         assertEquals(2, tea.getDisplayOrder());
-        verify(categoryRepository, times(3)).flush();
+        verify(categoryRepository).flush();
     }
 
     private Category category(Long id, String name, int order) {

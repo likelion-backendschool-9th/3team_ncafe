@@ -37,7 +37,7 @@ public class CategoriesService {
             throw new CategoryException(Reason.CONFLICT, "기타 카테고리의 보호 상태가 올바르지 않습니다.");
         }
 
-        categoryRepository.saveAndFlush(Category.createFallback(nextOrder()));
+        categoryRepository.save(Category.createFallback(nextOrder()));
     }
 
     @Transactional(readOnly = true)
@@ -55,7 +55,7 @@ public class CategoriesService {
         }
 
         Category category = Category.create(normalizedName, nextOrder());
-        return toResponse(categoryRepository.saveAndFlush(category));
+        return toResponse(categoryRepository.save(category));
     }
 
     @Transactional
@@ -69,7 +69,6 @@ public class CategoriesService {
         }
 
         category.rename(normalizedName);
-        categoryRepository.flush();
 
         return toResponse(category);
     }
@@ -104,7 +103,6 @@ public class CategoriesService {
 
         menuRepository.moveToCategory(category, fallback);
         categoryRepository.delete(category);
-        categoryRepository.flush();
 
         saveOrderWithoutUniqueCollision(categoryRepository.findAllByOrderByDisplayOrderAsc());
     }
@@ -145,8 +143,6 @@ public class CategoriesService {
         for (int i = 0; i < ordered.size(); i++) {
             ordered.get(i).changeDisplayOrder(i + 1);
         }
-
-        categoryRepository.flush();
     }
 
     private CategoryResponse toResponse(Category category) {
