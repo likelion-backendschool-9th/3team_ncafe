@@ -23,13 +23,21 @@ import com.newcafe.backend.repository.CategoryRepository;
 import com.newcafe.backend.repository.MenuRepository;
 import com.newcafe.backend.service.admin.MenusService;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -262,6 +270,75 @@ class MenusControllerTest {
         mockMvc.perform(delete("/api/v1/admin/menus/5"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    void s6DefaultListReturnsFirstPageOfNewestMenus() throws Exception {
+        listReturns(20, 25);
+
+        mockMvc.perform(get("/api/v1/admin/menus"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(20))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(20))
+                .andExpect(jsonPath("$.totalElements").value(25))
+                .andExpect(jsonPath("$.totalPages").value(2));
+
+        assertEquals(0, capturedPageable().getPageNumber());
+        assertEquals(20, capturedPageable().getPageSize());
+        assertEquals(Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id")), capturedPageable().getSort());
+    }
+
+    @Test
+    void s7SecondPageReturnsRemainingMenus() throws Exception {
+        listReturns(5, 25);
+
+        mockMvc.perform(get("/api/v1/admin/menus").param("page", "1").param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(5))
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.totalElements").value(25));
+
+        assertEquals(1, capturedPageable().getPageNumber());
+    }
+
+    @Test
+    void s10PriceHighSortsByPriceDescending() throws Exception {
+        listReturns(3, 3);
+
+        mockMvc.perform(get("/api/v1/admin/menus").param("sort", "price-high"))
+                .andExpect(status().isOk());
+
+        assertEquals(Sort.by(Sort.Order.desc("price"), Sort.Order.desc("id")), capturedPageable().getSort());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"sort=cheap", "status=sold", "page=-1", "size=0", "size=101"})
+    @SuppressWarnings("unchecked")
+    void s11InvalidListConditionReturnsBadRequest(String condition) throws Exception {
+        String[] pair = condition.split("=");
+
+        mockMvc.perform(get("/api/v1/admin/menus").param(pair[0], pair[1]))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+
+        verify(menuRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void listReturns(int itemCount, long total) {
+        when(menuRepository.findAll(any(Specification.class), any(Pageable.class))).thenAnswer(invocation -> {
+            Pageable pageable = invocation.getArgument(1);
+            List<Menu> menus = IntStream.range(0, itemCount).mapToObj(i -> existingMenu()).toList();
+            return new PageImpl<>(menus, pageable, total);
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    private Pageable capturedPageable() {
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(menuRepository).findAll(any(Specification.class), captor.capture());
+        return captor.getValue();
     }
 
     private Menu existingMenu() {
