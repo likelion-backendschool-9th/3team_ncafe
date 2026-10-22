@@ -1,7 +1,7 @@
 package com.newcafe.backend.dto.menus;
 
-import com.newcafe.backend.entity.MenuDetails;
-import com.newcafe.backend.entity.MenuFields;
+import com.newcafe.backend.entity.menu.MenuDetails;
+import com.newcafe.backend.entity.menu.MenuFields;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

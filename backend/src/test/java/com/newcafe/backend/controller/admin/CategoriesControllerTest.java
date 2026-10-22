@@ -9,7 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.newcafe.backend.common.error.ApiExceptionHandler;
-import com.newcafe.backend.entity.Category;
+import com.newcafe.backend.entity.category.Category;
 import com.newcafe.backend.repository.CategoryRepository;
 import com.newcafe.backend.repository.MenuRepository;
 import com.newcafe.backend.service.admin.CategoriesService;

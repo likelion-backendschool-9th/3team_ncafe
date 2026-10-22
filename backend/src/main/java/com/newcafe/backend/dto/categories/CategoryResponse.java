@@ -1,6 +1,6 @@
 package com.newcafe.backend.dto.categories;
 
-import com.newcafe.backend.entity.Category;
+import com.newcafe.backend.entity.category.Category;
 
 import java.time.Instant;
 

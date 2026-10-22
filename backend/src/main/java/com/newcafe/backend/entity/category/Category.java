@@ -1,4 +1,4 @@
-package com.newcafe.backend.entity;
+package com.newcafe.backend.entity.category;
 
 import com.newcafe.backend.common.error.CategoryException;
 import com.newcafe.backend.common.error.CategoryException.Reason;

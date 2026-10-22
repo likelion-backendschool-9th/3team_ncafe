@@ -1,6 +1,6 @@
 package com.newcafe.backend.dto.categories;
 
-import com.newcafe.backend.entity.CategoryName;
+import com.newcafe.backend.entity.category.CategoryName;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

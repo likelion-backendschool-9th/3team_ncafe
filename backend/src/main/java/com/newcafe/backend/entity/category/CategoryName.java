@@ -1,4 +1,4 @@
-package com.newcafe.backend.entity;
+package com.newcafe.backend.entity.category;
 
 public final class CategoryName {
 

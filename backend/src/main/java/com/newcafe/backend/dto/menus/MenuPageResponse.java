@@ -1,6 +1,6 @@
 package com.newcafe.backend.dto.menus;
 
-import com.newcafe.backend.entity.Menu;
+import com.newcafe.backend.entity.menu.Menu;
 
 import java.util.List;
 

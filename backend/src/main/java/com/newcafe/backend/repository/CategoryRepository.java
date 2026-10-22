@@ -1,6 +1,6 @@
 package com.newcafe.backend.repository;
 
-import com.newcafe.backend.entity.Category;
+import com.newcafe.backend.entity.category.Category;
 
 import jakarta.persistence.LockModeType;
 

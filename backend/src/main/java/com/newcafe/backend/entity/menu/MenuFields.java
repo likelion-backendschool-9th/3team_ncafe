@@ -1,4 +1,4 @@
-package com.newcafe.backend.entity;
+package com.newcafe.backend.entity.menu;
 
 public final class MenuFields {
 

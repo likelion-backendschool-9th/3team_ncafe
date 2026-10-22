@@ -1,4 +1,6 @@
-package com.newcafe.backend.entity;
+package com.newcafe.backend.entity.menu;
+
+import com.newcafe.backend.entity.category.Category;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

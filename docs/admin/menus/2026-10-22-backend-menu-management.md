@@ -147,7 +147,7 @@ S19 카테고리 메뉴 수 (R5·카테고리 R3)
    - 파일: `docs/admin/menus/2026-10-22-backend-menu-management.md`
    - 커밋: `docs: 관리자 메뉴 백엔드 계획 추가`
 2. Entity·DTO·오류 — S1, S2, S3
-   - 파일: `entity/Menu.java` (필드·`create`·`update`·`archive`, `@PrePersist`/`@PreUpdate`는 `Category.java` 패턴), `dto/menus/MenuCreateRequest·MenuUpdateRequest·MenuResponse·MenuPageResponse.java`, `common/error/MenuException.java`, `ApiExceptionHandler.java`에 매핑 추가
+   - 파일: `entity/menu/Menu.java`·`MenuDetails.java`·`MenuFields.java` (필드·`create`·`update`·`archive`, `@PrePersist`/`@PreUpdate`는 `Category.java` 패턴), `dto/menus/MenuCreateRequest·MenuUpdateRequest·MenuResponse·MenuPageResponse.java`, `common/error/MenuException.java`, `ApiExceptionHandler.java`에 매핑 추가
    - 입력 정규화는 `CategoryName.normalize`처럼 trim 후 Bean Validation (기준 2).
    - 확인: `cd backend && ./gradlew compileJava`
 3. 등록·상세 — S1~S5, S12, S13

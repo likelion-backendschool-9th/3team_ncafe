@@ -1,7 +1,7 @@
 package com.newcafe.backend.repository;
 
-import com.newcafe.backend.entity.Category;
-import com.newcafe.backend.entity.Menu;
+import com.newcafe.backend.entity.category.Category;
+import com.newcafe.backend.entity.menu.Menu;
 
 import java.util.List;
 
