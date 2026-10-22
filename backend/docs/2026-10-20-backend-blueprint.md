@@ -175,9 +175,10 @@ backend/
 │  │  ├─ UserRepository.java, CategoryRepository.java, MenuRepository.java
 │  │  ├─ CartItemRepository.java, OrderRepository.java
 │  │  └─ SongRepository.java, MusicBoxStateRepository.java
-│  ├─ entity/
-│  │  ├─ User.java, Category.java, Menu.java, CartItem.java
-│  │  └─ Order.java, OrderItem.java, Song.java, MusicBoxState.java
+│  ├─ entity/                 # 도메인별 하위 폴더, 도메인 전용 값·규칙 클래스도 함께 둔다
+│  │  ├─ user/User.java, category/Category.java, menu/Menu.java
+│  │  ├─ cartitem/CartItem.java, order/Order.java, order/OrderItem.java
+│  │  └─ song/Song.java, song/MusicBoxState.java
 │  ├─ dto/
 │  │  ├─ auth/LoginRequest.java, SignupRequest.java, AuthResponse.java
 │  │  ├─ users/UserResponse.java, UpdateProfileRequest.java

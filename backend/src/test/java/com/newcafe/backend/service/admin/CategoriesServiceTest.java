@@ -11,7 +11,7 @@ import com.newcafe.backend.common.error.CategoryException;
 import com.newcafe.backend.common.error.CategoryException.Reason;
 import com.newcafe.backend.dto.categories.CategoryOrderRequest;
 import com.newcafe.backend.dto.categories.CategoryRequest;
-import com.newcafe.backend.entity.Category;
+import com.newcafe.backend.entity.category.Category;
 import com.newcafe.backend.repository.CategoryRepository;
 import com.newcafe.backend.repository.MenuRepository;
 

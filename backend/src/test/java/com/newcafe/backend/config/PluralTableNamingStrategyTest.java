@@ -3,8 +3,8 @@ package com.newcafe.backend.config;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.newcafe.backend.entity.Category;
-import com.newcafe.backend.entity.Menu;
+import com.newcafe.backend.entity.category.Category;
+import com.newcafe.backend.entity.menu.Menu;
 import com.newcafe.backend.repository.CategoryRepository;
 import com.newcafe.backend.repository.MenuRepository;
 
