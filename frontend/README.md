@@ -1,6 +1,6 @@
 # 삼다방 프론트엔드
 
-Next.js App Router와 TypeScript로 구성한 프론트엔드 기본 구조다. 화면 범위와 단계는 [프론트엔드 청사진](../frontend-청사진.md)을 따른다.
+Next.js App Router와 TypeScript로 구성한 프론트엔드 기본 구조다. 화면 범위, 라우트-컨트롤러 매핑, 개발 규칙, 진행 현황은 [프론트엔드 개발 문서](../docs/FRONTEND.md)를 따른다.
 
 ## 로컬 실행
 
