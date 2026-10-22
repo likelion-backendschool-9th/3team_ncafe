@@ -7,6 +7,7 @@ import com.newcafe.backend.service.admin.CategoriesService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,13 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/admin/categories")
+@RequiredArgsConstructor
 public class CategoriesController {
 
     private final CategoriesService categoriesService;
-
-    public CategoriesController(CategoriesService categoriesService) {
-        this.categoriesService = categoriesService;
-    }
 
     @GetMapping
     public List<CategoryResponse> list() {

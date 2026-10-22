@@ -2,6 +2,7 @@ package com.newcafe.backend.service.admin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,6 +30,24 @@ class CategoriesServiceTest {
         categoryRepository = org.mockito.Mockito.mock(CategoryRepository.class);
         menuRepository = org.mockito.Mockito.mock(MenuRepository.class);
         service = new CategoriesService(categoryRepository, menuRepository);
+    }
+
+    @Test
+    void listReturnsMenuCountsWithOneAggregateQuery() {
+        Category coffee = category(10L, "커피", 1);
+        Category fallback = fallback(1L, 2);
+        MenuRepository.CategoryMenuCount coffeeCount = org.mockito.Mockito.mock(MenuRepository.CategoryMenuCount.class);
+        when(coffeeCount.getCategoryId()).thenReturn(10L);
+        when(coffeeCount.getMenuCount()).thenReturn(2L);
+        when(categoryRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(List.of(coffee, fallback));
+        when(menuRepository.countByCategory()).thenReturn(List.of(coffeeCount));
+
+        var responses = service.list();
+
+        assertEquals(List.of(10L, 1L), responses.stream().map(response -> response.id()).toList());
+        assertEquals(List.of(2L, 0L), responses.stream().map(response -> response.menuCount()).toList());
+        verify(menuRepository).countByCategory();
+        verify(menuRepository, never()).countByCategory_Id(10L);
     }
 
     @Test

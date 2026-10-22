@@ -77,4 +77,11 @@ class CategoriesControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
+
+    @Test
+    void invalidCategoryIdReturnsCommonErrorResponse() throws Exception {
+        mockMvc.perform(delete("/api/v1/admin/categories/not-a-number"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
+    }
 }

@@ -8,7 +8,9 @@ import java.util.Collections;
 import java.util.List;
 
 public record CategoryOrderRequest(
-        @NotEmpty(message = "카테고리 순서를 입력해 주세요.") List<@NotNull @Positive Long> orderedIds) {
+        @NotEmpty(message = "카테고리 순서를 입력해 주세요.")
+        List<@NotNull @Positive Long> orderedIds
+) {
     public CategoryOrderRequest {
         orderedIds = orderedIds == null ? null : Collections.unmodifiableList(new ArrayList<>(orderedIds));
     }

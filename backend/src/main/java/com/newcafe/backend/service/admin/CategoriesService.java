@@ -11,19 +11,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class CategoriesService {
 
     private final CategoryRepository categoryRepository;
     private final MenuRepository menuRepository;
-
-    public CategoriesService(CategoryRepository categoryRepository, MenuRepository menuRepository) {
-        this.categoryRepository = categoryRepository;
-        this.menuRepository = menuRepository;
-    }
 
     @Transactional
     public void initializeFallback() {
@@ -42,9 +40,7 @@ public class CategoriesService {
 
     @Transactional(readOnly = true)
     public List<CategoryResponse> list() {
-        return categoryRepository.findAllByOrderByDisplayOrderAsc().stream()
-                .map(this::toResponse)
-                .toList();
+        return toResponses(categoryRepository.findAllByOrderByDisplayOrderAsc());
     }
 
     @Transactional
@@ -83,10 +79,7 @@ public class CategoriesService {
         lockFallback();
         List<Category> current = categoryRepository.findAllByOrderByDisplayOrderAsc();
         List<Long> orderedIds = request.orderedIds();
-        if (orderedIds == null || orderedIds.stream().anyMatch(id -> id == null || id < 1)
-                || new HashSet<>(orderedIds).size() != orderedIds.size()) {
-            throw new CategoryException(Reason.INVALID_ORDER, "카테고리 순서에 중복되거나 잘못된 ID가 있습니다.");
-        }
+        validateOrderedIds(orderedIds);
         Map<Long, Category> byId = new HashMap<>();
         current.forEach(category -> byId.put(category.getId(), category));
         if (orderedIds.size() != current.size() || !byId.keySet().containsAll(orderedIds)) {
@@ -94,7 +87,7 @@ public class CategoriesService {
         }
         List<Category> reordered = orderedIds.stream().map(byId::get).toList();
         saveOrderWithoutUniqueCollision(reordered);
-        return reordered.stream().map(this::toResponse).toList();
+        return toResponses(reordered);
     }
 
     @Transactional
@@ -127,6 +120,14 @@ public class CategoriesService {
                 .orElse(0) + 1;
     }
 
+    private void validateOrderedIds(List<Long> orderedIds) {
+        if (orderedIds == null || orderedIds.isEmpty()
+                || orderedIds.stream().anyMatch(id -> id == null || id < 1)
+                || new HashSet<>(orderedIds).size() != orderedIds.size()) {
+            throw new CategoryException(Reason.INVALID_ORDER, "카테고리 순서에 중복되거나 잘못된 ID가 있습니다.");
+        }
+    }
+
     private void saveOrderWithoutUniqueCollision(List<Category> ordered) {
         int nextTemporaryOrder = ordered.stream().mapToInt(Category::getDisplayOrder).max().orElse(0) + 1;
         for (Category category : ordered) {
@@ -141,5 +142,14 @@ public class CategoriesService {
 
     private CategoryResponse toResponse(Category category) {
         return CategoryResponse.from(category, menuRepository.countByCategory_Id(category.getId()));
+    }
+
+    private List<CategoryResponse> toResponses(List<Category> categories) {
+        Map<Long, Long> menuCounts = menuRepository.countByCategory().stream()
+                .collect(Collectors.toMap(MenuRepository.CategoryMenuCount::getCategoryId,
+                        MenuRepository.CategoryMenuCount::getMenuCount));
+        return categories.stream()
+                .map(category -> CategoryResponse.from(category, menuCounts.getOrDefault(category.getId(), 0L)))
+                .toList();
     }
 }

@@ -70,8 +70,11 @@ class PluralTableNamingStrategyTest {
                         .getAnnotation(Query.class).value();
                 String menuMoveQuery = MenuRepository.class.getMethod("moveToCategory", Category.class, Category.class)
                         .getAnnotation(Query.class).value();
+                String menuCountQuery = MenuRepository.class.getMethod("countByCategory")
+                        .getAnnotation(Query.class).value();
                 entityManager.createQuery(fallbackQuery);
                 entityManager.createQuery(menuMoveQuery);
+                entityManager.createQuery(menuCountQuery);
             } finally {
                 entityManager.close();
             }
