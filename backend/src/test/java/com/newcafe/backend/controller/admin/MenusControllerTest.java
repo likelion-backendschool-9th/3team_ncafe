@@ -1,10 +1,13 @@
 package com.newcafe.backend.controller.admin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -233,6 +236,30 @@ class MenusControllerTest {
         mockMvc.perform(put("/api/v1/admin/menus/6")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(UPDATE_BODY))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    void s17DeleteArchivesMenuWithoutRemovingRow() throws Exception {
+        Menu menu = existingMenu();
+        when(menuRepository.findByIdAndArchivedAtIsNull(5L)).thenReturn(Optional.of(menu));
+
+        mockMvc.perform(delete("/api/v1/admin/menus/5"))
+                .andExpect(status().isNoContent());
+
+        assertFalse(menu.isAvailable());
+        assertNotNull(menu.getArchivedAt());
+        verify(menuRepository, never()).delete(any(Menu.class));
+    }
+
+    @Test
+    void s18ArchivedMenuCannotBeReadOrDeletedAgain() throws Exception {
+        when(menuRepository.findByIdAndArchivedAtIsNull(5L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/v1/admin/menus/5"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(delete("/api/v1/admin/menus/5"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }

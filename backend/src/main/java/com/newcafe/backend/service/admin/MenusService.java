@@ -49,6 +49,11 @@ public class MenusService {
         return MenuResponse.from(menu);
     }
 
+    @Transactional
+    public void delete(Long id) {
+        findMenu(id).archive();
+    }
+
     private Menu findMenu(Long id) {
         return menuRepository.findByIdAndArchivedAtIsNull(id)
                 .orElseThrow(() -> new MenuException(Reason.NOT_FOUND, "메뉴를 찾을 수 없습니다."));
