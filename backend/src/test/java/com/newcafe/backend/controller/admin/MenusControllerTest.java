@@ -6,7 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -16,6 +18,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.newcafe.backend.common.error.ApiExceptionHandler;
+import com.newcafe.backend.common.security.SecurityErrorHandler;
+import com.newcafe.backend.config.SecurityConfig;
 import com.newcafe.backend.entity.category.Category;
 import com.newcafe.backend.entity.menu.Menu;
 import com.newcafe.backend.entity.menu.MenuDetails;
@@ -28,20 +32,27 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+@WebMvcTest(MenusController.class)
+@Import({SecurityConfig.class, SecurityErrorHandler.class, ApiExceptionHandler.class, MenusService.class})
+@WithMockUser(roles = "ADMIN")
 class MenusControllerTest {
 
     private static final String VALID_BODY = """
@@ -56,19 +67,56 @@ class MenusControllerTest {
             .replace("\"price\":4500", "\"price\":5000")
             .replace("\"available\":true", "\"available\":false");
 
+    @MockitoBean
     private CategoryRepository categoryRepository;
+
+    @MockitoBean
     private MenuRepository menuRepository;
+
+    @Autowired
     private MockMvc mockMvc;
 
-    @BeforeEach
-    void setUp() {
-        categoryRepository = org.mockito.Mockito.mock(CategoryRepository.class);
-        menuRepository = org.mockito.Mockito.mock(MenuRepository.class);
-        MenusService menusService = new MenusService(menuRepository, categoryRepository);
+    @Test
+    @WithAnonymousUser
+    void anonymousAdminReadReturnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/menus"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"));
 
-        mockMvc = MockMvcBuilders.standaloneSetup(new MenusController(menusService))
-                .setControllerAdvice(new ApiExceptionHandler())
-                .build();
+        verifyNoInteractions(categoryRepository, menuRepository);
+    }
+
+    @Test
+    @WithMockUser(roles = "CUSTOMER")
+    void customerCannotReadAdminData() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/menus"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+
+        verifyNoInteractions(categoryRepository, menuRepository);
+    }
+
+    @Test
+    @WithMockUser(roles = "CUSTOMER")
+    void customerCannotCreateEvenWithValidCsrf() throws Exception {
+        mockMvc.perform(post("/api/v1/admin/menus").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+
+        verifyNoInteractions(categoryRepository, menuRepository);
+    }
+
+    @Test
+    void adminCannotCreateWithoutCsrf() throws Exception {
+        mockMvc.perform(post("/api/v1/admin/menus")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("CSRF_INVALID"));
+
+        verifyNoInteractions(categoryRepository, menuRepository);
     }
 
     @Test
@@ -76,7 +124,7 @@ class MenusControllerTest {
         when(categoryRepository.findById(10L)).thenReturn(Optional.of(category(10L, "커피")));
         savesWithId(5L);
 
-        mockMvc.perform(post("/api/v1/admin/menus")
+        mockMvc.perform(post("/api/v1/admin/menus").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_BODY))
                 .andExpect(status().isCreated())
@@ -91,7 +139,7 @@ class MenusControllerTest {
         when(categoryRepository.findById(12L)).thenReturn(Optional.of(category(12L, "다과")));
         savesWithId(6L);
 
-        mockMvc.perform(post("/api/v1/admin/menus")
+        mockMvc.perform(post("/api/v1/admin/menus").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_BODY
                                 .replace("\"categoryId\":10", "\"categoryId\":12")
@@ -118,7 +166,7 @@ class MenusControllerTest {
     @ParameterizedTest
     @MethodSource("invalidBodies")
     void s3InvalidInputReturnsValidationErrorWithoutSaving(String body) throws Exception {
-        mockMvc.perform(post("/api/v1/admin/menus")
+        mockMvc.perform(post("/api/v1/admin/menus").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest())
@@ -132,7 +180,7 @@ class MenusControllerTest {
         when(categoryRepository.findById(10L)).thenReturn(Optional.of(category(10L, "커피")));
         when(menuRepository.existsBySlug("americano")).thenReturn(true);
 
-        mockMvc.perform(post("/api/v1/admin/menus")
+        mockMvc.perform(post("/api/v1/admin/menus").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_BODY))
                 .andExpect(status().isConflict())
@@ -143,7 +191,7 @@ class MenusControllerTest {
     void s5MissingCategoryReturnsBadRequest() throws Exception {
         when(categoryRepository.findById(10L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(post("/api/v1/admin/menus")
+        mockMvc.perform(post("/api/v1/admin/menus").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_BODY))
                 .andExpect(status().isBadRequest())
@@ -191,7 +239,7 @@ class MenusControllerTest {
         when(menuRepository.findByIdAndArchivedAtIsNull(5L)).thenReturn(Optional.of(existingMenu()));
         when(categoryRepository.findById(12L)).thenReturn(Optional.of(category(12L, "다과")));
 
-        mockMvc.perform(put("/api/v1/admin/menus/5")
+        mockMvc.perform(put("/api/v1/admin/menus/5").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(UPDATE_BODY))
                 .andExpect(status().isOk())
@@ -205,7 +253,7 @@ class MenusControllerTest {
         when(menuRepository.findByIdAndArchivedAtIsNull(5L)).thenReturn(Optional.of(existingMenu()));
         when(categoryRepository.findById(12L)).thenReturn(Optional.of(category(12L, "다과")));
 
-        mockMvc.perform(put("/api/v1/admin/menus/5")
+        mockMvc.perform(put("/api/v1/admin/menus/5").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(UPDATE_BODY.replace("{", "{\"slug\":\"new-slug\",")))
                 .andExpect(status().isOk())
@@ -219,13 +267,13 @@ class MenusControllerTest {
         when(categoryRepository.findById(12L)).thenReturn(Optional.of(category(12L, "다과")));
         when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(put("/api/v1/admin/menus/5")
+        mockMvc.perform(put("/api/v1/admin/menus/5").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(UPDATE_BODY.replace("\"price\":5000", "\"price\":0")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
 
-        mockMvc.perform(put("/api/v1/admin/menus/5")
+        mockMvc.perform(put("/api/v1/admin/menus/5").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(UPDATE_BODY.replace("\"categoryId\":12", "\"categoryId\":999")))
                 .andExpect(status().isBadRequest())
@@ -240,7 +288,7 @@ class MenusControllerTest {
         when(menuRepository.findByIdAndArchivedAtIsNull(6L)).thenReturn(Optional.empty());
         when(categoryRepository.findById(12L)).thenReturn(Optional.of(category(12L, "다과")));
 
-        mockMvc.perform(put("/api/v1/admin/menus/6")
+        mockMvc.perform(put("/api/v1/admin/menus/6").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(UPDATE_BODY))
                 .andExpect(status().isNotFound())
@@ -252,7 +300,7 @@ class MenusControllerTest {
         Menu menu = existingMenu();
         when(menuRepository.findByIdAndArchivedAtIsNull(5L)).thenReturn(Optional.of(menu));
 
-        mockMvc.perform(delete("/api/v1/admin/menus/5"))
+        mockMvc.perform(delete("/api/v1/admin/menus/5").with(csrf()))
                 .andExpect(status().isNoContent());
 
         assertFalse(menu.isAvailable());
@@ -266,7 +314,7 @@ class MenusControllerTest {
 
         mockMvc.perform(get("/api/v1/admin/menus/5"))
                 .andExpect(status().isNotFound());
-        mockMvc.perform(delete("/api/v1/admin/menus/5"))
+        mockMvc.perform(delete("/api/v1/admin/menus/5").with(csrf()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
