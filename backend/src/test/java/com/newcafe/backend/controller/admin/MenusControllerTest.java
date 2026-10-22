@@ -1,0 +1,185 @@
+package com.newcafe.backend.controller.admin;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.newcafe.backend.common.error.ApiExceptionHandler;
+import com.newcafe.backend.entity.category.Category;
+import com.newcafe.backend.entity.menu.Menu;
+import com.newcafe.backend.entity.menu.MenuDetails;
+import com.newcafe.backend.repository.CategoryRepository;
+import com.newcafe.backend.repository.MenuRepository;
+import com.newcafe.backend.service.admin.MenusService;
+
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.http.MediaType;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+class MenusControllerTest {
+
+    private static final String VALID_BODY = """
+            {"categoryId":10,"slug":"americano","name":" 아메리카노 ","description":"진한 커피",
+             "imageUrl":"/images/menus/coffee.png","price":4500,"available":true,"isNew":false,
+             "recommended":true,"supportsHot":true,"supportsIced":true}
+            """;
+
+    private CategoryRepository categoryRepository;
+    private MenuRepository menuRepository;
+    private MockMvc mockMvc;
+
+    @BeforeEach
+    void setUp() {
+        categoryRepository = org.mockito.Mockito.mock(CategoryRepository.class);
+        menuRepository = org.mockito.Mockito.mock(MenuRepository.class);
+        MenusService menusService = new MenusService(menuRepository, categoryRepository);
+
+        mockMvc = MockMvcBuilders.standaloneSetup(new MenusController(menusService))
+                .setControllerAdvice(new ApiExceptionHandler())
+                .build();
+    }
+
+    @Test
+    void s1CreateTrimsNameAndReturnsCreatedLocation() throws Exception {
+        when(categoryRepository.findById(10L)).thenReturn(Optional.of(category(10L, "커피")));
+        savesWithId(5L);
+
+        mockMvc.perform(post("/api/v1/admin/menus")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "/api/v1/admin/menus/5"))
+                .andExpect(jsonPath("$.name").value("아메리카노"))
+                .andExpect(jsonPath("$.categoryName").value("커피"))
+                .andExpect(jsonPath("$.createdAt").exists());
+    }
+
+    @Test
+    void s2CreateAllowsMenuWithoutTemperatureOptions() throws Exception {
+        when(categoryRepository.findById(12L)).thenReturn(Optional.of(category(12L, "다과")));
+        savesWithId(6L);
+
+        mockMvc.perform(post("/api/v1/admin/menus")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY
+                                .replace("\"categoryId\":10", "\"categoryId\":12")
+                                .replace("\"slug\":\"americano\"", "\"slug\":\"monaka\"")
+                                .replace("\"supportsHot\":true", "\"supportsHot\":false")
+                                .replace("\"supportsIced\":true", "\"supportsIced\":false")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.supportsHot").value(false))
+                .andExpect(jsonPath("$.supportsIced").value(false));
+    }
+
+    static Stream<String> invalidBodies() {
+        return Stream.of(
+                VALID_BODY.replace("\"americano\"", "\"Ameri Cano\""),
+                VALID_BODY.replace("\" 아메리카노 \"", "\"   \""),
+                VALID_BODY.replace("\" 아메리카노 \"", "\"" + "가".repeat(81) + "\""),
+                VALID_BODY.replace("\"진한 커피\"", "\"" + "가".repeat(501) + "\""),
+                VALID_BODY.replace("\"price\":4500", "\"price\":0"),
+                VALID_BODY.replace("\"/images/menus/coffee.png\"", "\"http://example.com/a.png\""),
+                VALID_BODY.replace("\"available\":true,", "")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidBodies")
+    void s3InvalidInputReturnsValidationErrorWithoutSaving(String body) throws Exception {
+        mockMvc.perform(post("/api/v1/admin/menus")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+
+        verify(menuRepository, never()).save(any(Menu.class));
+    }
+
+    @Test
+    void s4DuplicateSlugReturnsConflict() throws Exception {
+        when(categoryRepository.findById(10L)).thenReturn(Optional.of(category(10L, "커피")));
+        when(menuRepository.existsBySlug("americano")).thenReturn(true);
+
+        mockMvc.perform(post("/api/v1/admin/menus")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CONFLICT"));
+    }
+
+    @Test
+    void s5MissingCategoryReturnsBadRequest() throws Exception {
+        when(categoryRepository.findById(10L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/v1/admin/menus")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
+    }
+
+    @Test
+    void s12GetReturnsAllMenuFields() throws Exception {
+        Menu menu = Menu.create(category(10L, "커피"), "americano", new MenuDetails(
+                "아메리카노", "진한 커피", "/images/menus/coffee.png", 4500, true, true, false, true, false));
+        ReflectionTestUtils.setField(menu, "id", 5L);
+        ReflectionTestUtils.invokeMethod(menu, "onCreate");
+        when(menuRepository.findByIdAndArchivedAtIsNull(5L)).thenReturn(Optional.of(menu));
+
+        mockMvc.perform(get("/api/v1/admin/menus/5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(5))
+                .andExpect(jsonPath("$.slug").value("americano"))
+                .andExpect(jsonPath("$.name").value("아메리카노"))
+                .andExpect(jsonPath("$.description").value("진한 커피"))
+                .andExpect(jsonPath("$.imageUrl").value("/images/menus/coffee.png"))
+                .andExpect(jsonPath("$.price").value(4500))
+                .andExpect(jsonPath("$.categoryId").value(10))
+                .andExpect(jsonPath("$.categoryName").value("커피"))
+                .andExpect(jsonPath("$.available").value(true))
+                .andExpect(jsonPath("$.isNew").value(true))
+                .andExpect(jsonPath("$.recommended").value(false))
+                .andExpect(jsonPath("$.supportsHot").value(true))
+                .andExpect(jsonPath("$.supportsIced").value(false))
+                .andExpect(jsonPath("$.createdAt").exists())
+                .andExpect(jsonPath("$.updatedAt").exists());
+    }
+
+    @Test
+    void s13MissingOrArchivedMenuReturnsNotFound() throws Exception {
+        when(menuRepository.findByIdAndArchivedAtIsNull(999L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/v1/admin/menus/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    private void savesWithId(Long id) {
+        when(menuRepository.save(any(Menu.class))).thenAnswer(invocation -> {
+            Menu menu = invocation.getArgument(0);
+            ReflectionTestUtils.setField(menu, "id", id);
+            ReflectionTestUtils.invokeMethod(menu, "onCreate");
+            return menu;
+        });
+    }
+
+    private static Category category(Long id, String name) {
+        Category category = Category.create(name, 1);
+        ReflectionTestUtils.setField(category, "id", id);
+        return category;
+    }
+}

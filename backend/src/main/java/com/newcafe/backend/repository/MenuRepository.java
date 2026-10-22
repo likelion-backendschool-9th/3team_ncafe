@@ -4,7 +4,9 @@ import com.newcafe.backend.entity.category.Category;
 import com.newcafe.backend.entity.menu.Menu;
 
 import java.util.List;
+import java.util.Optional;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -19,6 +21,11 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
     }
 
     long countByCategory_Id(Long categoryId);
+
+    boolean existsBySlug(String slug);
+
+    @EntityGraph(attributePaths = "category")
+    Optional<Menu> findByIdAndArchivedAtIsNull(Long id);
 
     @Query("select menu.category.id as categoryId, count(menu) as menuCount from Menu menu group by menu.category.id")
     List<CategoryMenuCount> countByCategory();
