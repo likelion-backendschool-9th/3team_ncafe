@@ -4,6 +4,7 @@ import com.newcafe.backend.common.error.MenuException;
 import com.newcafe.backend.common.error.MenuException.Reason;
 import com.newcafe.backend.dto.menus.MenuCreateRequest;
 import com.newcafe.backend.dto.menus.MenuResponse;
+import com.newcafe.backend.dto.menus.MenuUpdateRequest;
 import com.newcafe.backend.entity.category.Category;
 import com.newcafe.backend.entity.menu.Menu;
 import com.newcafe.backend.repository.CategoryRepository;
@@ -36,6 +37,16 @@ public class MenusService {
 
         Menu menu = Menu.create(category, request.slug(), request.toDetails());
         return MenuResponse.from(menuRepository.save(menu));
+    }
+
+    @Transactional
+    public MenuResponse update(Long id, MenuUpdateRequest request) {
+        Menu menu = findMenu(id);
+        Category category = findCategory(request.categoryId());
+
+        menu.update(category, request.toDetails());
+
+        return MenuResponse.from(menu);
     }
 
     private Menu findMenu(Long id) {

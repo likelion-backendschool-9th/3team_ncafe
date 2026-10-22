@@ -87,6 +87,7 @@ public class Menu {
 
     public void update(Category category, MenuDetails details) {
         apply(category, details);
+        updatedAt = Instant.now();
     }
 
     public void archive() {

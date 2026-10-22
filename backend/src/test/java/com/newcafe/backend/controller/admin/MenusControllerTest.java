@@ -1,11 +1,13 @@
 package com.newcafe.backend.controller.admin;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -37,6 +39,12 @@ class MenusControllerTest {
              "imageUrl":"/images/menus/coffee.png","price":4500,"available":true,"isNew":false,
              "recommended":true,"supportsHot":true,"supportsIced":true}
             """;
+
+    private static final String UPDATE_BODY = VALID_BODY
+            .replace("\"categoryId\":10", "\"categoryId\":12")
+            .replace("\"slug\":\"americano\",", "")
+            .replace("\"price\":4500", "\"price\":5000")
+            .replace("\"available\":true", "\"available\":false");
 
     private CategoryRepository categoryRepository;
     private MenuRepository menuRepository;
@@ -166,6 +174,75 @@ class MenusControllerTest {
         mockMvc.perform(get("/api/v1/admin/menus/999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    void s14UpdateChangesCategoryPriceAndAvailability() throws Exception {
+        when(menuRepository.findByIdAndArchivedAtIsNull(5L)).thenReturn(Optional.of(existingMenu()));
+        when(categoryRepository.findById(12L)).thenReturn(Optional.of(category(12L, "다과")));
+
+        mockMvc.perform(put("/api/v1/admin/menus/5")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(UPDATE_BODY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.categoryName").value("다과"))
+                .andExpect(jsonPath("$.price").value(5000))
+                .andExpect(jsonPath("$.available").value(false));
+    }
+
+    @Test
+    void s15UpdateIgnoresSlug() throws Exception {
+        when(menuRepository.findByIdAndArchivedAtIsNull(5L)).thenReturn(Optional.of(existingMenu()));
+        when(categoryRepository.findById(12L)).thenReturn(Optional.of(category(12L, "다과")));
+
+        mockMvc.perform(put("/api/v1/admin/menus/5")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(UPDATE_BODY.replace("{", "{\"slug\":\"new-slug\",")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.slug").value("americano"));
+    }
+
+    @Test
+    void s16InvalidUpdateKeepsStoredValues() throws Exception {
+        Menu menu = existingMenu();
+        when(menuRepository.findByIdAndArchivedAtIsNull(5L)).thenReturn(Optional.of(menu));
+        when(categoryRepository.findById(12L)).thenReturn(Optional.of(category(12L, "다과")));
+        when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/api/v1/admin/menus/5")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(UPDATE_BODY.replace("\"price\":5000", "\"price\":0")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+
+        mockMvc.perform(put("/api/v1/admin/menus/5")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(UPDATE_BODY.replace("\"categoryId\":12", "\"categoryId\":999")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
+
+        assertEquals(4500, menu.getPrice());
+        assertEquals("커피", menu.getCategory().getName());
+    }
+
+    @Test
+    void s16UpdatingMissingOrArchivedMenuReturnsNotFound() throws Exception {
+        when(menuRepository.findByIdAndArchivedAtIsNull(6L)).thenReturn(Optional.empty());
+        when(categoryRepository.findById(12L)).thenReturn(Optional.of(category(12L, "다과")));
+
+        mockMvc.perform(put("/api/v1/admin/menus/6")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(UPDATE_BODY))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    private Menu existingMenu() {
+        Menu menu = Menu.create(category(10L, "커피"), "americano", new MenuDetails(
+                "아메리카노", "진한 커피", "/images/menus/coffee.png", 4500, true, false, true, true, true));
+        ReflectionTestUtils.setField(menu, "id", 5L);
+        ReflectionTestUtils.invokeMethod(menu, "onCreate");
+        return menu;
     }
 
     private void savesWithId(Long id) {
