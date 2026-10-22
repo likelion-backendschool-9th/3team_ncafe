@@ -10,4 +10,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+      naming:
+        implicit-strategy: com.newcafe.backend.config.PluralTableNamingStrategy
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
     open-in-view: false
