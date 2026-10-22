@@ -7,8 +7,10 @@ import com.newcafe.backend.entity.Category;
 import com.newcafe.backend.entity.Menu;
 import com.newcafe.backend.repository.CategoryRepository;
 import com.newcafe.backend.repository.MenuRepository;
+
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -45,6 +47,7 @@ class PluralTableNamingStrategyTest {
                     columnNames);
             assertTrue(table.getColumn(org.hibernate.boot.model.naming.Identifier.toIdentifier("name")).isUnique());
             assertTrue(table.getColumn(org.hibernate.boot.model.naming.Identifier.toIdentifier("display_order")).isUnique());
+
             assertEquals("menus", menuTable.getName());
             assertTrue(menuTable.getColumns().stream().anyMatch(column -> column.getName().equals("category_id")));
         } finally {
@@ -72,6 +75,7 @@ class PluralTableNamingStrategyTest {
                         .getAnnotation(Query.class).value();
                 String menuCountQuery = MenuRepository.class.getMethod("countByCategory")
                         .getAnnotation(Query.class).value();
+
                 entityManager.createQuery(fallbackQuery);
                 entityManager.createQuery(menuMoveQuery);
                 entityManager.createQuery(menuCountQuery);

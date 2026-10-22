@@ -1,6 +1,7 @@
 package com.newcafe.backend.dto.categories;
 
 import com.newcafe.backend.entity.Category;
+
 import java.time.Instant;
 
 public record CategoryResponse(

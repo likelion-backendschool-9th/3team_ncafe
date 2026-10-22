@@ -14,8 +14,10 @@ import com.newcafe.backend.dto.categories.CategoryRequest;
 import com.newcafe.backend.entity.Category;
 import com.newcafe.backend.repository.CategoryRepository;
 import com.newcafe.backend.repository.MenuRepository;
+
 import java.util.List;
 import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -30,6 +32,7 @@ class CategoriesServiceTest {
     void setUp() {
         categoryRepository = org.mockito.Mockito.mock(CategoryRepository.class);
         menuRepository = org.mockito.Mockito.mock(MenuRepository.class);
+
         service = new CategoriesService(categoryRepository, menuRepository);
     }
 
@@ -38,6 +41,7 @@ class CategoriesServiceTest {
         Category coffee = category(10L, "커피", 1);
         Category fallback = fallback(1L, 2);
         MenuRepository.CategoryMenuCount coffeeCount = org.mockito.Mockito.mock(MenuRepository.CategoryMenuCount.class);
+
         when(coffeeCount.getCategoryId()).thenReturn(10L);
         when(coffeeCount.getMenuCount()).thenReturn(2L);
         when(categoryRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(List.of(coffee, fallback));
@@ -47,6 +51,7 @@ class CategoriesServiceTest {
 
         assertEquals(List.of(10L, 1L), responses.stream().map(response -> response.id()).toList());
         assertEquals(List.of(2L, 0L), responses.stream().map(response -> response.menuCount()).toList());
+
         verify(menuRepository).countByCategory();
         verify(menuRepository, never()).countByCategory_Id(10L);
     }
@@ -64,6 +69,7 @@ class CategoriesServiceTest {
         assertEquals(2, coffee.getDisplayOrder());
         assertEquals(1, tea.getDisplayOrder());
         assertEquals(3, fallback.getDisplayOrder());
+
         verify(categoryRepository, times(2)).flush();
     }
 
@@ -78,6 +84,7 @@ class CategoriesServiceTest {
                 () -> service.reorder(new CategoryOrderRequest(List.of(1L))));
 
         assertEquals(Reason.CONFLICT, exception.getReason());
+
         org.mockito.Mockito.verify(categoryRepository, org.mockito.Mockito.never()).flush();
     }
 
@@ -91,6 +98,7 @@ class CategoriesServiceTest {
                 () -> service.create(new CategoryRequest(" 기타 ")));
 
         assertEquals(Reason.CONFLICT, exception.getReason());
+
         org.mockito.Mockito.verify(categoryRepository, org.mockito.Mockito.never())
                 .saveAndFlush(org.mockito.ArgumentMatchers.any(Category.class));
     }
@@ -106,6 +114,7 @@ class CategoriesServiceTest {
 
         assertEquals(Reason.CONFLICT, exception.getReason());
         assertEquals(Category.FALLBACK_NAME, fallback.getName());
+
         verify(categoryRepository, never()).flush();
     }
 
@@ -122,6 +131,7 @@ class CategoriesServiceTest {
 
         assertEquals(Reason.CONFLICT, exception.getReason());
         assertEquals("커피", coffee.getName());
+
         verify(categoryRepository, never()).flush();
     }
 
@@ -139,18 +149,21 @@ class CategoriesServiceTest {
         org.mockito.InOrder order = org.mockito.Mockito.inOrder(menuRepository, categoryRepository);
         order.verify(menuRepository).moveToCategory(coffee, fallback);
         order.verify(categoryRepository).delete(coffee);
+
         assertEquals(2, tea.getDisplayOrder());
         verify(categoryRepository, times(3)).flush();
     }
 
     private Category category(Long id, String name, int order) {
         Category category = Category.create(name, order);
+
         ReflectionTestUtils.setField(category, "id", id);
         return category;
     }
 
     private Category fallback(Long id, int order) {
         Category category = Category.createFallback(order);
+
         ReflectionTestUtils.setField(category, "id", id);
         return category;
     }

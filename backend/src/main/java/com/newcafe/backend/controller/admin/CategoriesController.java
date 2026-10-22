@@ -4,10 +4,14 @@ import com.newcafe.backend.dto.categories.CategoryOrderRequest;
 import com.newcafe.backend.dto.categories.CategoryRequest;
 import com.newcafe.backend.dto.categories.CategoryResponse;
 import com.newcafe.backend.service.admin.CategoriesService;
+
 import jakarta.validation.Valid;
+
 import java.net.URI;
 import java.util.List;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +37,7 @@ public class CategoriesController {
     @PostMapping
     public ResponseEntity<CategoryResponse> create(@Valid @RequestBody CategoryRequest request) {
         CategoryResponse category = categoriesService.create(request);
+
         return ResponseEntity.created(URI.create("/api/v1/admin/categories/" + category.id())).body(category);
     }
 
@@ -49,6 +54,7 @@ public class CategoriesController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         categoriesService.delete(id);
+
         return ResponseEntity.noContent().build();
     }
 }

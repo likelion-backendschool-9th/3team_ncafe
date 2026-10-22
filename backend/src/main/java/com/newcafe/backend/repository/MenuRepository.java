@@ -2,7 +2,9 @@ package com.newcafe.backend.repository;
 
 import com.newcafe.backend.entity.Category;
 import com.newcafe.backend.entity.Menu;
+
 import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

@@ -19,6 +19,7 @@ public class ApiExceptionHandler {
             case CONFLICT -> HttpStatus.CONFLICT;
             case INVALID_ORDER -> HttpStatus.BAD_REQUEST;
         };
+
         return ResponseEntity.status(status)
                 .body(new ErrorResponse(exception.getReason().name(), exception.getMessage()));
     }
@@ -29,6 +30,7 @@ public class ApiExceptionHandler {
                 .findFirst()
                 .map(error -> error.getDefaultMessage())
                 .orElse("요청 값을 확인해 주세요.");
+
         return ResponseEntity.badRequest().body(new ErrorResponse("VALIDATION_ERROR", message));
     }
 

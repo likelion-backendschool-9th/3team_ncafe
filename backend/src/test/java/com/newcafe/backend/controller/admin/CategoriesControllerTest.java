@@ -13,8 +13,10 @@ import com.newcafe.backend.entity.Category;
 import com.newcafe.backend.repository.CategoryRepository;
 import com.newcafe.backend.repository.MenuRepository;
 import com.newcafe.backend.service.admin.CategoriesService;
+
 import java.util.List;
 import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -32,6 +34,7 @@ class CategoriesControllerTest {
         categoryRepository = org.mockito.Mockito.mock(CategoryRepository.class);
         MenuRepository menuRepository = org.mockito.Mockito.mock(MenuRepository.class);
         CategoriesService categoriesService = new CategoriesService(categoryRepository, menuRepository);
+
         mockMvc = MockMvcBuilders.standaloneSetup(new CategoriesController(categoriesService))
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
@@ -41,6 +44,7 @@ class CategoriesControllerTest {
     void createTrimsNameAndReturnsCreatedLocation() throws Exception {
         Category fallback = Category.createFallback(1);
         ReflectionTestUtils.setField(fallback, "id", 1L);
+
         when(categoryRepository.findFallbackForUpdate()).thenReturn(Optional.of(fallback));
         when(categoryRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(List.of(fallback));
         when(categoryRepository.saveAndFlush(any(Category.class))).thenAnswer(invocation -> {
@@ -72,6 +76,7 @@ class CategoriesControllerTest {
     void deletingMissingCategoryReturnsNotFound() throws Exception {
         Category fallback = Category.createFallback(1);
         ReflectionTestUtils.setField(fallback, "id", 1L);
+
         when(categoryRepository.findFallbackForUpdate()).thenReturn(Optional.of(fallback));
 
         mockMvc.perform(delete("/api/v1/admin/categories/999"))
