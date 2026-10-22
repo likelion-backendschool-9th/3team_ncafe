@@ -7,12 +7,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.newcafe.backend.common.error.CategoryException;
+import com.newcafe.backend.common.error.CategoryException.Reason;
 import com.newcafe.backend.dto.categories.CategoryOrderRequest;
 import com.newcafe.backend.dto.categories.CategoryRequest;
 import com.newcafe.backend.entity.Category;
 import com.newcafe.backend.repository.CategoryRepository;
 import com.newcafe.backend.repository.MenuRepository;
-import com.newcafe.backend.service.admin.CategoryException.Reason;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;

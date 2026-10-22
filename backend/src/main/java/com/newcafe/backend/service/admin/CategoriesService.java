@@ -1,12 +1,13 @@
 package com.newcafe.backend.service.admin;
 
+import com.newcafe.backend.common.error.CategoryException;
+import com.newcafe.backend.common.error.CategoryException.Reason;
 import com.newcafe.backend.dto.categories.CategoryOrderRequest;
 import com.newcafe.backend.dto.categories.CategoryRequest;
 import com.newcafe.backend.dto.categories.CategoryResponse;
 import com.newcafe.backend.entity.Category;
 import com.newcafe.backend.repository.CategoryRepository;
 import com.newcafe.backend.repository.MenuRepository;
-import com.newcafe.backend.service.admin.CategoryException.Reason;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;

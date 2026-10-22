@@ -1,6 +1,6 @@
-package com.newcafe.backend.controller.admin;
+package com.newcafe.backend.common.error;
 
-import com.newcafe.backend.service.admin.CategoryException;
+import com.newcafe.backend.controller.admin.CategoriesController;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

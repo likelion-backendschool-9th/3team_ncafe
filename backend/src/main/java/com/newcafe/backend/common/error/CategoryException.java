@@ -1,4 +1,4 @@
-package com.newcafe.backend.service.admin;
+package com.newcafe.backend.common.error;
 
 public class CategoryException extends RuntimeException {
 
