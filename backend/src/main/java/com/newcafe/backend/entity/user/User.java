@@ -31,13 +31,14 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = EMAIL_MAX_LENGTH)
+    // 관리자 목록 정렬용. DB 기본 정렬 규칙(en_US 등)은 한글을 가나다순으로 정렬하지 못해 "C"(코드 순서)로 고정한다.
+    @Column(nullable = false, unique = true, columnDefinition = "varchar(" + EMAIL_MAX_LENGTH + ") collate \"C\"")
     private String email;
 
     @Column(nullable = false)
     private String passwordHash;
 
-    @Column(nullable = false, length = NAME_MAX_LENGTH)
+    @Column(nullable = false, columnDefinition = "varchar(" + NAME_MAX_LENGTH + ") collate \"C\"")
     private String name;
 
     @Column(nullable = false, length = 20)
