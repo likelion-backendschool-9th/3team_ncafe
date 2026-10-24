@@ -32,8 +32,6 @@
 .table th:last-child, .table td:last-child { width: 1%; padding-right: 1.1rem; text-align: left; }
 .table tbody tr:last-child td { border-bottom: 0; }
 .table tbody tr:hover { background: #fff8ec; }
-.person { display: flex; align-items: center; gap: 0.75rem; }
-.avatar { display: grid; flex: 0 0 40px; width: 40px; height: 40px; place-items: center; border: 1px solid #c7aa81; border-radius: 50%; background: #e9d8ba; color: #174b4a; font-weight: 800; }
 .memberName { color: var(--text); font-weight: 700; text-decoration: none; }
 a.memberName:hover { color: var(--accent); text-decoration: underline; }
 .secondary { display: block; margin-top: 0.15rem; color: var(--muted); font-size: 0.8rem; }
@@ -60,7 +58,6 @@ a.memberName:hover { color: var(--accent); text-decoration: underline; }
 .statusPanel > .panelHeading, .statusPanel > p { margin: 0; }
 .statusPanel > .statusForm > .outlineButton { width: min(100%, 12rem); min-height: 44px; justify-self: start; }
 .profile { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding-bottom: 1.3rem; border-bottom: 1px dashed var(--border); }
-.profile .avatar { flex-basis: 64px; width: 64px; height: 64px; font-size: 1.4rem; }
 .profile h2 { margin: 0 0 0.3rem; font-size: 1.5rem; }
 .profile p { margin: 0.3rem 0 0; overflow-wrap: anywhere; color: var(--muted); font-size: 0.85rem; }
 .details { display: grid; margin: 0; }
