@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { logout } from "@/app/_lib/session/logout";
 import { requireRole } from "@/app/_lib/session/session";
+import { getMyProfile } from "./_lib/api";
 import styles from "./mypage.module.css";
 
 export const metadata: Metadata = { title: "마이페이지", robots: { index: false } };
@@ -28,7 +29,9 @@ const shortcuts = [
 ];
 
 export default async function MyPage() {
-  const user = await requireRole("customer", "/my");
+  // 화면 접근 검사는 아직 목 세션이다. 백엔드 인증이 붙으면 auth 작업에서 교체한다.
+  await requireRole("customer", "/my");
+  const user = await getMyProfile();
 
   return (
     <div className={styles.page}>
@@ -45,7 +48,7 @@ export default async function MyPage() {
         </div>
         <dl className={styles.memberFields}>
           <div>
-            <dt>성함</dt>
+            <dt>닉네임</dt>
             <dd>{user.name}</dd>
           </div>
           <div>
