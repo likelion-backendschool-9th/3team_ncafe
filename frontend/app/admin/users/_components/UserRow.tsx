@@ -10,7 +10,7 @@ export function UserRow({ user, query }: Props) {
 
   return (
     <tr>
-      <td><div className={styles.person}><span className={styles.avatar} aria-hidden="true">{user.name.slice(0, 1)}</span><Link className={styles.memberName} href={detailHref}>{user.name}</Link></div></td>
+      <td><Link className={styles.memberName} href={detailHref}>{user.name}</Link></td>
       <td>{user.email}</td>
       <td><span className={user.role === "admin" ? `${styles.badge} ${styles.admin}` : styles.badge}>{roleLabels[user.role]}</span></td>
       <td><span className={`${styles.badge} ${styles[user.status]}`}>{statusLabels[user.status]}</span></td>
