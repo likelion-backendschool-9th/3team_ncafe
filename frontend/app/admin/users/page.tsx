@@ -24,8 +24,9 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
         <span className={styles.hint}>전체 회원 기준 · 관리자 포함</span>
       </header>
       <UserSummary summary={summary} />
-      <UserFilters key={userListQuery(query)} query={query} />
-      <UserStatusFeedback key={userListQuery(query)}>
+      {/* 형제끼리 key가 같으면 React가 이전 요소를 지우지 못해 폼이 쌓이므로 접두어로 구분한다. */}
+      <UserFilters key={`filters${userListQuery(query)}`} query={query} />
+      <UserStatusFeedback key={`feedback${userListQuery(query)}`}>
         <UserList users={users} query={query} hasUsers={summary.totalCount > 0} />
       </UserStatusFeedback>
     </div>
