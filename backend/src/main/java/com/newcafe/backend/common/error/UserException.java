@@ -4,7 +4,9 @@ public class UserException extends RuntimeException {
 
     public enum Reason {
         NOT_FOUND,
-        CONFLICT
+        CONFLICT,
+        UNAUTHORIZED,
+        FORBIDDEN
     }
 
     private final Reason reason;

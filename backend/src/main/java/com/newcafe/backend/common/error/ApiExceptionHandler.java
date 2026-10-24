@@ -41,6 +41,8 @@ public class ApiExceptionHandler {
         HttpStatus status = switch (exception.getReason()) {
             case NOT_FOUND -> HttpStatus.NOT_FOUND;
             case CONFLICT -> HttpStatus.CONFLICT;
+            case UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
+            case FORBIDDEN -> HttpStatus.FORBIDDEN;
         };
 
         return ResponseEntity.status(status)
