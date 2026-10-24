@@ -7,7 +7,7 @@ export function UserProfilePanel({ user }: Props) {
   return (
     <section className={styles.panel} aria-labelledby="user-info-title">
       <h2 id="user-info-title" className={styles.panelHeading}>기본 정보</h2>
-      <div className={styles.profile}><span className={styles.avatar} aria-hidden="true">{user.name.slice(0, 1)}</span><div><h2>{user.name}</h2><span className={styles.secondary}>{roleLabels[user.role]}</span></div></div>
+      <div className={styles.profile}><div><h2>{user.name}</h2><span className={styles.secondary}>{roleLabels[user.role]}</span></div></div>
       <dl className={styles.details}>
         <div><dt>회원 ID</dt><dd>{user.id}</dd></div>
         <div><dt>닉네임</dt><dd>{user.name}</dd></div>
