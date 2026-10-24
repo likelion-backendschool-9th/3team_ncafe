@@ -1,9 +1,9 @@
 package com.newcafe.backend.controller.admin;
 
 import com.newcafe.backend.dto.users.UpdateUserStatusRequest;
-import com.newcafe.backend.dto.users.UserPageRequest;
 import com.newcafe.backend.dto.users.UserPageResponse;
 import com.newcafe.backend.dto.users.UserResponse;
+import com.newcafe.backend.dto.users.UserSearchRequest;
 import com.newcafe.backend.dto.users.UserSummaryResponse;
 import com.newcafe.backend.service.admin.UsersService;
 
@@ -27,7 +27,7 @@ public class UsersController {
     private final UsersService usersService;
 
     @GetMapping
-    public UserPageResponse list(@Valid @ModelAttribute UserPageRequest request) {
+    public UserPageResponse list(@Valid @ModelAttribute UserSearchRequest request) {
         return usersService.list(request);
     }
 

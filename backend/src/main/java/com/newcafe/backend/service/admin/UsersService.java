@@ -3,13 +3,14 @@ package com.newcafe.backend.service.admin;
 import com.newcafe.backend.common.error.UserException;
 import com.newcafe.backend.common.error.UserException.Reason;
 import com.newcafe.backend.dto.users.UpdateUserStatusRequest;
-import com.newcafe.backend.dto.users.UserPageRequest;
 import com.newcafe.backend.dto.users.UserPageResponse;
 import com.newcafe.backend.dto.users.UserResponse;
+import com.newcafe.backend.dto.users.UserSearchRequest;
 import com.newcafe.backend.dto.users.UserSummaryResponse;
 import com.newcafe.backend.entity.user.User;
 import com.newcafe.backend.entity.user.UserStatus;
 import com.newcafe.backend.repository.UserRepository;
+import com.newcafe.backend.repository.UserSpecifications;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -25,15 +26,14 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UsersService {
 
-    private static final Sort NEWEST_FIRST = Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"));
-
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public UserPageResponse list(UserPageRequest request) {
-        PageRequest pageRequest = PageRequest.of(request.page(), request.size(), NEWEST_FIRST);
+    public UserPageResponse list(UserSearchRequest request) {
+        PageRequest pageRequest = PageRequest.of(request.page(), request.size(), toSort(request.sort()));
 
-        return UserPageResponse.from(userRepository.findAll(pageRequest));
+        return UserPageResponse.from(userRepository.findAll(
+                UserSpecifications.adminSearch(request.q(), request.statusFilter(), request.roleFilter()), pageRequest));
     }
 
     @Transactional(readOnly = true)
@@ -60,6 +60,13 @@ public class UsersService {
         user.changeStatus(request.toStatus());
 
         return UserResponse.from(user);
+    }
+
+    private Sort toSort(String sort) {
+        return switch (sort) {
+            case "email" -> Sort.by(Sort.Order.asc("email"), Sort.Order.asc("id"));
+            default -> Sort.by(Sort.Order.asc("name"), Sort.Order.asc("id"));
+        };
     }
 
     private User findUser(Long id) {

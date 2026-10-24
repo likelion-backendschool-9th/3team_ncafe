@@ -30,6 +30,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -71,7 +72,23 @@ class UsersControllerTest {
         Pageable pageable = capturedPageable();
         assertEquals(0, pageable.getPageNumber());
         assertEquals(20, pageable.getPageSize());
-        assertEquals(Sort.Direction.DESC, pageable.getSort().getOrderFor("createdAt").getDirection());
+        assertEquals(Sort.Direction.ASC, pageable.getSort().getOrderFor("name").getDirection());
+    }
+
+    @Test
+    void listSortsByEmailWhenRequested() throws Exception {
+        listReturns(1, 1);
+
+        mockMvc.perform(get("/api/v1/admin/users")
+                        .param("q", " 김 ")
+                        .param("status", "suspended")
+                        .param("role", "customer")
+                        .param("sort", "email"))
+                .andExpect(status().isOk());
+
+        Sort sort = capturedPageable().getSort();
+        assertEquals(Sort.Direction.ASC, sort.getOrderFor("email").getDirection());
+        assertEquals(null, sort.getOrderFor("name"));
     }
 
     @Test
@@ -87,14 +104,22 @@ class UsersControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"page=-1", "size=0", "size=101", "page=abc"})
-    void listRejectsInvalidPaging(String query) throws Exception {
+    @ValueSource(strings = {"page=-1", "size=0", "size=101", "page=abc", "status=banned", "role=owner", "sort=newest"})
+    void listRejectsInvalidConditions(String query) throws Exception {
         String[] pair = query.split("=");
 
         mockMvc.perform(get("/api/v1/admin/users").param(pair[0], pair[1]))
                 .andExpect(status().isBadRequest());
 
-        verify(userRepository, never()).findAll(any(Pageable.class));
+        verify(userRepository, never()).findAll(anySpecification(), any(Pageable.class));
+    }
+
+    @Test
+    void listRejectsTooLongQuery() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/users").param("q", "가".repeat(101)))
+                .andExpect(status().isBadRequest());
+
+        verify(userRepository, never()).findAll(anySpecification(), any(Pageable.class));
     }
 
     @Test
@@ -207,8 +232,8 @@ class UsersControllerTest {
     }
 
     private void listReturns(int itemCount, long total) {
-        when(userRepository.findAll(any(Pageable.class))).thenAnswer(invocation -> {
-            Pageable pageable = invocation.getArgument(0);
+        when(userRepository.findAll(anySpecification(), any(Pageable.class))).thenAnswer(invocation -> {
+            Pageable pageable = invocation.getArgument(1);
             List<User> users = IntStream.range(0, itemCount)
                     .mapToObj(index -> user((long) index, "회원" + index,
                             index == 0 ? UserRole.ADMIN : UserRole.CUSTOMER))
@@ -219,8 +244,13 @@ class UsersControllerTest {
 
     private Pageable capturedPageable() {
         ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(userRepository).findAll(captor.capture());
+        verify(userRepository).findAll(anySpecification(), captor.capture());
         return captor.getValue();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Specification<User> anySpecification() {
+        return any(Specification.class);
     }
 
     private static User user(Long id, String name, UserRole role) {

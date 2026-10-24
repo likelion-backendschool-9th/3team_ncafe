@@ -9,6 +9,8 @@ public enum UserRole {
     CUSTOMER("customer"),
     ADMIN("admin");
 
+    public static final String PATTERN = "customer|admin";
+
     private final String value;
 
     UserRole(String value) {
