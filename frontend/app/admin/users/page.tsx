@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireRole } from "@/app/_lib/session/session";
+import { UserFilters } from "./_components/UserFilters";
 import { UserList } from "./_components/UserList";
 import { UserStatusFeedback } from "./_components/UserStatusFeedback";
 import { UserSummary } from "./_components/UserSummary";
 import { getUserSummary, getUsers } from "./_lib/api";
-import { parseUserSearchParams, type UserSearchParams } from "./_lib/searchParams";
+import { parseUserSearchParams, userListQuery, type UserSearchParams } from "./_lib/searchParams";
 import styles from "./users.module.css";
 
 export const metadata: Metadata = { title: "회원 관리 | 삼다방" };
 
 export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<UserSearchParams> }) {
   await requireRole("admin", "/admin/users");
-  const { page } = parseUserSearchParams(await searchParams);
-  const [users, summary] = await Promise.all([getUsers(page), getUserSummary()]);
+  const query = parseUserSearchParams(await searchParams);
+  const [users, summary] = await Promise.all([getUsers(query), getUserSummary()]);
 
   return (
     <div className={styles.page}>
@@ -23,8 +24,9 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
         <span className={styles.hint}>전체 회원 기준 · 관리자 포함</span>
       </header>
       <UserSummary summary={summary} />
-      <UserStatusFeedback key={page}>
-        <UserList users={users} />
+      <UserFilters key={userListQuery(query)} query={query} />
+      <UserStatusFeedback key={userListQuery(query)}>
+        <UserList users={users} query={query} hasUsers={summary.totalCount > 0} />
       </UserStatusFeedback>
     </div>
   );

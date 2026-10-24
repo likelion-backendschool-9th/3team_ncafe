@@ -1,5 +1,6 @@
 import "server-only";
 import { apiFetch, ApiRequestError } from "@/app/_lib/api/client";
+import type { UserListQuery } from "./searchParams";
 import { isUserRole, isUserStatus, type UserPageResponse, type UserResponse, type UserSummaryResponse } from "./user";
 
 export const USER_PAGE_SIZE = 20;
@@ -26,9 +27,15 @@ function parseUser(value: unknown): UserResponse {
   return { id: integer(user.id), name: text(user.name), email: text(user.email), role: user.role, status: user.status };
 }
 
-// page는 URL 기준(1부터)으로 받고 API에는 0부터 넘긴다.
-export async function getUsers(page: number): Promise<UserPageResponse> {
-  const body = record(await apiFetch<unknown>(`/api/v1/admin/users?page=${page - 1}&size=${USER_PAGE_SIZE}`));
+// 검색·필터·정렬은 백엔드가 전체 회원에 적용한 뒤 페이지를 자른다.
+// URL page는 1부터, API page는 0부터 센다.
+export async function getUsers(query: UserListQuery): Promise<UserPageResponse> {
+  const params = new URLSearchParams({ page: String(query.page - 1), size: String(USER_PAGE_SIZE), sort: query.sort });
+  for (const key of ["q", "status", "role"] as const) {
+    if (query[key]) params.set(key, query[key]);
+  }
+
+  const body = record(await apiFetch<unknown>(`/api/v1/admin/users?${params}`));
   if (!Array.isArray(body.items)) invalidResponse();
 
   return {
@@ -36,7 +43,7 @@ export async function getUsers(page: number): Promise<UserPageResponse> {
     page: integer(body.page) + 1,
     size: integer(body.size),
     totalElements: integer(body.totalElements),
-    totalPages: integer(body.totalPages),
+    totalPages: Math.max(1, integer(body.totalPages)),
   };
 }
 
