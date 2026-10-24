@@ -41,7 +41,7 @@ export default async function MyPage() {
       <section className={styles.memberCard} aria-labelledby="member-card-title">
         <div className={styles.memberCardTop}>
           <h2 id="member-card-title">삼다방 단골 회원증</h2>
-          <span>No. {user.id}</span>
+          {/* <span>No. {user.id}</span> */}
         </div>
         <dl className={styles.memberFields}>
           <div>
