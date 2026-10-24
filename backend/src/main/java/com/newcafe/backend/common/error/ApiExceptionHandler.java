@@ -60,6 +60,17 @@ public class ApiExceptionHandler {
                 .body(new ErrorResponse(exception.getReason().name(), exception.getMessage()));
     }
 
+    @ExceptionHandler(UserException.class)
+    public ResponseEntity<ErrorResponse> handleUserException(UserException exception) {
+        HttpStatus status = switch (exception.getReason()) {
+            case NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case CONFLICT -> HttpStatus.CONFLICT;
+        };
+
+        return ResponseEntity.status(status)
+                .body(new ErrorResponse(exception.getReason().name(), exception.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException exception) {
         String message = exception.getBindingResult().getAllErrors().stream()
