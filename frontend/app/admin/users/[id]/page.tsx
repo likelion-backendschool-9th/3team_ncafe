@@ -20,7 +20,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: {
   if (id === null) notFound();
   const user = await getUser(id);
   if (!user) notFound();
-  const listHref = `/admin/users${userListQuery(parseUserSearchParams(await searchParams).page)}`;
+  const listHref = `/admin/users${userListQuery(parseUserSearchParams(await searchParams))}`;
 
   return (
     <div className={styles.page}>
