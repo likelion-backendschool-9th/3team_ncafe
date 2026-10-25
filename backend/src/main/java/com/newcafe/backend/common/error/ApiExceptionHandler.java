@@ -92,6 +92,18 @@ public class ApiExceptionHandler {
                 .body(new ErrorResponse(exception.getReason().name(), exception.getMessage()));
     }
 
+    @ExceptionHandler(CartItemException.class)
+    public ResponseEntity<ErrorResponse> handleCartItemException(CartItemException exception) {
+        HttpStatus status = switch (exception.getReason()) {
+            case NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case INVALID_INPUT -> HttpStatus.BAD_REQUEST;
+            case MENU_UNAVAILABLE -> HttpStatus.UNPROCESSABLE_ENTITY;
+        };
+
+        return ResponseEntity.status(status)
+                .body(new ErrorResponse(exception.getReason().name(), exception.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException exception) {
         String message = exception.getBindingResult().getAllErrors().stream()
