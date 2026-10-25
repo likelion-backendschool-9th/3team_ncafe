@@ -10,7 +10,7 @@ Spring Security로 이메일·비밀번호를 인증하고, 서버 세션과 브
 
 - 백엔드는 Java 21, Spring Boot 4.1.1, Gradle Groovy DSL, JPA, PostgreSQL을 사용한다.
 - 회원 도메인·해시·가입·세션 로그인·현재 회원 조회·로그아웃·최신 회원 상태 검사를 구현했다. 기존 관리자 API와 기본 접근 거부 정책을 적용하고, 실제 HTTP·PostgreSQL·서버 재시작까지 검증했다.
-- 프론트엔드는 현재 목 회원 저장소와 `ncafe_mock_session` 쿠키를 사용한다.
+- 프론트엔드의 가입·로그인·현재 회원 조회·로그아웃을 백엔드 세션 쿠키에 연결했다. 인증 외 업무 데이터의 목 저장소는 유지한다.
 - 데이터 기준은 [DB 설계](../../docs/database-design.md), 기존 경로와 계층 기준은 [백엔드 전체 청사진](2026-10-20-backend-blueprint.md)이다.
 - 이번 범위는 공개 회원가입, 로그인·로그아웃, 현재 회원 조회, 세션·CSRF·권한 검사다. 프로필 수정, 관리자 생성·정지 관리 화면, 소셜 로그인, 비밀번호 재설정, 이메일 인증은 후속 작업이다.
 
@@ -181,15 +181,17 @@ CSRF 토큰을 받기 위한 익명 세션과 인증된 세션은 구별한다. 
 
 완료 기준: 전체 백엔드 테스트가 통과하고 기존 메뉴·카테고리 권한 회귀가 없다. 회원 DB 데이터는 재시작 후 유지되고 메모리 세션은 재인증을 요구한다.
 
-### 6단계 — 프론트 연결은 별도 작업으로 진행
+### 6단계 — 프론트 연결
 
-- [ ] 연결 착수 전 `frontend/AGENTS.md`와 `docs/FRONTEND.md`를 읽고 로그인·가입·회원 조회 경로 매핑을 확인한다.
-- [ ] 기존 Server Actions를 유지할 때 백엔드 요청에 브라우저의 Cookie·CSRF를 전달하고, 백엔드의 모든 Set-Cookie를 올바른 속성으로 브라우저에 반영하는 중계 계층을 만든다.
-- [ ] 서버 `fetch`의 `credentials: "include"`만으로 브라우저 쿠키가 전달된다고 가정하지 않는다. SSR 회원 조회는 Cookie를 명시적으로 전달하고 결과를 공유 캐시하지 않는다.
-- [ ] 목 회원 조회와 `createSession/deleteSession`을 백엔드 세션 흐름으로 교체하고 `ncafe_mock_session`을 정리한다.
-- [ ] 가입 성공 후 별도 로그인을 호출해 현재 자동 로그인 UX를 유지한다. 가입은 성공했지만 로그인이 실패하면 가입을 재시도하지 않고 로그인 화면으로 안내한다.
-- [ ] 숫자 회원 ID에 맞춰 타입과 `/my`의 문자열 ID 표시를 수정한다. `getCurrentUser`와 `requireRole`은 실제 `/my` 응답을 사용한다.
-- [ ] 안전한 상대 경로 `next`, 고객 `/`·관리자 `/admin` 이동, 새로고침·다른 탭의 로그아웃 반영을 확인한다.
+구현·환경·검증은 [6단계 작업 기록](2026-10-25-auth-step6.md)에 정리한다.
+
+- [x] 연결 착수 전 `frontend/AGENTS.md`와 `docs/FRONTEND.md`를 읽고 로그인·가입·회원 조회 경로 매핑을 확인한다.
+- [x] 기존 Server Actions를 유지할 때 백엔드 요청에 브라우저의 Cookie·CSRF를 전달하고, 백엔드의 모든 Set-Cookie를 올바른 속성으로 브라우저에 반영하는 중계 계층을 만든다.
+- [x] 서버 `fetch`의 `credentials: "include"`만으로 브라우저 쿠키가 전달된다고 가정하지 않는다. SSR 회원 조회는 Cookie를 명시적으로 전달하고 결과를 공유 캐시하지 않는다.
+- [x] 목 회원 조회와 `createSession/deleteSession`을 백엔드 세션 흐름으로 교체하고 `ncafe_mock_session`을 정리한다.
+- [x] 가입 성공 후 별도 로그인을 호출해 현재 자동 로그인 UX를 유지한다. 가입은 성공했지만 로그인이 실패하면 가입을 재시도하지 않고 로그인 화면으로 안내한다.
+- [x] 숫자 회원 ID에 맞춰 타입과 `/my`의 문자열 ID 표시를 수정한다. `getCurrentUser`와 `requireRole`은 실제 `/my` 응답을 사용한다.
+- [x] 안전한 상대 경로 `next`, 고객 `/`·관리자 `/admin` 이동, 새로고침·다른 탭의 로그아웃 반영을 확인한다.
 
 완료 기준: 브라우저에서 가입 → 자동 로그인 → 새로고침 → 본인 정보 → 로그아웃 → 보호 페이지 재접근을 검증한다. 서버와 브라우저에서 동일한 백엔드 세션을 사용한다.
 
@@ -222,4 +224,6 @@ CSRF 토큰을 받기 위한 익명 세션과 인증된 세션은 구별한다. 
 
 2026-10-25에 갱신한 Git 규칙에 따라 에이전트는 **커밋·푸시·단계 PR 생성까지** 수행한다. 단계 PR과 최종 `feature/session-auth` → `develop` PR의 머지는 모두 사람이 한다. `develop`·`main`에는 직접 커밋·푸시하지 않는다.
 
-**0~2단계는 통합했고, 3~5단계는 구현·검증을 완료해 PR 통합을 기다린다.** 후속 PR은 앞 단계에 의존하므로 3 → 4 → 5 순서로 통합한다. 다음은 6단계 프론트 연결이다.
+**0~6단계의 구현·검증과 `feature/session-auth` 통합을 완료했다.** 2026-10-25 사용자의 명시적 요청에 따라 이번 통합만 에이전트가 수행했다. [#71](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/71) → [#72](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/72) → [#73](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/73) → [#74](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/74) 순서로 후속 단계만 rebase하고 대상을 통합 브랜치로 변경해 squash 병합했다. 일반적인 사람 머지 규칙은 유지한다.
+
+`develop`에는 반영하지 않았으며, `feature/session-auth` → `develop` [#61](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/61)은 열린 초안으로 유지한다. 인증 외 업무 데이터의 프론트 API 연결과 운영 전환은 별도 작업이다.

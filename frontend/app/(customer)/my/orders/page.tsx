@@ -47,7 +47,7 @@ function OrderSection({ title, description, orders }: {
 
 export default async function CustomerOrdersPage() {
   const customer = await requireRole("customer", "/my/orders");
-  const orders = await mockOrderRepository.listByCustomer(customer.id);
+  const orders = await mockOrderRepository.listByCustomer(String(customer.id));
   const active = orders.filter((order) => order.status !== "completed" && order.status !== "canceled");
   const past = orders.filter((order) => order.status === "completed" || order.status === "canceled");
 
