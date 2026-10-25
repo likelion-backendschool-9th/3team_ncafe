@@ -14,12 +14,13 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.csrf.CsrfException;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
 
 import tools.jackson.databind.json.JsonMapper;
 
 @Component
-public class SecurityErrorHandler implements AuthenticationEntryPoint, AccessDeniedHandler {
+public class SecurityErrorHandler implements AuthenticationEntryPoint, AccessDeniedHandler, AuthenticationFailureHandler {
 
     private final JsonMapper jsonMapper;
 
@@ -32,6 +33,13 @@ public class SecurityErrorHandler implements AuthenticationEntryPoint, AccessDen
             AuthenticationException exception) throws IOException {
         write(response, HttpServletResponse.SC_UNAUTHORIZED,
                 new ErrorResponse("UNAUTHENTICATED", "로그인이 필요합니다."));
+    }
+
+    @Override
+    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
+            AuthenticationException exception) throws IOException {
+        write(response, HttpServletResponse.SC_UNAUTHORIZED,
+                new ErrorResponse("LOGIN_FAILED", "이메일 또는 비밀번호를 확인해 주세요."));
     }
 
     @Override

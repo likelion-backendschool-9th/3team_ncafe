@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.newcafe.backend.common.security.Passwords;
+import com.newcafe.backend.common.security.DatabaseUserDetailsService;
 import com.newcafe.backend.entity.user.UserRole;
 import com.newcafe.backend.entity.user.UserStatus;
 import com.newcafe.backend.repository.UserRepository;
@@ -89,7 +90,8 @@ class SignupIntegrationTest {
             assertFalse(cookie.contains("secure"));
             assertFalse(cookie.contains("max-age="));
             assertEquals(30, servletContext.getSessionTimeout());
-            assertTrue(applicationContext.getBeansOfType(UserDetailsService.class).isEmpty());
+            assertEquals(1, applicationContext.getBeansOfType(UserDetailsService.class).size());
+            assertTrue(applicationContext.getBean(UserDetailsService.class) instanceof DatabaseUserDetailsService);
             assertUnauthenticated(get(browser.client(), "/api/v1/admin/categories"));
         }
     }
