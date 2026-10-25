@@ -212,7 +212,8 @@ class SessionSecurityTest {
         MemberSession member = login();
 
         mockMvc.perform(get("/api/v1/auth/logout").session(member.session()))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
 
         assertFalse(member.session().isInvalid());
         mockMvc.perform(get("/api/v1/my").session(member.session()))

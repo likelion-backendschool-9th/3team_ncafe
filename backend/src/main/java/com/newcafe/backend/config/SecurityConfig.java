@@ -79,8 +79,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/csrf").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/signup", "/api/v1/auth/login",
                                 "/api/v1/auth/logout").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/my").authenticated()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated())
+                        .anyRequest().denyAll())
                 .addFilterBefore(new SessionMemberFilter(sessionMembers, errors, sessionCookies, contextRepository),
                         AuthorizationFilter.class);
         return http.build();
