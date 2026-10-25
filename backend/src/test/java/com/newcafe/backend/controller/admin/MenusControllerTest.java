@@ -19,6 +19,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.newcafe.backend.common.error.ApiExceptionHandler;
 import com.newcafe.backend.common.security.SecurityErrorHandler;
+import com.newcafe.backend.common.security.ApiLogoutSuccessHandler;
+import com.newcafe.backend.common.security.SessionCookieLogoutHandler;
+import com.newcafe.backend.common.security.SessionMemberService;
+import com.newcafe.backend.common.security.SessionUserDetails;
+import com.newcafe.backend.common.security.WithSessionUser;
+import com.newcafe.backend.entity.user.UserRole;
 import com.newcafe.backend.common.security.DatabaseUserDetailsService;
 import com.newcafe.backend.common.security.LoginSuccessHandler;
 import com.newcafe.backend.common.security.Passwords;
@@ -37,6 +43,7 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -50,15 +57,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(MenusController.class)
 @Import({SecurityConfig.class, SecurityErrorHandler.class, LoginSuccessHandler.class, PasswordConfig.class,
-        Passwords.class, DatabaseUserDetailsService.class, ApiExceptionHandler.class, MenusService.class})
-@WithMockUser(roles = "ADMIN")
+        Passwords.class, DatabaseUserDetailsService.class, ApiLogoutSuccessHandler.class,
+        SessionCookieLogoutHandler.class, ApiExceptionHandler.class, MenusService.class})
+@WithSessionUser(role = UserRole.ADMIN)
 class MenusControllerTest {
 
     private static final String VALID_BODY = """
@@ -74,6 +82,9 @@ class MenusControllerTest {
             .replace("\"available\":true", "\"available\":false");
 
     @MockitoBean
+    private SessionMemberService sessionMembers;
+
+    @MockitoBean
     private UserRepository userRepository;
 
     @MockitoBean
@@ -84,6 +95,14 @@ class MenusControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @BeforeEach
+    void currentSessionMember() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof SessionUserDetails member) {
+            when(sessionMembers.findById(member.getId())).thenReturn(Optional.of(member));
+        }
+    }
 
     @Test
     @WithAnonymousUser
@@ -96,7 +115,7 @@ class MenusControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithSessionUser(role = UserRole.CUSTOMER)
     void customerCannotReadAdminData() throws Exception {
         mockMvc.perform(get("/api/v1/admin/menus"))
                 .andExpect(status().isForbidden())
@@ -106,7 +125,7 @@ class MenusControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithSessionUser(role = UserRole.CUSTOMER)
     void customerCannotCreateEvenWithValidCsrf() throws Exception {
         mockMvc.perform(post("/api/v1/admin/menus").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)

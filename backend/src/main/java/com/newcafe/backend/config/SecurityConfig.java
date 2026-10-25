@@ -3,12 +3,18 @@ package com.newcafe.backend.config;
 import com.newcafe.backend.common.security.SecurityErrorHandler;
 import com.newcafe.backend.common.security.LoginSuccessHandler;
 import com.newcafe.backend.common.security.Passwords;
+import com.newcafe.backend.common.security.ApiLogoutSuccessHandler;
+import com.newcafe.backend.common.security.SessionCookieLogoutHandler;
+import com.newcafe.backend.common.security.SessionMemberFilter;
+import com.newcafe.backend.common.security.SessionMemberService;
 
 import jakarta.servlet.DispatcherType;
 
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.server.autoconfigure.ServerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -22,17 +28,25 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.context.DelegatingSecurityContextRepository;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
+@EnableConfigurationProperties(ServerProperties.class)
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityErrorHandler errors,
             LoginSuccessHandler loginSuccessHandler, AuthenticationManager authenticationManager,
+            ApiLogoutSuccessHandler logoutSuccessHandler, SessionCookieLogoutHandler sessionCookies,
+            SessionMemberService sessionMembers, SecurityContextRepository contextRepository,
             UrlBasedCorsConfigurationSource corsConfigurationSource)
             throws Exception {
         http
@@ -44,7 +58,13 @@ public class SecurityConfig {
                         .usernameParameter("email")
                         .successHandler(loginSuccessHandler)
                         .failureHandler(errors))
-                .logout(AbstractHttpConfigurer::disable)
+                .logout(logout -> logout
+                        .logoutUrl("/api/v1/auth/logout")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .addLogoutHandler(sessionCookies)
+                        .logoutSuccessHandler(logoutSuccessHandler))
+                .securityContext(context -> context.securityContextRepository(contextRepository))
                 .requestCache(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.csrfTokenRepository(new HttpSessionCsrfTokenRepository()))
@@ -57,10 +77,22 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/csrf").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/signup", "/api/v1/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/signup", "/api/v1/auth/login",
+                                "/api/v1/auth/logout").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated());
+                        .anyRequest().authenticated())
+                .addFilterBefore(new SessionMemberFilter(sessionMembers, errors, sessionCookies, contextRepository),
+                        AuthorizationFilter.class);
         return http.build();
+    }
+
+    @Bean
+    public SecurityContextRepository securityContextRepository() {
+        HttpSessionSecurityContextRepository sessions = new HttpSessionSecurityContextRepository();
+        // Login already requires the CSRF session; never recreate an authentication session after concurrent logout.
+        sessions.setAllowSessionCreation(false);
+        return new DelegatingSecurityContextRepository(new RequestAttributeSecurityContextRepository(),
+                sessions);
     }
 
     @Bean

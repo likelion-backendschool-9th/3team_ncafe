@@ -26,17 +26,21 @@ public final class SessionUserDetails implements UserDetails, CredentialsContain
     @JsonIgnore
     private transient String passwordHash;
 
-    private SessionUserDetails(User user) {
+    private SessionUserDetails(User user, boolean includePassword) {
         this.id = user.getId();
         this.name = user.getName();
         this.email = user.getEmail();
         this.role = user.getRole();
         this.status = user.getStatus();
-        this.passwordHash = user.getPasswordHash();
+        this.passwordHash = includePassword ? user.getPasswordHash() : null;
     }
 
     public static SessionUserDetails from(User user) {
-        return new SessionUserDetails(user);
+        return new SessionUserDetails(user, true);
+    }
+
+    public static SessionUserDetails forSession(User user) {
+        return new SessionUserDetails(user, false);
     }
 
     public Long getId() {
