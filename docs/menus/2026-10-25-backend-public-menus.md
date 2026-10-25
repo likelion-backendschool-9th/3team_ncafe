@@ -5,7 +5,7 @@
 - 끝나면: 로그인 없이 `/api/v1/menus`에서 메뉴 목록(검색·카테고리·정렬·페이지)·필터용 카테고리·slug 상세를, `/api/v1/index/menus`에서 홈 추천 메뉴를 받을 수 있고, 단위·MockMvc 테스트가 통과한다.
 - 결정 필요: 없음 (아래 가정으로 진행하고 PR에 적는다)
 - 규모: 5단계
-- 현재 (10-25): 1~5단계 완료. 목록·필터용 카테고리·상세·홈 추천 API와 MockMvc·단위 테스트(S1~S11) 통과. 실제 PostgreSQL에서는 카테고리 조회만 확인했고, 메뉴 조회는 개발 DB의 `menus` 테이블 정리 후 확인한다. 프론트 연결(6단계)은 별도 PR.
+- 현재 (10-25): 1~5단계 완료. 목록·필터용 카테고리·상세·홈 추천 API와 MockMvc·단위 테스트(S1~S11) 통과. 개발 DB(ncafedb)에서 메뉴 2개(판매 중 추천 1개, 판매 중지 1개)로 목록 검색·필터·정렬, 카테고리, 상세, 홈 추천, 없는 slug `404`, 잘못된 정렬 `400`을 확인했다. 프론트 연결(6단계)은 별도 PR.
 - 위치: `docs/menus/`의 백엔드 계획.
 
 ## 1. 공개 메뉴 목록 (R1)
@@ -105,14 +105,13 @@ S11 없음
 2. 목록 — S1~S4
    - 파일: `controller/MenusController.java` (`@RestController("publicMenusController")`), `service/MenusService.java` (`@Service("publicMenusService")`), `repository/MenuSpecifications.java`에 `publicSearch` 추가 (기존 `adminSearch` 동작은 바꾸지 않음)
    - 요청은 `MenuSearchRequest`를 재사용한다. 정렬은 관리자 `toSort`와 같은 값·순서.
-   - 테스트: `controller/MenusControllerTest.java`, `service/MenusServiceTest.java`, `repository/MenuSpecificationsTest.java`에 공개 검색 케이스 추가
-   - 확인: `cd backend && ./gradlew test --tests '*.controller.MenusController*' --tests '*.service.MenusService*'`
+   - 테스트: `controller/MenusControllerTest.java` (실제 Service와 가짜 Repository로 Service 로직까지 확인), `repository/MenuSpecificationsTest.java`에 공개 검색 케이스 추가
+   - 확인: `cd backend && ./gradlew test --tests '*.controller.MenusController*'`
 3. 필터용 카테고리 — S5, S6
    - 파일: `dto/menus/MenuCategoryResponse.java` (`id`, `name`), `MenusService.categories()`는 `CategoryRepository.findAllByOrderByDisplayOrderAsc()` 재사용
-   - 커밋: `feat: 공개 메뉴 목록·카테고리 API 추가` (2·3단계)
 4. 상세 — S7~S9
    - 파일: `MenuRepository`에 `findBySlugAndArchivedAtIsNull` (`@EntityGraph(attributePaths = "category")`) 추가
-   - 커밋: `feat: 공개 메뉴 상세 API 추가`
+   - 커밋: `feat: 공개 메뉴 목록·카테고리·상세 API 추가` (2~4단계)
 5. 홈 추천 — S10, S11
    - 파일: `controller/HomeController.java`, `service/HomeService.java`, `MenuRepository`에 추천 조회 메서드 추가
    - 커밋: `feat: 홈 추천 메뉴 API 추가`
@@ -125,7 +124,7 @@ S11 없음
 ## 브랜치·커밋
 
 - 백엔드: `feature/public-menu-api` (1~5단계), 프론트: `feature/public-menu-frontend` (6단계)
-- 커밋은 단계별 하나. PR 대상은 `develop`, 머지는 사람이 한다.
+- 커밋은 기능 단위로 하나(목록·카테고리·상세는 한 커밋). PR 대상은 `develop`, 머지는 사람이 한다.
 
 ## 가정
 
