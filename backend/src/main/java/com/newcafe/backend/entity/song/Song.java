@@ -7,7 +7,15 @@ import jakarta.persistence.Id;
 
 import java.time.Instant;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 @Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+// 신청곡 하나하나에 대한 데이터
 public class Song {
 
     @Id
@@ -18,12 +26,25 @@ public class Song {
     private String songTitle;
     private String artist;
     private String story;
+
+    @Setter
     private String status;
+
+    @Setter
     private String youtubeVideoId;
+
+    @Setter
     private Integer playlistOrder;
+
     private Instant createdAt;
+
+    @Setter
     private Instant playedAt;
+
+    @Setter
     private Instant startedAt;
+
+    @Setter
     private Integer durationSeconds;
 
     public Song(String requesterName, String songTitle, String artist, String story) {
@@ -33,77 +54,5 @@ public class Song {
         this.story = story;
         this.status = "pending";
         this.createdAt = Instant.now();
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getRequesterName() {
-        return requesterName;
-    }
-
-    public String getSongTitle() {
-        return songTitle;
-    }
-
-    public String getArtist() {
-        return artist;
-    }
-
-    public String getStory() {
-        return story;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public String getYoutubeVideoId() {
-        return youtubeVideoId;
-    }
-
-    public Integer getPlaylistOrder() {
-        return playlistOrder;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Instant getPlayedAt() {
-        return playedAt;
-    }
-
-    public Instant getStartedAt() {
-        return startedAt;
-    }
-
-    public Integer getDurationSeconds() {
-        return durationSeconds;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public void setYoutubeVideoId(String youtubeVideoId) {
-        this.youtubeVideoId = youtubeVideoId;
-    }
-
-    public void setPlaylistOrder(Integer playlistOrder) {
-        this.playlistOrder = playlistOrder;
-    }
-
-    public void setPlayedAt(Instant playedAt) {
-        this.playedAt = playedAt;
-    }
-
-    public void setStartedAt(Instant startedAt) {
-        this.startedAt = startedAt;
-    }
-
-    public void setDurationSeconds(Integer durationSeconds) {
-        this.durationSeconds = durationSeconds;
     }
 }
