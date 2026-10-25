@@ -34,6 +34,9 @@ public interface MenuRepository extends JpaRepository<Menu, Long>, JpaSpecificat
     @EntityGraph(attributePaths = "category")
     Optional<Menu> findBySlugAndArchivedAtIsNull(String slug);
 
+    @EntityGraph(attributePaths = "category")
+    List<Menu> findTop16ByAvailableTrueAndRecommendedTrueAndArchivedAtIsNullOrderByCreatedAtDescIdDesc();
+
     @Override
     @EntityGraph(attributePaths = "category")
     Page<Menu> findAll(Specification<Menu> specification, Pageable pageable);
