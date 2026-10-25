@@ -10,9 +10,27 @@
   - 공용 엔티티는 관리자 신청곡 PR #78(cha)이 DB 설계대로 고쳐서 만들었다 (10-26 합의·반영). 이 PR은 그 위에서 작업한다.
   - 10-26부터 cha와 추가 조율은 하지 않는다. 이 PR만으로 구조가 맞도록 필요한 공용 코드 수정도 직접 한다.
 - 결정 필요: 없음
-- 현재 (10-26): 단계 2 완료. PR #78(`93fbfe5`) 위로 옮겼고 `./gradlew test` 55개 통과. 다음은 단계 3.
+- 현재 (10-26): 단계 1~5 완료. `./gradlew test` 96개 통과 (PR #78 기준 55개 + 이 PR 41개). 남은 것은 PR #78 머지 후 단계 6.
+  - 테스트는 모두 mock·MockMvc·Hibernate 메타데이터로 실행했다. `backend/.env`가 실제 DB를 가리키고 `ddl-auto: update`라서, 앱 기동·`@SpringBootTest`는 실제 DB 스키마와 데이터를 바꾸므로 실행하지 않았다.
 - 규모: PR 1개, 6단계, 약 10시간 (단계 6은 PR #78 머지 후)
 - 위치: `docs/musicbox/`의 고객 쪽 백엔드 계획. 프론트 연결은 별도 계획으로 쓴다.
+
+## 구현 결과 (10-26)
+
+계획과 달라진 점:
+
+- 내 신청곡 목록(R4)도 공개 조회처럼 먼저 정리한다. 정리하지 않으면 끝난 곡이 `playing`으로 보인다.
+- 잠그기 전 확인 값은 `entity/song/SongTiming`(JPQL 생성자 조회), 끝나는 시각 계산은 `Song.endsAt(startedAt, durationSeconds)` 하나로 모았다.
+- 입력 길이 상수와 공백 제거는 `entity/song/SongFields`(`MenuFields` 방식), 고정 시각 테스트용 `Clock`은 `config/ClockConfiguration`에 둔다.
+- 응답은 PR #78의 `SongResponse`를 그대로 쓴다. 계획의 `updatedAt` 필드는 PR #78 파일을 고치지 않으려고 넣지 않았다.
+- 공개 응답의 `playlistOrder`는 별도 처리 없이 엔티티가 보장한다. `play(at)`·`finish(at)`과 PR #78의 `cancel`·`returnToInbox`·`markAsPlayed`가 `queued`가 아니게 될 때 순서를 비운다.
+
+실제 DB 없이는 확인하지 못한 것:
+
+- PostgreSQL에서 테이블·컬럼이 실제로 만들어지는지 (S1은 Hibernate 메타데이터로만 확인)
+- `findPlayingTiming` JPQL과 파생 쿼리가 실제 DB에서 실행되는지 (JPQL은 Hibernate 파싱, 파생 쿼리 이름은 Spring Data `PartTree`로만 확인)
+- 잠금 동시성과 `playing` 최대 1건 (S3)
+- Spring 앱 전체 기동 (Bean 이름·`Clock` 주입)
 
 ## 결정
 
