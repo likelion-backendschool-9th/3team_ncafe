@@ -53,8 +53,8 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | --- | --- | --- | --- | --- |
 | `/` | `HomeController` | `GET /index/menus`, `GET /index/songs` | 인덱스 | |
 | `/login`, `/signup` | `AuthController` | `POST /auth/login`, `POST /auth/signup` | 1.1, 1.3 | 공유 |
-| `/menus` | `MenusController`(공개) | `GET /menus`(`q`,`category`,`status`,`sort`), `GET /menus/categories` | 4.1 | 공유 |
-| `/menus/[slug]` | `MenusController`(공개) | `GET /menus/{slug}` | 4.2 | 공유, 보조. 현재 slug 자리에 UUID id를 씀 |
+| `/menus` | `MenusController`(공개) | `GET /menus`(`q`,`categoryId`,`status`,`sort`,`page`,`size`), `GET /menus/categories` | 4.1 | 공유 |
+| `/menus/[slug]` | `MenusController`(공개) | `GET /menus/{slug}` | 4.2 | 공유, 보조 |
 | `/musicbox` | `SongsController`(공개) | `GET /musicbox/songs`, `GET /songs/now` | 11.2~11.3 | 보조 |
 | `/cart` | `my/CartItemsController` | `GET /cart/items`, `PUT`·`DELETE /cart/items/{id}` | 14.2~14.4 | 현재 localStorage |
 | `/checkout` | `my/OrdersController` | `POST /orders` | 6.1 | 공유 |
@@ -111,7 +111,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | `/` | 없음 | `DjBooth`, `MusicBoxRefresher` | 기본값 · `/` |
 | `/login` | `next`(내부 경로 검증), flash `error` | 없음 | 로그인 |
 | `/signup` | flash `error`(`invalid`·`mismatch`·`exists`) | `SignupForm` | 회원가입 |
-| `/menus` | `q`(100자), `category`, `sort`=`newest`\|`name`\|`price-low`\|`price-high`. GET 폼 제출, 탭은 Link | 없음 | 메뉴 · `/menus` |
+| `/menus` | `q`(100자), `categoryId`, `sort`=`newest`\|`name`\|`price-low`\|`price-high`. GET 폼 제출, 탭은 Link | 없음 | 메뉴 · `/menus` |
 | `/menus/[slug]` | params `slug` | `OrderPanel`(온도·수량), `CartAddedDialog`, `LoginRequiredDialog`, `BackButton` | 메뉴명 · `/menus/{slug}`, 없으면 `notFound()` |
 | `/musicbox` | `page`(1부터, 10개), flash `submitted` | `RequestForm`, `DjBooth`, `YouTubePlayer`, `VolumeControl`, `MusicBoxRefresher` | 뮤직박스 · `/musicbox`(page 유지) |
 | `/cart` | 없음 | `CartView`(화면 전체) | 장바구니 |
@@ -363,7 +363,7 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | --- | --- |
 | 백엔드 인증 방식(세션·토큰, CSRF, 쿠키 이름) | 백엔드 |
 | 사이트 도메인, OG 이미지, 백엔드 주소 환경변수 이름 | 팀 |
-| 메뉴 `nameEn` 유지, 카테고리 단일·복수, 공개 메뉴 `category` 값이 이름인지 id인지 | 백엔드 협의 |
+| 메뉴 `nameEn` 유지, 카테고리 단일·복수 (공개 메뉴 필터는 `categoryId`로 정함) | 백엔드 협의 |
 | `/checkout` 주문 대상 조회, `/my/songs` 현재 곡, 관리자 메뉴 카테고리 목록의 컨트롤러 | 백엔드 협의 |
 | 관리자 주문 취소 API 계약, 고객 취소 화면 유지 여부(Q2) | 백엔드·팀 |
 | `/api/music-box/version` 대체(`revision`·`serverNow`) | 백엔드 협의 |
