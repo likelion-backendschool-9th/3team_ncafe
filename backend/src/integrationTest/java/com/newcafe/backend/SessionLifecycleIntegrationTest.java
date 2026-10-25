@@ -99,7 +99,7 @@ class SessionLifecycleIntegrationTest {
         try (Browser browser = loggedIn(email)) {
             String sessionId = browser.sessionId();
             HttpResponse<String> response = get(browser.client(), LOGOUT);
-            assertTrue(response.statusCode() == 404 || response.statusCode() == 405, response.body());
+            assertError(response, 403, "FORBIDDEN");
             assertMy(browser, email, "customer");
             assertEquals(sessionId, browser.sessionId());
         }
