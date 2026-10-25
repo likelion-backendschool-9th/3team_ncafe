@@ -1,11 +1,12 @@
 package com.newcafe.backend.entity.order;
 
-import com.newcafe.backend.common.error.OrderException;
-import com.newcafe.backend.common.error.OrderException.Reason;
+import com.newcafe.backend.common.error.AdminOrderException.Reason;
+import com.newcafe.backend.common.error.AdminOrderException;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -15,6 +16,7 @@ import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 
 import java.time.Instant;
@@ -34,12 +36,16 @@ import org.hibernate.annotations.Check;
         + "and order_type in ('dine-in','takeout') and payment_method in ('card','cash') "
         + "and total_amount >= 0 and status_version >= 0")
 @Table(name = "orders", indexes = {
-        @Index(name = "idx_orders_customer_created", columnList = "customer_id,created_at"),
-        @Index(name = "idx_orders_status_created", columnList = "status,created_at")
+        @Index(name = "idx_orders_customer_created", columnList = "customer_id, created_at"),
+        @Index(name = "idx_orders_status_created", columnList = "status, created_at")
+}, uniqueConstraints = {
+        @UniqueConstraint(name = "uk_orders_customer_idempotency", columnNames = {"customer_id", "idempotency_key"})
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order {
+
+    public static final String RECEIVED = "received";
     public static final String STATUS_PATTERN = "received|preparing|ready|completed|canceled";
     private static final List<String> PROGRESS = List.of("received", "preparing", "ready", "completed");
 
@@ -47,36 +53,36 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // User 엔티티는 회원 담당이 구현한 뒤 FK 연관관계로 통합한다.
-    @Column(nullable = false, updatable = false)
+    @Column(name = "customer_id", nullable = false)
     private Long customerId;
 
-    @Column(nullable = false, updatable = false, length = 80)
+    @Column(name = "customer_name_snapshot", nullable = false, length = 80)
     private String customerNameSnapshot;
 
-    @Column(nullable = false, updatable = false, length = 10)
+    @Column(name = "order_type", nullable = false, length = 20)
     private String orderType;
 
-    @Column(nullable = false, updatable = false, length = 4)
+    @Column(name = "payment_method", nullable = false, length = 20)
     private String paymentMethod;
 
-    @Column(nullable = false, updatable = false, length = 100)
+    @Column(length = 100)
     private String request;
 
-    @Column(nullable = false, length = 10)
-    private String status = "received";
+    @Column(nullable = false, length = 20)
+    private String status = RECEIVED;
 
-    @Version
-    @Column(nullable = false)
-    private Integer statusVersion;
-
-    @Column(nullable = false, updatable = false)
+    @Column(name = "total_amount", nullable = false)
     private int totalAmount;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.PERSIST)
-    @OrderBy("id ASC")
-    @Getter(AccessLevel.NONE)
-    private List<OrderItem> items = new ArrayList<>();
+    @Version
+    @Column(name = "status_version", nullable = false)
+    private int statusVersion = 0;
+
+    @Column(name = "idempotency_key", nullable = false, length = 100)
+    private String idempotencyKey;
+
+    @Column(name = "request_fingerprint", nullable = false, length = 64)
+    private String requestFingerprint;
 
     @Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMPTZ")
     private Instant createdAt;
@@ -84,35 +90,36 @@ public class Order {
     @Column(nullable = false, columnDefinition = "TIMESTAMPTZ")
     private Instant updatedAt;
 
-    public static Order create(Long customerId, String customerName, String orderType,
-            String paymentMethod, String request, List<OrderItem> items) {
-        if (customerId == null || customerId <= 0 || customerName == null || customerName.isBlank()
-                || customerName.length() > 80 || !("dine-in".equals(orderType) || "takeout".equals(orderType))
-                || !("card".equals(paymentMethod) || "cash".equals(paymentMethod)) || request == null
-                || request.length() > 100 || items == null || items.isEmpty()) {
-            throw new IllegalArgumentException("주문 정보를 확인해 주세요.");
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("id ASC")
+    @Getter(AccessLevel.NONE)
+    private List<OrderItem> items = new ArrayList<>();
+
+    private Order(Long customerId, String customerNameSnapshot, String orderType, String paymentMethod,
+            String request, int totalAmount, String idempotencyKey, String requestFingerprint) {
+        this.customerId = Objects.requireNonNull(customerId);
+        this.customerNameSnapshot = Objects.requireNonNull(customerNameSnapshot);
+        this.orderType = Objects.requireNonNull(orderType);
+        this.paymentMethod = Objects.requireNonNull(paymentMethod);
+        this.request = request;
+        this.totalAmount = totalAmount;
+        this.idempotencyKey = Objects.requireNonNull(idempotencyKey);
+        this.requestFingerprint = Objects.requireNonNull(requestFingerprint);
+    }
+
+    public static Order create(Long customerId, String customerName, String orderType, String paymentMethod,
+            String request, int totalAmount, String idempotencyKey, String requestFingerprint) {
+        return new Order(customerId, customerName, orderType, paymentMethod, request, totalAmount,
+                idempotencyKey, requestFingerprint);
+    }
+
+    public void addItem(OrderItem item) {
+        if (id != null) {
+            throw new IllegalStateException("저장된 주문의 품목은 변경할 수 없습니다.");
         }
-
-        List<OrderItem> snapshots = List.copyOf(items);
-        if (snapshots.stream().distinct().count() != snapshots.size()
-                || snapshots.stream().anyMatch(item -> item.getOrder() != null)) {
-            throw new IllegalArgumentException("이미 주문에 포함된 품목입니다.");
-        }
-
-        int total = snapshots.stream().mapToInt(OrderItem::getLineTotal).reduce(0, Math::addExact);
-
-        Order order = new Order();
-        order.customerId = customerId;
-        order.customerNameSnapshot = customerName.trim();
-        order.orderType = orderType;
-        order.paymentMethod = paymentMethod;
-        order.request = request.trim();
-        order.totalAmount = total;
-
-        snapshots.forEach(item -> item.attachTo(order));
-        order.items.addAll(snapshots);
-
-        return order;
+        Objects.requireNonNull(item);
+        item.attachTo(this);
+        items.add(item);
     }
 
     public List<OrderItem> getItems() {
@@ -139,24 +146,25 @@ public class Order {
 
     public void changeStatus(String expectedStatus, Integer expectedVersion, String nextStatus) {
         if (!Objects.equals(status, expectedStatus) || !Objects.equals(statusVersion, expectedVersion)) {
-            throw new OrderException(Reason.STALE_STATUS, "주문 상태가 변경되었습니다. 새로고침해 주세요.");
+            throw new AdminOrderException(Reason.STALE_STATUS, "주문 상태가 변경되었습니다. 새로고침해 주세요.");
         }
         if (!allowedStatuses().contains(nextStatus)) {
-            throw new OrderException(Reason.INVALID_STATUS, "현재 상태에서 변경할 수 없는 주문 상태입니다.");
+            throw new AdminOrderException(Reason.INVALID_STATUS, "현재 상태에서 변경할 수 없는 주문 상태입니다.");
         }
 
         status = nextStatus;
         updatedAt = Instant.now();
     }
 
-    @PrePersist
-    void onCreate() {
-        createdAt = Instant.now();
-        updatedAt = createdAt;
-    }
-
     @PreUpdate
     void onUpdate() {
         updatedAt = Instant.now();
+    }
+
+    @PrePersist
+    void onCreate() {
+        Instant now = Instant.now();
+        createdAt = now;
+        updatedAt = now;
     }
 }

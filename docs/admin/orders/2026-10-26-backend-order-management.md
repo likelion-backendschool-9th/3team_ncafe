@@ -16,14 +16,14 @@
 | F | 곡 신청·내 신청곡 (+ 숨은 API 3개, 이미지에는 세부 명세 없음) |
 | G | 관리자 선곡·재생 |
 
-프론트 API 연결, 회원·인증, 고객 주문 API는 아직 구현하지 않았다. A·B·D 담당과 아래 공유 계약을 통합한 뒤 실제 로그인 → 주문 생성 → 관리자 처리 → 고객 확인을 검증해야 한다. 현재 기능 완료는 백엔드 API·저장 구조와 자동 테스트 기준이다.
+이 브랜치에는 프론트 API 연결·회원·인증·고객 주문 API를 포함하지 않는다. 해당 기능은 별도 팀원 브랜치에서 개발 중이다. A·B·D 담당과 아래 공유 계약을 통합한 뒤 실제 로그인 → 주문 생성 → 관리자 처리 → 고객 확인을 검증해야 한다. 현재 기능 완료는 백엔드 API·저장 구조와 자동 테스트 기준이다.
 
 ## 작업 순서와 완료 기준
 
 카테고리 계획의 구현 기준 1~8을 따른다. Controller는 요청·권한 경계와 DTO 검증, Service는 트랜잭션·조회, Entity는 상태 이동 규칙, Repository는 DB 조회를 맡는다. Service에 HTTP 객체를 전달하거나 Entity를 API 응답으로 직접 반환하지 않는다.
 
 1. [x] 기존 계획·화면·분담 확인: E의 목록·상세·상태 변경·취소로 범위를 정리한다.
-2. [x] 공유 저장 구조: `Order`·`OrderItem`에 주문 당시 스냅샷, 금액·온도 제약, `status_version`과 조회 인덱스를 둔다.
+2. [x] 공유 저장 구조: D의 기존 `Order`·`OrderItem` 생성 계약과 중복 요청 방지 필드를 보존하고, 주문 당시 스냅샷·금액·온도 제약·`status_version`·조회 인덱스를 둔다.
 3. [x] 관리자 API: 지정된 Controller/Service 이름, 공통 오류 형식, 검색·필터·정렬·페이지 DTO를 적용한다.
 4. [x] 변경 규칙: 인접 단계, 접수 취소, 예상 상태·버전 검사와 DB 동시 변경을 검증한다.
 5. [x] 자동 검증: 단위·MockMvc 테스트와 별도 임시 PostgreSQL에서 전체 테스트를 실행한다. 청사진의 Testcontainers 대신 이 환경에 설치된 PostgreSQL 16을 사용해 새 테스트 의존성 없이 실제 DB를 검증했다. 재실행은 아래 환경 변수 방식이다.
@@ -62,9 +62,9 @@
 
 ## 팀 간 공유 계약과 남은 통합
 
-1. **A(인증):** Controller는 Servlet `getUserPrincipal()`과 `isUserInRole("admin")`을 검사한다. 인증 구현 전에는 정상 요청도 `401`로 차단한다. 인증 담당은 검증된 로그인 정보로 principal과 역할을 연결하거나 이 검사를 팀의 공통 권한 검사로 교체해야 한다. Spring Security의 기본 `ROLE_` 접두사를 사용한다면 Servlet 역할 `admin`과 실제 authority의 매핑도 확인한다. 프론트 목 쿠키, 임의 헤더·요청 본문의 역할 값은 신뢰하지 않는다. 실제 로그인·로그아웃·세션/CSRF 검증은 A 연동 후 수행한다.
-2. **B(회원):** 아직 `User` 엔티티가 없어 `customer_id`는 `Long` 필드다. 회원 엔티티 통합 시 `users` FK 또는 `@ManyToOne`을 추가해야 한다. 현재 DB가 회원 존재·역할·정지 상태를 검증하지는 않는다. `customer_name_snapshot`은 주문 당시 이름으로 유지한다.
-3. **D(주문):** `entity/order/Order`, `OrderItem`, `OrderRepository`를 공유하며 새 주문 테이블을 중복 생성하지 않는다. `OrderItem.snapshot(menu, temperature, quantity)` 후 `Order.create(customerId, customerName, orderType, paymentMethod, request, items)`와 `save`를 사용한다. `received`·버전 0으로 저장되고 총액은 품목 합으로 계산된다. 소유권·현재 판매 상태·예상 금액·중복 요청 검증과 장바구니 삭제는 D 서비스의 한 트랜잭션에서 처리해야 한다. 이 팩토리만으로 주문 생성 API의 검증이 완성되는 것은 아니다.
+1. **A(인증):** Controller는 Servlet `getUserPrincipal()`과 `isUserInRole("ADMIN")`을 검사한다. 이 브랜치 단독 실행에서는 인증 구현이 없으므로 정상 요청도 `401`로 차단한다. 인증 담당은 검증된 로그인 정보로 principal과 역할을 연결하거나 이 검사를 팀의 공통 권한 검사로 교체해야 한다. `feature/session-auth`의 `ROLE_ADMIN`과 맞췄으며 A 코드와 조립한 임시 환경에서 실제 로그인·CSRF·관리자 API를 검증했다. 프론트 목 쿠키, 임의 헤더·요청 본문의 역할 값은 신뢰하지 않는다. 최종 머지 결과에서도 로그인·로그아웃·세션/CSRF를 다시 검증해야 한다.
+2. **B(회원):** `develop`에 아직 `User` 엔티티가 없고 D도 scalar ID를 사용하므로 `customer_id`는 `Long` 필드를 유지한다. 회원 엔티티 통합 시 `users` FK 또는 `@ManyToOne`을 추가해야 한다. 현재 DB가 회원 존재·역할·정지 상태를 검증하지는 않는다. `customer_name_snapshot`은 주문 당시 이름으로 유지한다.
+3. **D(주문):** `entity/order/Order`, `OrderItem`, `OrderRepository`를 공유하며 새 주문 테이블을 중복 생성하지 않는다. `feature/order-api`(PR #69)의 `OrderItem.snapshot(menu, temperature, quantity, unitPrice, lineTotal)`, `Order.create(customerId, customerName, orderType, paymentMethod, request, totalAmount, idempotencyKey, requestFingerprint)`, `addItem` 계약을 보존했다. D가 서비스에서 품목 합을 계산하고 `received`·버전 0으로 저장한다. `idempotency_key`·`request_fingerprint`·회원별 키 유니크 제약과 Repository의 멱등성/본인 주문 조회 메서드도 유지한다. 관리자 페이지 DTO는 `AdminOrderPageResponse`, 예외·advice는 `AdminOrderException`·`AdminOrdersExceptionHandler`로 분리해 D의 같은 이름 파일 및 공통 오류 처리와 겹치지 않는다. 소유권·현재 판매 상태·예상 금액·중복 요청 검증과 장바구니 삭제는 D 서비스의 한 트랜잭션에서 처리해야 한다. 이 팩토리만으로 주문 생성 API의 검증이 완성되는 것은 아니다.
 4. **프론트:** 인증·D 연동 이후 목 호출을 교체한다. 문자열 ID→숫자, `option`/`ice`→`temperature`/`iced`, `statusVersion` 전달, 서버 `allowedStatuses` 사용, 취소 사유 폼 제거와 `received`만 취소를 반영한다. 고객·관리자 목록/상세와 `/admin` 캐시를 갱신한다.
 
 품목은 변경 메서드 없이 불변 스냅샷으로 저장한다. 메뉴 숨김 후에도 당시 이름·이미지·온도·단가·수량·합계가 유지된다. 실제 결제·고객 취소·배달 API는 범위 밖이다.
@@ -85,6 +85,6 @@ ORDER_TEST_DB_USERNAME=postgres ORDER_TEST_DB_PASSWORD=... \
 ./gradlew test --rerun-tasks
 ```
 
-2026-10-26 검증: 별도 임시 PostgreSQL 16 인스턴스에서 기존 테스트를 포함한 전체 테스트 통과. 실제 프론트·인증·고객 주문 연동은 미검증이다.
+2026-10-26 재검토: 별도 임시 PostgreSQL 16에서 이 브랜치의 전체 테스트 105개 통과. A·D 코드를 복사해 구성한 임시 통합 환경에서는 기존 테스트와 주문 생성 서비스 → 실제 관리자 로그인/CSRF → 관리자 변경 API → 고객 조회 서비스 흐름을 포함해 244개 통과했다. 실제 프론트·고객 주문 HTTP 인증·회원 FK·Git 머지 결과는 미검증이다. 상세 근거와 남은 조건은 [통합 검토](2026-10-26-integration-review.md)에 기록했다.
 
 브랜치: `feature/admin-orders`. PR 대상: `develop`. 머지는 사람이 수행한다.

@@ -1,10 +1,10 @@
 package com.newcafe.backend.controller.admin;
 
-import com.newcafe.backend.common.error.OrderException;
-import com.newcafe.backend.common.error.OrderException.Reason;
+import com.newcafe.backend.common.error.AdminOrderException;
+import com.newcafe.backend.common.error.AdminOrderException.Reason;
 import com.newcafe.backend.dto.orders.AdminOrderResponse;
 import com.newcafe.backend.dto.orders.ChangeOrderStatusRequest;
-import com.newcafe.backend.dto.orders.OrderPageResponse;
+import com.newcafe.backend.dto.orders.AdminOrderPageResponse;
 import com.newcafe.backend.dto.orders.OrderSearchRequest;
 import com.newcafe.backend.service.admin.OrdersService;
 
@@ -28,7 +28,7 @@ public class OrdersController {
     private final OrdersService ordersService;
 
     @GetMapping
-    public OrderPageResponse list(@Valid @ModelAttribute OrderSearchRequest request, HttpServletRequest http) {
+    public AdminOrderPageResponse list(@Valid @ModelAttribute OrderSearchRequest request, HttpServletRequest http) {
         requireAdmin(http);
         return ordersService.list(request);
     }
@@ -48,10 +48,10 @@ public class OrdersController {
 
     private void requireAdmin(HttpServletRequest request) {
         if (request.getUserPrincipal() == null) {
-            throw new OrderException(Reason.UNAUTHORIZED, "로그인이 필요합니다.");
+            throw new AdminOrderException(Reason.UNAUTHORIZED, "로그인이 필요합니다.");
         }
-        if (!request.isUserInRole("admin")) {
-            throw new OrderException(Reason.FORBIDDEN, "관리자만 주문을 관리할 수 있습니다.");
+        if (!request.isUserInRole("ADMIN")) {
+            throw new AdminOrderException(Reason.FORBIDDEN, "관리자만 주문을 관리할 수 있습니다.");
         }
     }
 }

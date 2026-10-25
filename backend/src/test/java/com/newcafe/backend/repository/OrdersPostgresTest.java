@@ -32,7 +32,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @EnabledIfEnvironmentVariable(named = "ORDER_TEST_DB_URL", matches = "jdbc:postgresql:.*")
 @DirtiesContext
 class OrdersPostgresTest {
@@ -83,8 +83,11 @@ class OrdersPostgresTest {
                     .orElseGet(() -> categories.save(Category.create("테스트", 1)));
             Menu menu = menus.save(Menu.create(category, "test-" + UUID.randomUUID(), new MenuDetails(
                     menuName, "설명", "/images/menus/tea.png", 5000, true, false, false, true, true)));
-            return orders.saveAndFlush(Order.create(1L, name, "dine-in", "card", "",
-                    List.of(OrderItem.snapshot(menu, "hot", 1), OrderItem.snapshot(menu, "iced", 2))));
+            Order order = Order.create(1L, name, "dine-in", "card", null, 15000,
+                    "admin-test-" + UUID.randomUUID(), "test-fingerprint");
+            order.addItem(OrderItem.snapshot(menu, "hot", 1, 5000, 5000));
+            order.addItem(OrderItem.snapshot(menu, "iced", 2, 5000, 10000));
+            return orders.saveAndFlush(order);
         });
     }
 

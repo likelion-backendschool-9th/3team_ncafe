@@ -25,41 +25,52 @@ import org.hibernate.annotations.Check;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrderItem {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(nullable = false, updatable = false)
+    @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(nullable = false, updatable = false)
+    @JoinColumn(name = "menu_id", nullable = false)
     private Menu menu;
 
-    @Column(nullable = false, updatable = false, length = 80)
+    @Column(name = "menu_name", nullable = false, length = 80)
     private String menuName;
 
-    @Column(nullable = false, updatable = false, length = 2048)
+    @Column(name = "image_url", nullable = false, length = 2048)
     private String imageUrl;
 
-    @Column(updatable = false, length = 4)
+    @Column(length = 10)
     private String temperature;
 
-    @Column(nullable = false, updatable = false)
-    private int quantity;
-
-    @Column(nullable = false, updatable = false)
+    @Column(name = "unit_price", nullable = false)
     private int unitPrice;
 
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false)
+    private int quantity;
+
+    @Column(name = "line_total", nullable = false)
     private int lineTotal;
 
-    public static OrderItem snapshot(Menu menu, String temperature, int quantity) {
-        if (menu == null || menu.isArchived() || !menu.isAvailable() || quantity < 1 || quantity > 20) {
-            throw new IllegalArgumentException("주문 가능한 메뉴와 수량을 확인해 주세요.");
-        }
+    private OrderItem(Menu menu, String temperature, int quantity, int unitPrice, int lineTotal) {
+        this.menu = menu;
+        this.menuName = menu.getName();
+        this.imageUrl = menu.getImageUrl();
+        this.temperature = temperature;
+        this.quantity = quantity;
+        this.unitPrice = unitPrice;
+        this.lineTotal = lineTotal;
+    }
 
+    public static OrderItem snapshot(Menu menu, String temperature, int quantity, int unitPrice, int lineTotal) {
+        if (menu == null || menu.isArchived() || !menu.isAvailable() || quantity < 1 || quantity > 20
+                || unitPrice < 0 || lineTotal != Math.multiplyExact(quantity, unitPrice)) {
+            throw new IllegalArgumentException("주문 품목 정보를 확인해 주세요.");
+        }
         boolean validTemperature = temperature == null
                 ? !menu.isSupportsHot() && !menu.isSupportsIced()
                 : ("hot".equals(temperature) && menu.isSupportsHot())
@@ -67,24 +78,13 @@ public class OrderItem {
         if (!validTemperature) {
             throw new IllegalArgumentException("메뉴 온도 옵션을 확인해 주세요.");
         }
-
-        OrderItem item = new OrderItem();
-        item.menu = menu;
-        item.menuName = menu.getName();
-        item.imageUrl = menu.getImageUrl();
-        item.temperature = temperature;
-        item.quantity = quantity;
-        item.unitPrice = menu.getPrice();
-        item.lineTotal = Math.multiplyExact(quantity, item.unitPrice);
-
-        return item;
+        return new OrderItem(menu, temperature, quantity, unitPrice, lineTotal);
     }
 
     void attachTo(Order order) {
         if (this.order != null) {
             throw new IllegalArgumentException("이미 주문에 포함된 품목입니다.");
         }
-
         this.order = order;
     }
 }

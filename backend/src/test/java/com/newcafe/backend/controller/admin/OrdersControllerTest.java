@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.newcafe.backend.common.error.ApiExceptionHandler;
+import com.newcafe.backend.common.error.AdminOrdersExceptionHandler;
 import com.newcafe.backend.entity.menu.Menu;
 import com.newcafe.backend.entity.menu.MenuDetails;
 import com.newcafe.backend.entity.order.Order;
@@ -46,11 +47,12 @@ class OrdersControllerTest {
     void setup() {
         repository = mock(OrderRepository.class);
         mvc = MockMvcBuilders.standaloneSetup(new OrdersController(new OrdersService(repository)))
-                .setControllerAdvice(new ApiExceptionHandler()).build();
+                .setControllerAdvice(new ApiExceptionHandler(), new AdminOrdersExceptionHandler()).build();
         Menu menu = Menu.create(Category.create("차", 1), "tea", new MenuDetails("쌍화차", "설명",
                 "/images/menus/tea.png", 5000, true, false, false, true, false));
         ReflectionTestUtils.setField(menu, "id", 10L);
-        order = Order.create(2L, "손님", "dine-in", "card", "덜 뜨겁게", List.of(OrderItem.snapshot(menu, "hot", 2)));
+        order = Order.create(2L, "손님", "dine-in", "card", "덜 뜨겁게", 10000, "admin-test", "test-fingerprint");
+        order.addItem(OrderItem.snapshot(menu, "hot", 2, 5000, 10000));
         ReflectionTestUtils.setField(order, "id", 1L);
         ReflectionTestUtils.setField(order, "statusVersion", 0);
         ReflectionTestUtils.invokeMethod(order, "onCreate");
@@ -60,9 +62,19 @@ class OrdersControllerTest {
     private RequestPostProcessor admin() {
         return request -> {
             request.setUserPrincipal(() -> "admin-user");
-            request.addUserRole("admin");
+            request.addUserRole("ADMIN");
             return request;
         };
+    }
+
+    @Test
+    void lowercaseRoleDoesNotMatchAuthenticationBranchAdminAuthority() throws Exception {
+        mvc.perform(get("/api/v1/admin/orders/1").with(request -> {
+            request.setUserPrincipal(() -> "admin-user");
+            request.addUserRole("admin");
+            return request;
+        })).andExpect(status().isForbidden());
+        verifyNoInteractions(repository);
     }
 
     @Test

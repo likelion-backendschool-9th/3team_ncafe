@@ -1,10 +1,10 @@
 package com.newcafe.backend.service.admin;
 
-import com.newcafe.backend.common.error.OrderException;
-import com.newcafe.backend.common.error.OrderException.Reason;
+import com.newcafe.backend.common.error.AdminOrderException;
+import com.newcafe.backend.common.error.AdminOrderException.Reason;
 import com.newcafe.backend.dto.orders.AdminOrderResponse;
 import com.newcafe.backend.dto.orders.ChangeOrderStatusRequest;
-import com.newcafe.backend.dto.orders.OrderPageResponse;
+import com.newcafe.backend.dto.orders.AdminOrderPageResponse;
 import com.newcafe.backend.dto.orders.OrderSearchRequest;
 import com.newcafe.backend.entity.order.Order;
 import com.newcafe.backend.repository.OrderRepository;
@@ -27,7 +27,7 @@ public class OrdersService {
     private final OrderRepository orderRepository;
 
     @Transactional(readOnly = true)
-    public OrderPageResponse list(OrderSearchRequest request) {
+    public AdminOrderPageResponse list(OrderSearchRequest request) {
         Sort.Direction direction = "oldest".equals(request.sort()) ? Sort.Direction.ASC : Sort.Direction.DESC;
         var page = orderRepository.findAll(OrderSpecifications.adminSearch(request),
                 PageRequest.of(request.page(), request.size(), Sort.by(direction, "createdAt", "id")));
@@ -37,7 +37,7 @@ public class OrdersService {
                 page.getContent().stream().map(Order::getId).toList()).stream()
                 .collect(Collectors.toMap(Order::getId, Function.identity()));
 
-        return new OrderPageResponse(page.getContent().stream()
+        return new AdminOrderPageResponse(page.getContent().stream()
                 .map(order -> AdminOrderResponse.from(orders.get(order.getId()))).toList(),
                 page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages());
     }
@@ -60,6 +60,6 @@ public class OrdersService {
 
     private Order findOrder(Long id) {
         return orderRepository.findWithItemsById(id)
-                .orElseThrow(() -> new OrderException(Reason.NOT_FOUND, "주문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new AdminOrderException(Reason.NOT_FOUND, "주문을 찾을 수 없습니다."));
     }
 }
