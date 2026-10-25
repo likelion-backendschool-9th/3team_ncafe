@@ -5,7 +5,7 @@
 - 끝나면: 로그인한 고객이 `/api/v1/menus/{id}/cart/items`로 메뉴를 담고, `/api/v1/cart/items`로 장바구니를 조회·수량 변경·삭제할 수 있다. 장바구니는 기기와 상관없이 회원별로 서버에 남고, 단위·MockMvc·접근 정책 테스트가 통과한다.
 - 결정 필요: 없음 (아래 가정으로 진행하고 PR에 적는다)
 - 규모: 6단계
-- 현재 (10-25): 계획 작성. 인증 #61과 주문 #69가 `develop`에 머지된다고 보고 그 코드를 기준으로 세웠다.
+- 현재 (10-25): 1~5단계 완료. #61·#69를 합친 로컬 브랜치에서 단위 테스트 232개와 PostgreSQL 통합 테스트 59개(장바구니 3개 포함)가 통과했다. 프론트 연결(6단계)은 별도 PR.
 - 위치: `docs/my/cart/`의 백엔드 계획.
 
 ## 선행 PR (머지된다고 가정)
@@ -158,8 +158,10 @@ S17 다른 메서드
    - `SecurityConfig`: `GET /api/v1/cart/items`, `PUT`·`DELETE /api/v1/cart/items/*`, `POST /api/v1/menus/*/cart/items`를 `hasRole("CUSTOMER")`로 선언한다.
    - `ApiAccessPolicyTest`에 S14~S17을 추가한다 (`@WithSessionUser`, `csrf()`).
    - 인증 담당(배기현)에게 리뷰를 요청한다.
-   - 확인: `./gradlew test`, 실제 서버에서 가입·로그인 세션으로 담기·조회·수정·삭제와 `401`·`403` 확인 (ncafedb)
    - 커밋: `feat: 장바구니 API 접근 정책 추가`
+   - 실제 DB 확인은 팀 DB(ncafedb)에 머지 전 테이블·계정을 만들지 않도록 #61과 같은 Testcontainers 통합 테스트로 한다. `integrationTest/CartItemsIntegrationTest`: 실제 로그인 세션·CSRF로 S1~S16 흐름, 다른 회원 `404`, 온도 없는 메뉴 동시 담기 8건이 한 줄로 합쳐지는지(회원 행 잠금) 확인한다.
+   - 커밋: `test: 장바구니 PostgreSQL 통합 테스트 추가`
+   - 확인: `./gradlew test integrationTest` (Docker 필요)
 6. 프론트 연결 (별도 브랜치·PR)
    - `CartContext`·`localStorage`를 걷어내고 `/cart`를 서버 컴포넌트 조회로, 담기·수량·삭제를 Server Action으로 바꾼다. 체크 상태는 화면 `useState`.
    - 변경 요청에는 #61이 정한 CSRF 처리를 따른다. 공통 요청기는 `frontend/app/_lib/api/client.ts`.
