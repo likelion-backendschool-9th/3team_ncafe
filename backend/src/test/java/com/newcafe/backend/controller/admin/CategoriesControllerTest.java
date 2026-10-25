@@ -16,6 +16,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.newcafe.backend.common.error.ApiExceptionHandler;
 import com.newcafe.backend.common.security.SecurityErrorHandler;
+import com.newcafe.backend.common.security.ApiLogoutSuccessHandler;
+import com.newcafe.backend.common.security.SessionCookieLogoutHandler;
+import com.newcafe.backend.common.security.SessionMemberService;
+import com.newcafe.backend.common.security.SessionUserDetails;
+import com.newcafe.backend.common.security.WithSessionUser;
+import com.newcafe.backend.entity.user.UserRole;
 import com.newcafe.backend.common.security.DatabaseUserDetailsService;
 import com.newcafe.backend.common.security.LoginSuccessHandler;
 import com.newcafe.backend.common.security.Passwords;
@@ -30,6 +36,7 @@ import com.newcafe.backend.service.admin.CategoriesService;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -38,16 +45,20 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithAnonymousUser;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(CategoriesController.class)
 @Import({SecurityConfig.class, SecurityErrorHandler.class, LoginSuccessHandler.class, PasswordConfig.class,
-        Passwords.class, DatabaseUserDetailsService.class, ApiExceptionHandler.class, CategoriesService.class})
-@WithMockUser(roles = "ADMIN")
+        Passwords.class, DatabaseUserDetailsService.class, ApiLogoutSuccessHandler.class,
+        SessionCookieLogoutHandler.class, ApiExceptionHandler.class, CategoriesService.class})
+@WithSessionUser(role = UserRole.ADMIN)
 class CategoriesControllerTest {
+
+    @MockitoBean
+    private SessionMemberService sessionMembers;
 
     @MockitoBean
     private UserRepository userRepository;
@@ -63,6 +74,14 @@ class CategoriesControllerTest {
 
     @Autowired
     private ApplicationContext applicationContext;
+
+    @BeforeEach
+    void currentSessionMember() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof SessionUserDetails member) {
+            when(sessionMembers.findById(member.getId())).thenReturn(Optional.of(member));
+        }
+    }
 
     @Test
     @WithAnonymousUser
@@ -92,7 +111,7 @@ class CategoriesControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithSessionUser(role = UserRole.CUSTOMER)
     void customerCannotReadAdminData() throws Exception {
         mockMvc.perform(get("/api/v1/admin/categories"))
                 .andExpect(status().isForbidden())
@@ -102,7 +121,7 @@ class CategoriesControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithSessionUser(role = UserRole.CUSTOMER)
     void customerCannotCreateEvenWithValidCsrf() throws Exception {
         mockMvc.perform(post("/api/v1/admin/categories").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)

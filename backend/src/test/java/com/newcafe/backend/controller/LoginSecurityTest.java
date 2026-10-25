@@ -22,6 +22,9 @@ import com.newcafe.backend.common.security.LoginSuccessHandler;
 import com.newcafe.backend.common.security.Passwords;
 import com.newcafe.backend.common.security.SecurityErrorHandler;
 import com.newcafe.backend.common.security.SessionUserDetails;
+import com.newcafe.backend.common.security.SessionMemberService;
+import com.newcafe.backend.common.security.ApiLogoutSuccessHandler;
+import com.newcafe.backend.common.security.SessionCookieLogoutHandler;
 import com.newcafe.backend.config.PasswordConfig;
 import com.newcafe.backend.config.SecurityConfig;
 import com.newcafe.backend.controller.my.UsersController;
@@ -59,7 +62,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 @WebMvcTest({AuthController.class, UsersController.class})
 @Import({SecurityConfig.class, PasswordConfig.class, Passwords.class, DatabaseUserDetailsService.class,
-        LoginSuccessHandler.class, SecurityErrorHandler.class})
+        LoginSuccessHandler.class, SecurityErrorHandler.class, SessionMemberService.class,
+        SessionCookieLogoutHandler.class, ApiLogoutSuccessHandler.class})
 class LoginSecurityTest {
 
     private static final String EMAIL = "member@example.com";
@@ -89,6 +93,7 @@ class LoginSecurityTest {
         String passwordHash = passwords.encode(PASSWORD);
         User user = member(passwordHash);
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.findById(42L)).thenReturn(Optional.of(user));
         when(usersService.getCurrent(42L)).thenReturn(MemberResponse.from(user));
         CsrfSession csrf = csrfSession();
         String anonymousSessionId = csrf.session().getId();
