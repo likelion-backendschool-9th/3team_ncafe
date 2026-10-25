@@ -19,12 +19,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.newcafe.backend.common.error.ApiExceptionHandler;
 import com.newcafe.backend.common.security.SecurityErrorHandler;
+import com.newcafe.backend.common.security.DatabaseUserDetailsService;
+import com.newcafe.backend.common.security.LoginSuccessHandler;
+import com.newcafe.backend.common.security.Passwords;
+import com.newcafe.backend.config.PasswordConfig;
 import com.newcafe.backend.config.SecurityConfig;
 import com.newcafe.backend.entity.category.Category;
 import com.newcafe.backend.entity.menu.Menu;
 import com.newcafe.backend.entity.menu.MenuDetails;
 import com.newcafe.backend.repository.CategoryRepository;
 import com.newcafe.backend.repository.MenuRepository;
+import com.newcafe.backend.repository.UserRepository;
 import com.newcafe.backend.service.admin.MenusService;
 
 import java.util.List;
@@ -51,7 +56,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(MenusController.class)
-@Import({SecurityConfig.class, SecurityErrorHandler.class, ApiExceptionHandler.class, MenusService.class})
+@Import({SecurityConfig.class, SecurityErrorHandler.class, LoginSuccessHandler.class, PasswordConfig.class,
+        Passwords.class, DatabaseUserDetailsService.class, ApiExceptionHandler.class, MenusService.class})
 @WithMockUser(roles = "ADMIN")
 class MenusControllerTest {
 
@@ -66,6 +72,9 @@ class MenusControllerTest {
             .replace("\"slug\":\"americano\",", "")
             .replace("\"price\":4500", "\"price\":5000")
             .replace("\"available\":true", "\"available\":false");
+
+    @MockitoBean
+    private UserRepository userRepository;
 
     @MockitoBean
     private CategoryRepository categoryRepository;

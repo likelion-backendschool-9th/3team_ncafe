@@ -2,14 +2,14 @@
 
 작성일: 2026-10-22 · 통합 브랜치: `feature/session-auth` · 최초 기준: `origin/develop` (`62c139a`)
 
-인증 개발은 `feature/session-auth-step0`부터 `step6`까지 한 단계씩 진행한다. 단계별 검증 후 `feature/session-auth`에 통합하고, 완료한 체크박스를 갱신한다. 0단계의 계약과 실행 방법은 [0단계 작업 기록](2026-10-22-auth-step0.md)에 정리한다.
+인증 개발은 `feature/session-auth-step0`부터 `step6`까지 한 단계씩 진행한다. 단계별 검증 후 `feature/session-auth` 대상 PR을 만들고, 사람이 통합한다. 구현·검증을 마친 체크박스를 갱신한다. 0단계의 계약과 실행 방법은 [0단계 작업 기록](2026-10-22-auth-step0.md)에 정리한다.
 
 ## 1. 목표와 현재 상태
 
 Spring Security로 이메일·비밀번호를 인증하고, 서버 세션과 브라우저 쿠키로 로그인 상태를 유지한다. 회원가입 → 로그인 → 내 정보 확인 → 로그아웃을 실제 PostgreSQL과 연결해 검증하는 것이 목표다.
 
 - 백엔드는 Java 21, Spring Boot 4.1.1, Gradle Groovy DSL, JPA, PostgreSQL을 사용한다.
-- 회원 엔티티·저장소·비밀번호 해시와 회원가입 API를 구현했다. 웹 Security·CSRF와 관리자 메뉴·카테고리 접근 제어를 적용했으며 로그인은 3단계에서 연결한다.
+- 회원 엔티티·저장소·비밀번호 해시와 회원가입 API를 구현했다. 웹 Security·CSRF와 관리자 메뉴·카테고리 접근 제어를 적용했으며, 3단계에서 DB 인증·세션 로그인과 현재 회원 조회를 연결한다.
 - 프론트엔드는 현재 목 회원 저장소와 `ncafe_mock_session` 쿠키를 사용한다.
 - 데이터 기준은 [DB 설계](../../docs/database-design.md), 기존 경로와 계층 기준은 [백엔드 전체 청사진](2026-10-20-backend-blueprint.md)이다.
 - 이번 범위는 공개 회원가입, 로그인·로그아웃, 현재 회원 조회, 세션·CSRF·권한 검사다. 프로필 수정, 관리자 생성·정지 관리 화면, 소셜 로그인, 비밀번호 재설정, 이메일 인증은 후속 작업이다.
@@ -143,12 +143,14 @@ CSRF 토큰을 받기 위한 익명 세션과 인증된 세션은 구별한다. 
 
 ### 3단계 — 로그인과 현재 회원 조회
 
-- [ ] `UserDetailsService`와 principal을 만들고 정규화 이메일로 회원을 조회한다.
-- [ ] `DaoAuthenticationProvider`와 같은 `PasswordEncoder`로 비밀번호를 검증하고 정지 계정을 거부한다.
-- [ ] 표준 로그인 필터의 경로·이메일 파라미터·JSON 성공/실패 핸들러를 설정한다. 핸들러는 비밀번호를 응답하지 않는다.
-- [ ] 성공 시 세션 ID 변경과 SecurityContext 저장을 확인한다. 자격 증명 원문이 세션 principal에 남지 않게 한다.
-- [ ] `GET /api/v1/my`를 구현해 요청 세션의 회원 ID로 본인 정보를 조회한다. 고객·관리자 모두 자신의 정보를 받을 수 있다.
-- [ ] 로그인 성공 직후 클라이언트가 새 CSRF 토큰을 받게 한다. 로그인으로 이전 토큰이 폐기되는 동작을 테스트한다.
+구현과 검증 내용은 [3단계 작업 기록](2026-10-25-auth-step3.md)에 정리한다.
+
+- [x] `UserDetailsService`와 principal을 만들고 정규화 이메일로 회원을 조회한다.
+- [x] `DaoAuthenticationProvider`와 같은 `PasswordEncoder`로 비밀번호를 검증하고 정지 계정을 거부한다.
+- [x] 표준 로그인 필터의 경로·이메일 파라미터·JSON 성공/실패 핸들러를 설정한다. 핸들러는 비밀번호를 응답하지 않는다.
+- [x] 성공 시 세션 ID 변경과 SecurityContext 저장을 확인한다. 자격 증명 원문이 세션 principal에 남지 않게 한다.
+- [x] `GET /api/v1/my`를 구현해 요청 세션의 회원 ID로 본인 정보를 조회한다. 고객·관리자 모두 자신의 정보를 받을 수 있다.
+- [x] 로그인 성공 직후 클라이언트가 새 CSRF 토큰을 받게 한다. 로그인으로 이전 토큰이 폐기되는 동작을 테스트한다.
 
 완료 기준: 실제 로그인으로 받은 세션을 다음 요청에 붙이면 `/my`가 `200`이다. 없는 이메일·틀린 비밀번호·정지 계정은 같은 형태의 `401`이며 새 인증을 만들지 않는다.
 
@@ -210,8 +212,8 @@ CSRF 토큰을 받기 위한 익명 세션과 인증된 세션은 구별한다. 
 
 한 번의 구현에서는 한 단계만 진행하고, 완료 기준과 관련 테스트를 통과하면 체크박스를 갱신한다. 보안 설정을 추가해 기존 테스트의 인증 전제가 바뀌는 수정은 같은 단계에 포함한다.
 
-단계 브랜치는 `feature/session-auth-step0`부터 `feature/session-auth-step6`까지 사용하며, 각 단계 착수 시 최신 `feature/session-auth`에서 분기한다. 푸시 전 `origin/feature/session-auth`를 fetch·rebase하고, 충돌이면 abort 후 보고한다. 각 단계는 해당 파일만 커밋 → 푸시 → `feature/session-auth` 대상 PR → 검증 후 통합 순서다. 완료한 단계 브랜치는 삭제하지 않는다.
+단계 브랜치는 `feature/session-auth-step0`부터 `feature/session-auth-step6`까지 사용하며, 각 단계 착수 시 최신 `feature/session-auth`에서 분기한다. 푸시 전 `origin/feature/session-auth`를 fetch·rebase하고, 충돌이면 abort 후 보고한다. 각 단계는 해당 파일만 커밋 → 푸시 → `feature/session-auth` 대상 PR → 사람이 검토 후 통합하는 순서다. 완료한 단계 브랜치는 삭제하지 않는다.
 
-2026-10-22의 단계별 통합 요청에 따라 에이전트는 **단계 브랜치에서 `feature/session-auth`로의 통합만** 수행한다. `develop`·`main`에는 직접 커밋·푸시하거나 PR을 머지하지 않는다. 최종 `feature/session-auth` → `develop` PR의 머지는 사람이 한다.
+2026-10-25에 갱신한 Git 규칙에 따라 에이전트는 **커밋·푸시·단계 PR 생성까지** 수행한다. 단계 PR과 최종 `feature/session-auth` → `develop` PR의 머지는 모두 사람이 한다. `develop`·`main`에는 직접 커밋·푸시하지 않는다.
 
-**0~2단계를 완료했다.** 다음은 3단계 로그인·현재 회원 조회다.
+**0~2단계는 통합했고, 3단계는 구현·검증을 완료해 PR 통합을 기다린다.** 다음 구현은 4단계 로그아웃·만료·기존 세션의 상태 검사다.

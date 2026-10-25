@@ -1,6 +1,8 @@
 package com.newcafe.backend.config;
 
 import com.newcafe.backend.common.security.SecurityErrorHandler;
+import com.newcafe.backend.common.security.LoginSuccessHandler;
+import com.newcafe.backend.common.security.Passwords;
 
 import jakarta.servlet.DispatcherType;
 
@@ -11,11 +13,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
@@ -27,17 +32,25 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityErrorHandler errors,
-            AuthenticationManager authenticationManager, UrlBasedCorsConfigurationSource corsConfigurationSource)
+            LoginSuccessHandler loginSuccessHandler, AuthenticationManager authenticationManager,
+            UrlBasedCorsConfigurationSource corsConfigurationSource)
             throws Exception {
         http
                 .authenticationManager(authenticationManager)
                 .httpBasic(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
+                .formLogin(form -> form
+                        .loginPage("/api/v1/auth/login")
+                        .loginProcessingUrl("/api/v1/auth/login")
+                        .usernameParameter("email")
+                        .successHandler(loginSuccessHandler)
+                        .failureHandler(errors))
                 .logout(AbstractHttpConfigurer::disable)
                 .requestCache(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.csrfTokenRepository(new HttpSessionCsrfTokenRepository()))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .sessionFixation(fixation -> fixation.changeSessionId()))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(errors)
                         .accessDeniedHandler(errors))
@@ -51,11 +64,21 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager() {
-        // Replaced by database authentication in step3; suppress Boot's generated account in the meantime.
-        return authentication -> {
-            throw new BadCredentialsException("이메일 또는 비밀번호를 확인해 주세요.");
-        };
+    public AuthenticationManager authenticationManager(UserDetailsService userDetailsService, Passwords passwords) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+        // Apply the signup password policy and fail safely on unsupported or damaged stored hashes.
+        provider.setPasswordEncoder(new PasswordEncoder() {
+            @Override
+            public String encode(CharSequence rawPassword) {
+                return passwords.encode(rawPassword == null ? null : rawPassword.toString());
+            }
+
+            @Override
+            public boolean matches(CharSequence rawPassword, String encodedPassword) {
+                return passwords.matches(rawPassword == null ? null : rawPassword.toString(), encodedPassword);
+            }
+        });
+        return new ProviderManager(provider);
     }
 
     @Bean
