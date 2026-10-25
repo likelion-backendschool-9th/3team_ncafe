@@ -28,4 +28,9 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     @Query("select new com.newcafe.backend.entity.song.SongTiming(song.startedAt, song.durationSeconds) "
             + "from Song song where song.status = com.newcafe.backend.entity.song.SongStatus.playing")
     Optional<SongTiming> findPlayingTiming();
+
+    List<Song> findByStatusOrderByCreatedAtAsc(SongStatus status);
+
+    // 공개 목록의 지난 선곡은 최근 20곡만 보여 준다.
+    List<Song> findTop20ByStatusOrderByPlayedAtDesc(SongStatus status);
 }

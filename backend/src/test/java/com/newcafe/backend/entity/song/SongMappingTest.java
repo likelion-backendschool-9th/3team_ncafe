@@ -17,6 +17,7 @@ import org.hibernate.mapping.Column;
 import org.hibernate.mapping.Table;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.parser.PartTree;
 
 class SongMappingTest {
 
@@ -85,6 +86,18 @@ class SongMappingTest {
             }
         } finally {
             StandardServiceRegistryBuilder.destroy(registry);
+        }
+    }
+
+    @Test
+    void derivedQueryNamesUseSongProperties() {
+        for (String method : List.of("findByStatusOrderByPlaylistOrderAsc", "findByUserIdOrderByCreatedAtDesc",
+                "findByIdAndUserId", "findByStatusOrderByCreatedAtAsc", "findTop20ByStatusOrderByPlayedAtDesc")) {
+            PartTree tree = new PartTree(method, Song.class);
+
+            if (method.startsWith("findTop20")) {
+                assertEquals(20, tree.getMaxResults());
+            }
         }
     }
 
