@@ -4,7 +4,8 @@ public class SongException extends RuntimeException {
 
     public enum Reason {
         NOT_FOUND,
-        CONFLICT
+        CONFLICT,
+        INVALID_INPUT
     }
 
     private final Reason reason;

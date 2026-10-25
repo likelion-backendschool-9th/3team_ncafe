@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.newcafe.backend.common.error.SongException;
 import com.newcafe.backend.entity.song.MusicBoxState;
 import com.newcafe.backend.entity.song.Song;
+import com.newcafe.backend.entity.song.SongStatus;
 import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
 
@@ -37,41 +38,50 @@ class SongsServiceTest {
         MusicBoxState state = new MusicBoxState();
 
         when(songRepository.findById(1L)).thenReturn(Optional.of(song));
-        when(songRepository.findByStatus("queued")).thenReturn(List.of());
+        when(songRepository.findByStatus(SongStatus.queued)).thenReturn(List.of());
         when(musicBoxStateRepository.findForUpdate()).thenReturn(state);
-        when(songRepository.findFirstByStatusOrderByPlaylistOrderAsc("queued")).thenReturn(Optional.of(song));
+        when(songRepository.findFirstByStatus(SongStatus.playing)).thenReturn(Optional.empty());
+        when(songRepository.findFirstByStatusOrderByPlaylistOrderAsc(SongStatus.queued)).thenReturn(Optional.of(song));
 
-        service.addToPlaylist(1L, "abc123");
+        service.addToPlaylist(1L, "abc123", null);
 
-        assertEquals("playing", song.getStatus());
-        assertEquals(1L, state.getCurrentSongId());
+        assertEquals(SongStatus.playing, song.getStatus());
+        assertEquals(1L, state.getRevision());
     }
 
     @Test
     void addToPlaylistRejectsNonPendingSong() {
         Song song = newSong(1L);
-        song.setStatus("played");
+        setStatus(song, SongStatus.played);
 
         when(songRepository.findById(1L)).thenReturn(Optional.of(song));
+        when(musicBoxStateRepository.findForUpdate()).thenReturn(new MusicBoxState());
 
-        assertThrows(SongException.class, () -> service.addToPlaylist(1L, "abc123"));
+        assertThrows(SongException.class, () -> service.addToPlaylist(1L, "abc123", null));
     }
 
     @Test
-    void finishCurrentIgnoresMismatchedId() {
+    void finishCurrentIgnoresSongThatIsNotPlaying() {
+        Song song = newSong(99L);
+        setStatus(song, SongStatus.queued);
         MusicBoxState state = new MusicBoxState();
-        state.setCurrentSongId(5L);
 
+        when(songRepository.findById(99L)).thenReturn(Optional.of(song));
         when(musicBoxStateRepository.findForUpdate()).thenReturn(state);
 
         service.finishCurrent(99L);
 
-        assertEquals(5L, state.getCurrentSongId());
+        assertEquals(SongStatus.queued, song.getStatus());
+        assertEquals(0L, state.getRevision());
     }
 
     private Song newSong(Long id) {
-        Song song = new Song("강태윤", "이등병의 편지", "김광석", "사연");
+        Song song = new Song(1L, "강태윤", "이등병의 편지", "김광석", "사연");
         ReflectionTestUtils.setField(song, "id", id);
         return song;
+    }
+
+    private void setStatus(Song song, SongStatus status) {
+        ReflectionTestUtils.setField(song, "status", status);
     }
 }

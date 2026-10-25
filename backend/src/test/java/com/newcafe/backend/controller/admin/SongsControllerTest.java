@@ -62,7 +62,7 @@ class SongsControllerTest {
     }
 
     private Song newSong(Long id) {
-        Song song = new Song("강태윤", "이등병의 편지", "김광석", "사연");
+        Song song = new Song(1L, "강태윤", "이등병의 편지", "김광석", "사연");
         ReflectionTestUtils.setField(song, "id", id);
         return song;
     }

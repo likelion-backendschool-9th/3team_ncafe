@@ -25,7 +25,7 @@ public record SongResponse(
                 song.getSongTitle(),
                 song.getArtist(),
                 song.getStory(),
-                song.getStatus(),
+                song.getStatus().name(),
                 song.getYoutubeVideoId(),
                 song.getPlaylistOrder(),
                 song.getCreatedAt(),

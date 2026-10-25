@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 // TODO: feature/session-auth 머지 후 관리자 권한 체크 추가
-@RestController
+@RestController("adminSongsController")
 @RequestMapping("/api/v1/admin/songs")
 @RequiredArgsConstructor
 public class SongsController {
@@ -42,7 +42,7 @@ public class SongsController {
 
     @PostMapping("/playlist")
     public SongResponse addToPlaylist(@Valid @RequestBody PlaylistItemRequest request) {
-        Song song = songsService.addToPlaylist(request.songId(), request.youtubeVideoId());
+        Song song = songsService.addToPlaylist(request.songId(), request.youtubeVideoId(), request.durationSeconds());
         return SongResponse.from(song);
     }
 
@@ -53,7 +53,7 @@ public class SongsController {
 
     @PutMapping("/playlist/{id}")
     public SongResponse editPlaylistItem(@PathVariable Long id, @Valid @RequestBody PlaylistItemRequest request) {
-        Song song = songsService.editPlaylistItem(id, request.youtubeVideoId());
+        Song song = songsService.editPlaylistItem(id, request.youtubeVideoId(), request.durationSeconds());
         return SongResponse.from(song);
     }
 
