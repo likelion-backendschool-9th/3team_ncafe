@@ -1,9 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { deleteSession } from "./session";
+import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { createAuthSession } from "../api/auth";
 
 export async function logout(): Promise<void> {
-  await deleteSession();
+  await (await createAuthSession()).logout();
+  (await cookies()).delete("ncafe_mock_session");
+  revalidatePath("/", "layout");
   redirect("/");
 }

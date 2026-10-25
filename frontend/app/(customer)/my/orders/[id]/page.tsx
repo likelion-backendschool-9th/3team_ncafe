@@ -18,7 +18,7 @@ export default async function CustomerOrderDetailPage({ params, searchParams }: 
 }) {
   const { id } = await params;
   const customer = await requireRole("customer", `/my/orders/${encodeURIComponent(id)}`);
-  const order = await mockOrderRepository.getByCustomer(id, customer.id);
+  const order = await mockOrderRepository.getByCustomer(id, String(customer.id));
   if (!order) notFound();
   const query = await searchParams;
   const code = orderCode(order);

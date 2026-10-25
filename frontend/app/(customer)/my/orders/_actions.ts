@@ -10,7 +10,7 @@ export async function cancelCustomerOrder(id: string): Promise<void> {
   const customer = await requireRole("customer", detailPath);
 
   try {
-    await mockOrderRepository.cancelByCustomer(id, customer.id);
+    await mockOrderRepository.cancelByCustomer(id, String(customer.id));
   } catch (error) {
     if (error instanceof OrderError && error.code === "NOT_FOUND") notFound();
     redirect(`${detailPath}?error=cancel`);

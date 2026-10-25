@@ -26,7 +26,7 @@ export async function submitMusicRequest(_previous: RequestFormState, formData: 
   if (!story || story.length > 500) return { error: "사연은 1~500자로 입력해 주세요." };
 
   try {
-    await mockMusicBoxRepository.create({ userId: user.id, requesterName: user.name, songTitle, artist, story });
+    await mockMusicBoxRepository.create({ userId: String(user.id), requesterName: user.name, songTitle, artist, story });
   } catch {
     return { error: "신청곡을 접수하지 못했습니다. 잠시 후 다시 시도해 주세요." };
   }
