@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.newcafe.backend.config.PluralTableNamingStrategy;
+import com.newcafe.backend.repository.SongRepository;
 
 import java.util.List;
 
@@ -15,6 +16,7 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.mapping.Column;
 import org.hibernate.mapping.Table;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.jpa.repository.Query;
 
 class SongMappingTest {
 
@@ -57,6 +59,30 @@ class SongMappingTest {
             assertFalse(column(state, "revision").isNullable());
             assertFalse(column(state, "updated_at").isNullable());
             assertEquals("TIMESTAMPTZ", column(state, "updated_at").getSqlType());
+        } finally {
+            StandardServiceRegistryBuilder.destroy(registry);
+        }
+    }
+
+    @Test
+    void playingTimingQueryUsesMappedProperties() throws Exception {
+        StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
+                .applySetting("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect")
+                .applySetting("hibernate.boot.allow_jdbc_metadata_access", false)
+                .build();
+
+        try (var sessionFactory = new MetadataSources(registry)
+                .addAnnotatedClass(Song.class)
+                .buildMetadata()
+                .buildSessionFactory()) {
+            var entityManager = sessionFactory.createEntityManager();
+            try {
+                String query = SongRepository.class.getMethod("findPlayingTiming").getAnnotation(Query.class).value();
+
+                entityManager.createQuery(query, SongTiming.class);
+            } finally {
+                entityManager.close();
+            }
         } finally {
             StandardServiceRegistryBuilder.destroy(registry);
         }

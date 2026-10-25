@@ -162,6 +162,10 @@ public class Song {
 
     // 재생 중인 곡이 끝나는 시각. 영상 길이를 모르면 null이다. 광고·버퍼링 여유로 1초를 더한다.
     public Instant endsAt() {
+        return endsAt(startedAt, durationSeconds);
+    }
+
+    public static Instant endsAt(Instant startedAt, Integer durationSeconds) {
         if (startedAt == null || durationSeconds == null) {
             return null;
         }
