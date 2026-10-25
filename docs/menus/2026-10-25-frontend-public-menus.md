@@ -5,7 +5,7 @@
 - 끝나면: `/menus`, `/menus/[slug]`, `/`의 추천 메뉴가 목 저장소 대신 백엔드 공개 메뉴 API(#76)를 읽는다. 관리자 API로 등록한 메뉴가 방문자 화면에 보인다.
 - 결정 필요: 없음 (아래 가정으로 진행하고 PR에 적는다)
 - 규모: 7단계
-- 현재 (10-25): 1단계 진행 중
+- 현재 (10-25): 1~7단계 완료. #76 백엔드와 ncafedb의 `커피`·`생칡즙`으로 F1~F10을 브라우저에서 확인했다.
 - 위치: `docs/menus/`의 프론트 계획. 백엔드 계획은 `docs/menus/2026-10-25-backend-public-menus.md`(#76).
 
 ## 대상 쌍
@@ -47,7 +47,7 @@ F5 결과 없음
 
 F6 정상
 - When 목록에서 `커피` 카드를 누른다.
-- Then `/menus/coffee`로 이동하고 `GET /menus/coffee`의 이름·가격·설명·사진·카테고리·판매 상태·온도를 보여 준다. 제목은 `커피`, canonical은 `/menus/coffee`다.
+- Then `/menus/coffee`로 이동하고 `GET /menus/coffee`의 이름·가격·설명·사진·카테고리·판매 상태·온도를 보여 준다. 제목은 `커피 | 삼다방`, description은 메뉴 설명이다.
 
 F7 판매 중지
 - Given `fresh-arrowroot-juice`가 판매 중지다.
@@ -80,11 +80,12 @@ F10 없음
    - 커밋: `refactor: 공개 메뉴 카드를 공개 영역으로 옮기고 API 타입 적용` (4단계와 함께 빌드가 통과하도록 4·5·6단계와 같은 커밋에 넣을 수 있다)
 4. `/menus` — F1~F5
    - 파일: `app/(public)/menus/page.tsx`, `app/(public)/menus/_lib/searchParams.ts`
-   - 목 필터·정렬 코드를 지우고 URL을 파싱해 API에 넘긴다. metadata(title `메뉴`, canonical `/menus`)
+   - 목 필터·정렬 코드를 지우고 URL을 파싱해 API에 넘긴다. metadata는 title `메뉴 | 삼다방`과 description
    - `docs/FRONTEND.md`의 `/menus` 매핑·URL 상태를 `category` → `categoryId`로 고친다.
 5. `/menus/[slug]` — F6~F8
    - 파일: `app/(public)/menus/[slug]/page.tsx`. `cache()`로 감싼 조회를 `generateMetadata`와 page가 같이 쓴다.
-   - `supportsHot`/`supportsIced` → `OrderPanel`의 `temperatures`, `menuId`는 `String(id)`. `OrderPanel`은 고치지 않는다.
+   - `supportsHot`/`supportsIced` → `OrderPanel`의 `temperatures`, `menuId`는 `String(id)`.
+   - `OrderPanel`은 로그인 후 돌아올 주소가 `/menus/{menuId}`라서 `menuSlug` prop 하나만 추가한다. 담기 동작은 그대로다.
 6. `/` — F9, F10
    - 파일: `app/(public)/page.tsx`. `pickFeatured` 대신 `GET /index/menus`.
    - 커밋: `feat: 공개 메뉴·홈 추천 화면을 백엔드 API에 연결` (3~6단계)
@@ -112,6 +113,7 @@ F10 없음
 - 영어 이름: 백엔드 메뉴에 `nameEn`이 없어 상세의 영어 이름을 지우고, 검색 안내 문구를 "메뉴 이름"으로 바꾼다. 백엔드 검색은 이름·slug를 본다.
 - 카테고리: 백엔드는 메뉴당 카테고리 하나(`categoryName`)다. 세트 메뉴의 온도 라벨은 `categoryName === "세트"`로 정한다.
 - 인증: 공개 조회라 쿠키가 없어도 된다. 인증 PR #61이 먼저 머지되면 공개 GET 경로 허용이 필요하다(#76에 적음).
+- 제목·canonical: 기존 페이지처럼 title에 `| 삼다방`을 직접 붙인다. canonical은 상대 경로를 쓰려면 루트 `metadataBase`가 있어야 하고(없으면 빌드 오류), 사이트 주소가 미정(6-2)이라 루트 metadata 갭(8-1)을 처리할 때 함께 넣는다.
 - 오류: 백엔드가 꺼져 있거나 `404` 외 오류면 예외를 그대로 던져 `error.tsx`가 처리한다.
 
 ## 참고
