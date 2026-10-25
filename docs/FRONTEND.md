@@ -410,10 +410,12 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 
 ### 8-2. 쌍별 작업
 
+2026-10-25 사용자의 명시적 요청에 따라 에이전트가 인증 단계 PR #71~#74를 순서대로 `feature/session-auth`에 통합했다. 이번 통합은 사람 머지 일반 규칙의 예외다. `develop`에는 미반영이며, 최종 [PR #61](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/61)은 열린 초안으로 유지한다.
+
 | 쌍 | 규칙 갭 | 남은 기능 작업 | 선행 |
 | --- | --- | --- | --- |
-| `/login`·`/signup` ↔ Auth | 인증 API·목 세션 교체·필드 오류·metadata/noindex 완료. `<main>`의 layout 이동은 공통 갭으로 남음 | 인증 6단계 브라우저 검증 완료 | 후속 PR 통합 대기 |
-| `/my` ↔ my/Users | 실제 본인 조회·로그아웃·숫자 ID·metadata/noindex 완료 | 인증 6단계 검증 완료 | 후속 PR 통합 대기 |
+| `/login`·`/signup` ↔ Auth | 인증 API·목 세션 교체·필드 오류·metadata/noindex 완료. `<main>`의 layout 이동은 공통 갭으로 남음 | 인증 6단계 브라우저 검증 완료 | `feature/session-auth` 통합 완료 |
+| `/my` ↔ my/Users | 실제 본인 조회·로그아웃·숫자 ID·metadata/noindex 완료 | 인증 6단계 검증 완료 | `feature/session-auth` 통합 완료 |
 | `/profile/update` ↔ my/Users | — | 화면 신규 | `/my` |
 | `/admin/users*` ↔ admin/Users | title 직접 표기 | API 연결 | Auth |
 | `/admin/users/new` ↔ admin/Users | — | 화면 신규 | `/admin/users` |

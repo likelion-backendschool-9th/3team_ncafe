@@ -10,7 +10,7 @@ Spring Security로 이메일·비밀번호를 인증하고, 서버 세션과 브
 
 - 백엔드는 Java 21, Spring Boot 4.1.1, Gradle Groovy DSL, JPA, PostgreSQL을 사용한다.
 - 회원 도메인·해시·가입·세션 로그인·현재 회원 조회·로그아웃·최신 회원 상태 검사를 구현했다. 기존 관리자 API와 기본 접근 거부 정책을 적용하고, 실제 HTTP·PostgreSQL·서버 재시작까지 검증했다.
-- 프론트엔드는 현재 목 회원 저장소와 `ncafe_mock_session` 쿠키를 사용한다.
+- 프론트엔드의 가입·로그인·현재 회원 조회·로그아웃을 백엔드 세션 쿠키에 연결했다. 인증 외 업무 데이터의 목 저장소는 유지한다.
 - 데이터 기준은 [DB 설계](../../docs/database-design.md), 기존 경로와 계층 기준은 [백엔드 전체 청사진](2026-10-20-backend-blueprint.md)이다.
 - 이번 범위는 공개 회원가입, 로그인·로그아웃, 현재 회원 조회, 세션·CSRF·권한 검사다. 프로필 수정, 관리자 생성·정지 관리 화면, 소셜 로그인, 비밀번호 재설정, 이메일 인증은 후속 작업이다.
 
@@ -224,4 +224,6 @@ CSRF 토큰을 받기 위한 익명 세션과 인증된 세션은 구별한다. 
 
 2026-10-25에 갱신한 Git 규칙에 따라 에이전트는 **커밋·푸시·단계 PR 생성까지** 수행한다. 단계 PR과 최종 `feature/session-auth` → `develop` PR의 머지는 모두 사람이 한다. `develop`·`main`에는 직접 커밋·푸시하지 않는다.
 
-**0~6단계의 구현·검증을 완료했다.** 0~2단계는 통합했고 3~6단계는 PR 통합 대기다. 후속 PR은 앞 단계에 의존하므로 3 → 4 → 5 → 6 순서로 rebase·대상 변경 후 사람이 통합한다. 인증 외 업무 데이터의 프론트 API 연결과 운영 전환은 별도 작업이다.
+**0~6단계의 구현·검증과 `feature/session-auth` 통합을 완료했다.** 2026-10-25 사용자의 명시적 요청에 따라 이번 통합만 에이전트가 수행했다. [#71](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/71) → [#72](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/72) → [#73](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/73) → [#74](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/74) 순서로 후속 단계만 rebase하고 대상을 통합 브랜치로 변경해 squash 병합했다. 일반적인 사람 머지 규칙은 유지한다.
+
+`develop`에는 반영하지 않았으며, `feature/session-auth` → `develop` [#61](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/61)은 열린 초안으로 유지한다. 인증 외 업무 데이터의 프론트 API 연결과 운영 전환은 별도 작업이다.
