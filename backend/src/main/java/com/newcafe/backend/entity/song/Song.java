@@ -33,7 +33,7 @@ public class Song {
     @Column(nullable = false)
     private Long userId;
 
-    @Column(nullable = false, length = 40)
+    @Column(nullable = false, length = 50)
     private String requesterName;
 
     @Column(nullable = false, length = 100)
@@ -62,8 +62,10 @@ public class Song {
     @Column(nullable = false, columnDefinition = "TIMESTAMPTZ")
     private Instant updatedAt;
 
+    @Column(columnDefinition = "TIMESTAMPTZ")
     private Instant playedAt;
 
+    @Column(columnDefinition = "TIMESTAMPTZ")
     private Instant startedAt;
 
     public Song(Long userId, String requesterName, String songTitle, String artist, String story) {
@@ -91,10 +93,16 @@ public class Song {
     }
 
     public void play() {
+        play(Instant.now());
+    }
+
+    // 시간 경과 정리는 앞 곡이 끝났어야 할 시각을 시작 시각으로 기록한다.
+    public void play(Instant at) {
         requireStatus(SongStatus.queued, "플레이리스트에 있는 곡만 바로 재생할 수 있습니다.");
 
         this.status = SongStatus.playing;
-        this.startedAt = Instant.now();
+        this.playlistOrder = null;
+        this.startedAt = at;
     }
 
     public void requeue() {
@@ -103,10 +111,15 @@ public class Song {
     }
 
     public void finish() {
+        finish(Instant.now());
+    }
+
+    public void finish(Instant at) {
         requireStatus(SongStatus.playing, "재생 중인 곡만 종료할 수 있습니다.");
 
         this.status = SongStatus.played;
-        this.playedAt = Instant.now();
+        this.playlistOrder = null;
+        this.playedAt = at;
         this.startedAt = null;
     }
 

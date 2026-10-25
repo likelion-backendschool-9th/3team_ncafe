@@ -1,5 +1,6 @@
 package com.newcafe.backend.entity.song;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 
@@ -12,15 +13,19 @@ import lombok.Getter;
 @Getter
 public class MusicBoxState {
 
+    public static final Long ID = 1L;
+
     @Id
     private Long id;
 
+    @Column(nullable = false)
     private Long revision;
 
+    @Column(nullable = false, columnDefinition = "TIMESTAMPTZ")
     private Instant updatedAt;
 
     public MusicBoxState() {
-        this.id = 1L;
+        this.id = ID;
         this.revision = 0L;
         this.updatedAt = Instant.now();
     }
