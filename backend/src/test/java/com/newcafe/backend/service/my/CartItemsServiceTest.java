@@ -13,7 +13,10 @@ import static org.mockito.Mockito.when;
 
 import com.newcafe.backend.common.error.CartItemException;
 import com.newcafe.backend.common.error.CartItemException.Reason;
+import com.newcafe.backend.dto.cartitems.CartItemQuantityRequest;
 import com.newcafe.backend.dto.cartitems.CartItemRequest;
+import com.newcafe.backend.dto.cartitems.CartItemResponse;
+import com.newcafe.backend.dto.cartitems.CartItemsResponse;
 import com.newcafe.backend.entity.cartitem.CartItem;
 import com.newcafe.backend.entity.category.Category;
 import com.newcafe.backend.entity.menu.Menu;
@@ -23,6 +26,7 @@ import com.newcafe.backend.repository.CartItemRepository;
 import com.newcafe.backend.repository.MenuRepository;
 import com.newcafe.backend.repository.UserRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -129,6 +133,105 @@ class CartItemsServiceTest {
         assertReason(Reason.NOT_FOUND, () -> service.add(MEMBER_ID, 999L, new CartItemRequest("iced", 1)));
         assertReason(Reason.MENU_UNAVAILABLE, () -> service.add(MEMBER_ID, 2L, new CartItemRequest("iced", 1)));
         verify(cartItemRepository, never()).save(any());
+    }
+
+    @Test
+    void s6ListReturnsLinesInAddedOrderWithTotals() {
+        Menu coffee = menu(1L, "커피", 3500, true, true, true);
+        Menu monaka = menu(8L, "모나카", 3000, true, false, false);
+        when(cartItemRepository.findAllByUserIdOrderByIdAsc(MEMBER_ID)).thenReturn(List.of(
+                withId(CartItem.create(MEMBER_ID, coffee, "iced", 2), 11L),
+                withId(CartItem.create(MEMBER_ID, monaka, null, 1), 12L)));
+
+        CartItemsResponse response = service.list(MEMBER_ID);
+
+        assertEquals(List.of(11L, 12L), response.items().stream().map(CartItemResponse::id).toList());
+        assertEquals("menu-1", response.items().get(0).slug());
+        assertEquals(3500, response.items().get(0).unitPrice());
+        assertEquals(7000, response.items().get(0).lineTotal());
+        assertEquals(3, response.totalQuantity());
+        assertEquals(10000, response.totalAmount());
+    }
+
+    @Test
+    void s7PriceAndSoldOutComeFromCurrentMenu() {
+        Menu repricedCoffee = menu(1L, "커피", 4000, true, true, true);
+        Menu soldOutMonaka = menu(8L, "모나카", 3000, false, false, false);
+        when(cartItemRepository.findAllByUserIdOrderByIdAsc(MEMBER_ID)).thenReturn(List.of(
+                withId(CartItem.create(MEMBER_ID, repricedCoffee, "iced", 2), 11L),
+                withId(CartItem.create(MEMBER_ID, soldOutMonaka, null, 1), 12L)));
+
+        CartItemsResponse response = service.list(MEMBER_ID);
+
+        assertEquals(8000, response.items().get(0).lineTotal());
+        assertFalse(response.items().get(1).orderable());
+        assertEquals(3, response.totalQuantity());
+        assertEquals(8000, response.totalAmount());
+    }
+
+    @Test
+    void s8HiddenMenuLineStaysButIsNotOrderable() {
+        Menu hidden = menu(1L, "커피", 3500, true, true, true);
+        hidden.archive();
+        when(cartItemRepository.findAllByUserIdOrderByIdAsc(MEMBER_ID)).thenReturn(List.of(
+                withId(CartItem.create(MEMBER_ID, hidden, "hot", 1), 11L)));
+
+        CartItemsResponse response = service.list(MEMBER_ID);
+
+        assertEquals(1, response.items().size());
+        assertFalse(response.items().get(0).orderable());
+        assertEquals(0, response.totalAmount());
+    }
+
+    @Test
+    void s9ListReadsOnlySignedInMembersLines() {
+        when(cartItemRepository.findAllByUserIdOrderByIdAsc(MEMBER_ID)).thenReturn(List.of());
+
+        assertTrue(service.list(MEMBER_ID).items().isEmpty());
+        verify(cartItemRepository).findAllByUserIdOrderByIdAsc(MEMBER_ID);
+    }
+
+    @Test
+    void s10ChangeQuantityUpdatesOwnedLineAfterLockingMember() {
+        CartItem item = withId(CartItem.create(MEMBER_ID, menu(1L, "커피", 3500, true, true, true), "iced", 2), 11L);
+        lockSucceeds();
+        when(cartItemRepository.findByIdAndUserId(11L, MEMBER_ID)).thenReturn(Optional.of(item));
+
+        CartItemResponse response = service.changeQuantity(MEMBER_ID, 11L, new CartItemQuantityRequest(5));
+
+        assertEquals(5, response.quantity());
+        assertEquals(5, item.getQuantity());
+        InOrder order = inOrder(userRepository, cartItemRepository);
+        order.verify(userRepository).findByIdForUpdate(MEMBER_ID);
+        order.verify(cartItemRepository).findByIdAndUserId(11L, MEMBER_ID);
+    }
+
+    @Test
+    void s11OthersOrMissingLineIsNotFound() {
+        lockSucceeds();
+        when(cartItemRepository.findByIdAndUserId(12L, MEMBER_ID)).thenReturn(Optional.empty());
+
+        assertReason(Reason.NOT_FOUND, () -> service.changeQuantity(MEMBER_ID, 12L, new CartItemQuantityRequest(5)));
+    }
+
+    @Test
+    void s12RemoveDeletesOwnedLine() {
+        CartItem item = withId(CartItem.create(MEMBER_ID, menu(1L, "커피", 3500, true, true, true), "iced", 2), 11L);
+        lockSucceeds();
+        when(cartItemRepository.findByIdAndUserId(11L, MEMBER_ID)).thenReturn(Optional.of(item));
+
+        service.remove(MEMBER_ID, 11L);
+
+        verify(cartItemRepository).delete(item);
+    }
+
+    @Test
+    void s13RemovingOthersOrMissingLineIsNotFound() {
+        lockSucceeds();
+        when(cartItemRepository.findByIdAndUserId(999L, MEMBER_ID)).thenReturn(Optional.empty());
+
+        assertReason(Reason.NOT_FOUND, () -> service.remove(MEMBER_ID, 999L));
+        verify(cartItemRepository, never()).delete(any());
     }
 
     private void lockSucceeds() {

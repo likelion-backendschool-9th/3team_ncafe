@@ -2,11 +2,16 @@ package com.newcafe.backend.controller.my;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -14,11 +19,14 @@ import com.newcafe.backend.common.error.ApiExceptionHandler;
 import com.newcafe.backend.common.error.CartItemException;
 import com.newcafe.backend.common.error.CartItemException.Reason;
 import com.newcafe.backend.common.security.SessionUserDetails;
+import com.newcafe.backend.dto.cartitems.CartItemQuantityRequest;
 import com.newcafe.backend.dto.cartitems.CartItemRequest;
 import com.newcafe.backend.dto.cartitems.CartItemResponse;
+import com.newcafe.backend.dto.cartitems.CartItemsResponse;
 import com.newcafe.backend.entity.user.User;
 import com.newcafe.backend.service.my.CartItemsService;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -143,6 +151,73 @@ class CartItemsControllerTest {
                         .content("{\"temperature\":\"iced\",\"quantity\":1}"))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.code").value("MENU_UNAVAILABLE"));
+    }
+
+    @Test
+    void s6ListReturnsLinesAndTotalsWithoutCaching() throws Exception {
+        when(cartItemsService.list(MEMBER_ID)).thenReturn(new CartItemsResponse(
+                List.of(line(11L, "iced", 2), line(12L, null, 1)), 3, 10500));
+
+        mockMvc.perform(get("/api/v1/cart/items"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.items[0].id").value(11))
+                .andExpect(jsonPath("$.items[0].unitPrice").value(3500))
+                .andExpect(jsonPath("$.totalQuantity").value(3))
+                .andExpect(jsonPath("$.totalAmount").value(10500));
+    }
+
+    @Test
+    void s10ChangeQuantityReturnsUpdatedLine() throws Exception {
+        when(cartItemsService.changeQuantity(MEMBER_ID, 11L, new CartItemQuantityRequest(5)))
+                .thenReturn(line(11L, "iced", 5));
+
+        mockMvc.perform(put("/api/v1/cart/items/11").contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":5}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.quantity").value(5));
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidQuantityBodies")
+    void s11InvalidQuantityReturnsBadRequestWithoutCallingService(String body) throws Exception {
+        mockMvc.perform(put("/api/v1/cart/items/11").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+
+        verifyNoInteractions(cartItemsService);
+    }
+
+    static Stream<String> invalidQuantityBodies() {
+        return Stream.of("{\"quantity\":0}", "{\"quantity\":21}", "{}");
+    }
+
+    @Test
+    void s11OthersOrMissingLineReturnsNotFound() throws Exception {
+        when(cartItemsService.changeQuantity(MEMBER_ID, 12L, new CartItemQuantityRequest(5)))
+                .thenThrow(new CartItemException(Reason.NOT_FOUND, "장바구니 항목을 찾을 수 없습니다."));
+
+        mockMvc.perform(put("/api/v1/cart/items/12").contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":5}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    void s12RemoveReturnsNoContent() throws Exception {
+        mockMvc.perform(delete("/api/v1/cart/items/11"))
+                .andExpect(status().isNoContent());
+
+        verify(cartItemsService).remove(MEMBER_ID, 11L);
+    }
+
+    @Test
+    void s13RemovingOthersOrMissingLineReturnsNotFound() throws Exception {
+        doThrow(new CartItemException(Reason.NOT_FOUND, "장바구니 항목을 찾을 수 없습니다."))
+                .when(cartItemsService).remove(MEMBER_ID, 999L);
+
+        mockMvc.perform(delete("/api/v1/cart/items/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
 
     static CartItemResponse line(Long id, String temperature, int quantity) {

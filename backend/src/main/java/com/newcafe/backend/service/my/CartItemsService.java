@@ -2,8 +2,10 @@ package com.newcafe.backend.service.my;
 
 import com.newcafe.backend.common.error.CartItemException;
 import com.newcafe.backend.common.error.CartItemException.Reason;
+import com.newcafe.backend.dto.cartitems.CartItemQuantityRequest;
 import com.newcafe.backend.dto.cartitems.CartItemRequest;
 import com.newcafe.backend.dto.cartitems.CartItemResponse;
+import com.newcafe.backend.dto.cartitems.CartItemsResponse;
 import com.newcafe.backend.entity.cartitem.CartItem;
 import com.newcafe.backend.entity.menu.Menu;
 import com.newcafe.backend.repository.CartItemRepository;
@@ -50,6 +52,31 @@ public class CartItemsService {
 
         CartItem created = cartItemRepository.save(CartItem.create(userId, menu, temperature, request.quantity()));
         return new Added(CartItemResponse.from(created), true);
+    }
+
+    @Transactional(readOnly = true)
+    public CartItemsResponse list(Long userId) {
+        return CartItemsResponse.from(cartItemRepository.findAllByUserIdOrderByIdAsc(userId));
+    }
+
+    @Transactional
+    public CartItemResponse changeQuantity(Long userId, Long cartItemId, CartItemQuantityRequest request) {
+        lockMember(userId);
+        CartItem item = findOwned(userId, cartItemId);
+        item.changeQuantity(request.quantity());
+        return CartItemResponse.from(item);
+    }
+
+    @Transactional
+    public void remove(Long userId, Long cartItemId) {
+        lockMember(userId);
+        cartItemRepository.delete(findOwned(userId, cartItemId));
+    }
+
+    // 남의 줄도 없는 줄과 같은 404로 답해 존재를 알리지 않는다.
+    private CartItem findOwned(Long userId, Long cartItemId) {
+        return cartItemRepository.findByIdAndUserId(cartItemId, userId)
+                .orElseThrow(() -> new CartItemException(Reason.NOT_FOUND, "장바구니 항목을 찾을 수 없습니다."));
     }
 
     // 같은 회원의 장바구니 변경을 한 순서로 적용해, 동시에 담아도 같은 메뉴·온도 줄이 둘 생기지 않게 한다.
