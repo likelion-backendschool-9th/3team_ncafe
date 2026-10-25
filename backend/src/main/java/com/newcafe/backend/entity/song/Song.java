@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 
+import java.time.Duration;
 import java.time.Instant;
 
 import lombok.AccessLevel;
@@ -25,6 +26,8 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Song {
+
+    private static final Duration END_GRACE = Duration.ofSeconds(1);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -155,6 +158,15 @@ public class Song {
         this.status = SongStatus.played;
         this.playlistOrder = null;
         this.playedAt = Instant.now();
+    }
+
+    // 재생 중인 곡이 끝나는 시각. 영상 길이를 모르면 null이다. 광고·버퍼링 여유로 1초를 더한다.
+    public Instant endsAt() {
+        if (startedAt == null || durationSeconds == null) {
+            return null;
+        }
+
+        return startedAt.plus(Duration.ofSeconds(durationSeconds)).plus(END_GRACE);
     }
 
     private void requireStatus(SongStatus expected, String message) {
