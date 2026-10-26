@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { logout } from "@/app/_lib/session/logout";
 import { requireRole } from "@/app/_lib/session/session";
 import styles from "./mypage.module.css";
+
+export const metadata: Metadata = { title: "마이페이지", robots: { index: false } };
 
 const shortcuts = [
   {
@@ -38,7 +41,7 @@ export default async function MyPage() {
       <section className={styles.memberCard} aria-labelledby="member-card-title">
         <div className={styles.memberCardTop}>
           <h2 id="member-card-title">삼다방 단골 회원증</h2>
-          <span>No. {user.id.slice(0, 8).toUpperCase()}</span>
+          <span>No. {user.id}</span>
         </div>
         <dl className={styles.memberFields}>
           <div>

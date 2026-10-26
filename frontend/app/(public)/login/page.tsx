@@ -1,10 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { login } from "./_actions/login";
+import { safeNext } from "@/app/_lib/auth/navigation";
+import { LoginForm } from "./_components/LoginForm";
 
-type SearchParams = Promise<{ error?: string; next?: string }>;
+export const metadata: Metadata = { title: "로그인", robots: { index: false } };
 
-export default async function LoginPage({ searchParams }: { searchParams: SearchParams }) {
-  const { error, next } = await searchParams;
+type Props = { searchParams: Promise<{ next?: string | string[]; registered?: string | string[] }> };
+
+export default async function LoginPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const next = safeNext(params.next);
 
   return (
     <main className="container auth-page">
@@ -12,28 +17,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
         <p className="eyebrow">계정</p>
         <h1>로그인</h1>
         <p className="muted">삼다방 계정으로 계속하세요.</p>
-        {error && <p className="form-error" role="alert">이메일 또는 비밀번호를 확인해 주세요.</p>}
-        <form action={login} className="form-stack">
-          {next && <input type="hidden" name="next" value={next} />}
-          <label>
-            이메일
-            <input name="email" type="email" autoComplete="email" required />
-          </label>
-          <label>
-            비밀번호
-            <input name="password" type="password" autoComplete="current-password" required />
-          </label>
-          <button className="button" type="submit">로그인</button>
-        </form>
-        <p className="auth-card__aside">계정이 없나요? <Link href="/signup">회원가입</Link></p>
-        {process.env.NODE_ENV !== "production" && (
-          <div className="demo-note">
-            <strong>로컬 목 계정</strong>
-            <span>관리자: admin@ncafe.local</span>
-            <span>고객: customer@ncafe.local</span>
-            <span>공통 비밀번호: demo1234!</span>
-          </div>
-        )}
+        {params.registered === "1" && <p role="status">회원가입이 완료되었습니다. 가입한 계정으로 로그인해 주세요.</p>}
+        <LoginForm next={next} />
+        <p className="auth-card__aside">계정이 없나요? <Link href={`/signup${next ? `?next=${encodeURIComponent(next)}` : ""}`}>회원가입</Link></p>
       </div>
     </main>
   );

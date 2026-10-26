@@ -14,7 +14,7 @@ export async function createCustomerOrder(input: CreateOrderInput): Promise<Crea
 
   let order;
   try {
-    order = await mockOrderRepository.create(customer, input);
+    order = await mockOrderRepository.create({ id: String(customer.id), name: customer.name }, input);
   } catch (error) {
     if (error instanceof OrderError) {
       if (error.code === "PRICE_CHANGED") {

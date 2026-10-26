@@ -9,7 +9,7 @@ const pagePath = "/my/songs";
 
 export async function deleteMyMusicRequest(id: string): Promise<void> {
   const customer = await requireRole("customer", pagePath);
-  const removed = await mockMusicBoxRepository.removeByUser(id, customer.id);
+  const removed = await mockMusicBoxRepository.removeByUser(id, String(customer.id));
   if (!removed) redirect(`${pagePath}?error=delete`);
 
   revalidatePath("/");

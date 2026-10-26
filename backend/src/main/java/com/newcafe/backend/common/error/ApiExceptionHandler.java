@@ -1,6 +1,7 @@
 package com.newcafe.backend.common.error;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -11,6 +12,17 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    @ExceptionHandler(SignupException.class)
+    public ResponseEntity<ErrorResponse> handleSignupException(SignupException exception) {
+        HttpStatus status = switch (exception.getReason()) {
+            case VALIDATION_ERROR -> HttpStatus.BAD_REQUEST;
+            case EMAIL_ALREADY_EXISTS -> HttpStatus.CONFLICT;
+        };
+
+        return ResponseEntity.status(status).cacheControl(CacheControl.noStore())
+                .body(new ErrorResponse(exception.getReason().name(), exception.getMessage()));
+    }
 
     @ExceptionHandler(CategoryException.class)
     public ResponseEntity<ErrorResponse> handleCategoryException(CategoryException exception) {

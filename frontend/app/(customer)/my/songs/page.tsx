@@ -33,15 +33,16 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
   const onAir = onAirOf(playing);
   const playlist = playlistOf(requests);
   const queuePosition = new Map(playlist.map((request, index) => [request.id, index + 1]));
+  const memberId = String(user.id);
   // 내 신청곡은 재생 중 → 플레이리스트(차례 순) → 접수 → 재생 완료 → 취소됨으로 보여 준다.
   const mine = requests
-    .filter((request) => request.userId === user.id)
+    .filter((request) => request.userId === memberId)
     .sort((a, b) =>
       statusOrder[a.status] - statusOrder[b.status] ||
       (queuePosition.get(a.id) ?? 0) - (queuePosition.get(b.id) ?? 0),
     );
   // 내 메모는 모두 내 글씨 하나로, 다른 손님의 곡이 재생 중이면 메모지는 다른 글씨로 적는다.
-  const [myHand, otherHand] = handwritingSequence(user.id, 2);
+  const [myHand, otherHand] = handwritingSequence(memberId, 2);
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
@@ -72,7 +73,7 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
               story: playing.story,
               requesterName: playing.requesterName,
               youtubeVideoId: playing.youtubeVideoId,
-              handwriting: playing.userId === user.id ? myHand : otherHand,
+              handwriting: playing.userId === memberId ? myHand : otherHand,
             } : null}
             onAir={onAir}
           />
