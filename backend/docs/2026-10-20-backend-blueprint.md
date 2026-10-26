@@ -205,7 +205,7 @@ backend/
    └─ repository/MenuRepositoryTest.java
 ```
 
-Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요청 주체인 `my/`·`admin/`이 아닌 **데이터 도메인** 아래에 둔다. 예를 들어 관리자 메뉴 등록과 공개 메뉴 조회의 DTO는 모두 `dto/menus/`에 두고, 관리자 전용 주문 응답은 `dto/orders/AdminOrderResponse.java`로 구별한다. 곡 신청·재생 목록·현재 곡의 DTO는 `dto/songs/`에 모은다. `Song.java`는 DB의 `music_requests`에 매핑되고, `MusicBoxState.java`는 재생 전환용 내부 상태를 나타낸다. 재생 목록은 별도 테이블 없이 곡의 상태·순서로 다룬다. `service/support/`에는 두 개 이상의 시스템이 같이 쓰는 Service 계층 부품만 둔다. 자기 API가 없어 Controller가 직접 부르지 않고, 자기 트랜잭션을 만들지 않는다(`@Transactional(propagation = MANDATORY)`). 예: `MusicBoxSettler`는 공개·회원·관리자 서비스가 곡을 읽거나 바꾸기 전에 시간이 지난 곡을 정리한다. 위 트리의 파일은 최초 구현 위치를 나타내며 필요한 요청·응답 DTO는 해당 도메인 폴더에 추가한다. 현재 프론트 페이지 및 WBS 화면과 대응은 다음과 같다.
+Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요청 주체인 `my/`·`admin/`이 아닌 **데이터 도메인** 아래에 둔다. 예를 들어 관리자 메뉴 등록과 공개 메뉴 조회의 DTO는 모두 `dto/menus/`에 두고, 관리자 전용 주문 응답은 `dto/orders/AdminOrderResponse.java`로 구별한다. 곡 신청·재생 목록·현재 곡의 DTO는 `dto/songs/`에 모은다. `Song.java`는 DB의 `songs`에 매핑되고, `MusicBoxState.java`는 재생 전환용 내부 상태를 나타낸다. 재생 목록은 별도 테이블 없이 곡의 상태·순서로 다룬다. `service/support/`에는 두 개 이상의 시스템이 같이 쓰는 Service 계층 부품만 둔다. 자기 API가 없어 Controller가 직접 부르지 않고, 자기 트랜잭션을 만들지 않는다(`@Transactional(propagation = MANDATORY)`). 예: `MusicBoxSettler`는 공개·회원·관리자 서비스가 곡을 읽거나 바꾸기 전에 시간이 지난 곡을 정리한다. 위 트리의 파일은 최초 구현 위치를 나타내며 필요한 요청·응답 DTO는 해당 도메인 폴더에 추가한다. 현재 프론트 페이지 및 WBS 화면과 대응은 다음과 같다.
 
 같은 클래스명이 여러 패키지에 있으면 `@RestController("publicMenusController")`·`@RestController("adminMenusController")`처럼 역할별 Bean 이름을 어노테이션에 지정하고, Service도 `@Service`에 고유 이름을 지정한다. 이 규칙은 `Users`·`Menus`·`Orders`·`Songs`에도 적용한다.
 
@@ -268,7 +268,7 @@ WBS 5.3의 `/api/v1/admin/orders/focus`와 12.3의 `/api/v1/admin/orders/status`
 | `menus` | 카테고리 하나, 변경·재사용하지 않는 고유 `slug`, 양수 가격, `hot`/`iced` 지원 여부, `is_new`·`recommended`. 삭제는 `available=false`와 `archived_at`을 쓰는 숨김 처리. |
 | `cart_items` | 회원·메뉴·온도별 한 줄, 수량 1~20. 메뉴 이름·가격은 복제하지 않고 현재 메뉴에서 읽음. `NULL` 온도도 중복 방지. |
 | `orders`, `order_items` | 주문 헤더에 회원·매장/포장·카운터 결제수단·요청사항·상태·총액·`status_version`; 품목에 당시 이름·이미지·옵션·단가·수량·합계를 불변 스냅샷으로 저장. |
-| `music_requests`, `music_box_state` | 신청 상태 `pending`→`queued`→`playing`→`played`와 `cancelled`. 단일 상태 행(`id=1`)의 `revision`을 올리며 재생 중 곡은 최대 1개. |
+| `songs`, `music_box_state` | 신청 상태 `pending`→`queued`→`playing`→`played`와 `cancelled`. 단일 상태 행(`id=1`)의 `revision`을 올리며 재생 중 곡은 최대 1개. |
 
 현재 스키마에는 실제 결제 거래·결제수단 테이블이 없다. 이번 DB 구축에도 포함하지 않는다. 기존 프론트 목 데이터를 이관하지 않으며 초기 데이터는 보호 `기타`와 첫 관리자만 둔다. 세트 메뉴는 구성품 관계 없이 메뉴 한 건이다.
 

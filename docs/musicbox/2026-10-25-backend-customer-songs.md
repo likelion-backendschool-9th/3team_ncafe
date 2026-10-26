@@ -64,7 +64,7 @@ R1은 PR #78(cha)이 구현했다. 이 PR은 단계 3에서 부족한 부분만 
 S1 저장 형식
 - Given `Song`, `MusicBoxState` 엔티티와 `PluralTableNamingStrategy`가 있다.
 - When Hibernate 메타데이터를 만든다 (`PluralTableNamingStrategyTest` 방식).
-- Then `music_requests`의 `song_title`은 100자, `artist`는 80자다.
+- Then `music_requests`의 `song_title`은 100자, `artist`는 80자다. (고침 10-27: 테이블 이름을 `songs`로 바꿨다)
 - Then `story`는 `text`, `user_id`와 `status`는 `NOT NULL`이다.
 - Then `youtube_video_id`, `playlist_order`, `duration_seconds`, `started_at`, `played_at`은 `NULL`을 허용한다.
 - Then 시각 컬럼(`created_at`, `updated_at`, `started_at`, `played_at`, `music_box_state.updated_at`)은 `TIMESTAMPTZ`다.
@@ -405,7 +405,7 @@ cha, #69, 이 PR이 모두 핸들러를 추가한다.
 - 카테고리 계획: 구현 기준 1~8. `is_fallback` 부분 인덱스 적용 방법이 아직 결정 필요 상태다 (2026-10-25 확인).
 - 메뉴 계획: `MenuFields`, Bean 이름, 단계별 커밋 형식 (2026-10-25 확인)
 - develop에는 PostgreSQL 통합 테스트가 없다. 테스트는 Mockito·MockMvc·Hibernate 메타데이터(`PluralTableNamingStrategyTest`) 중심이다 (2026-10-25 확인).
-- `PluralTableNamingStrategy`에 `Song`→`music_requests`, `MusicBoxState`→`music_box_state` 매핑이 이미 있다 (2026-10-25 확인).
+- `PluralTableNamingStrategy`에 `Song`→`music_requests`, `MusicBoxState`→`music_box_state` 매핑이 이미 있다 (고침 10-27: `Song` 예외를 지워 기본 규칙대로 `songs`가 된다) (2026-10-25 확인).
 - 프론트 목 저장소 `frontend/app/_lib/mock/music-box.ts`: `END_GRACE_MS=1000`, `settle` (2026-10-25 확인)
 - 프론트 영상 길이 출처 (2026-10-25 확인):
   - 관리자가 플레이리스트에 담을 때 미리보기가 잰 길이를 보낸다 (`AddToPlaylistForm.tsx`).
