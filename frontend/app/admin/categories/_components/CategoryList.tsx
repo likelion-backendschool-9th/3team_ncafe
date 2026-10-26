@@ -9,7 +9,7 @@ import styles from "../categories.module.css";
 type Props = { categories: CategoryResponse[] };
 
 export function CategoryList({ categories }: Props) {
-  const { order, error, dragId, overId, startDrag, dragOver, dragLeave, drop, clearDrag, move } = useCategoryOrder(categories);
+  const { order, movableCount, error, dragId, overId, startDrag, dragOver, dragLeave, drop, clearDrag, move } = useCategoryOrder(categories);
 
   return (
     <>
@@ -18,9 +18,11 @@ export function CategoryList({ categories }: Props) {
         {order.map((category, index) => (
           <div
             key={category.id}
-            draggable
+            draggable={!category.isFallback}
             onDragStart={() => startDrag(category.id)}
             onDragOver={(event: DragEvent<HTMLDivElement>) => {
+              // 기타 행 위로는 놓을 수 없게 기본 동작(drop 거부)을 그대로 둔다.
+              if (category.isFallback) return;
               event.preventDefault();
               dragOver(category.id);
             }}
@@ -35,8 +37,8 @@ export function CategoryList({ categories }: Props) {
             <CategoryRow
               category={category}
               position={index + 1}
-              isFirst={index === 0}
-              isLast={index === order.length - 1}
+              canMoveUp={!category.isFallback && index > 0}
+              canMoveDown={index < movableCount - 1}
               onMoveUp={() => move(category.id, "up")}
               onMoveDown={() => move(category.id, "down")}
             />

@@ -20,14 +20,15 @@ async function createMenus(page: Page, categoryId: number, count: number) {
 }
 
 // 스트리밍 중에는 숨겨진 페이지 사본이 잠시 DOM에 함께 있으므로 보이는 행만 고른다.
-const rows = (page: Page) => page.locator('div[draggable="true"]:visible');
+// 기타 행은 draggable="false"라서 값과 관계없이 draggable 속성으로 찾는다.
+const rows = (page: Page) => page.locator("div[draggable]:visible");
+const rowNames = (page: Page) => rows(page).locator('input[name="name"]').evaluateAll((inputs) => inputs.map((input) => (input as HTMLInputElement).value));
 const row = (page: Page, name: string) =>
   rows(page).filter({ has: page.getByLabel(`${name} 카테고리명`, { exact: true }) });
 
 // 화면의 카테고리 순서 중 이 테스트가 만든 이름만 남긴다.
 async function orderOf(page: Page, names: string[]) {
-  const values = await rows(page).locator('input[name="name"]').evaluateAll((inputs) => inputs.map((input) => (input as HTMLInputElement).value));
-  return values.filter((value) => names.includes(value));
+  return (await rowNames(page)).filter((value) => names.includes(value));
 }
 
 test.beforeEach(async ({ page }) => {
@@ -62,7 +63,7 @@ test("C3 고객은 카테고리 관리에 들어갈 수 없다", async ({ browse
   await page.close();
 });
 
-test("C5 추가하면 앞뒤 공백을 지우고 마지막에 저장한다", async ({ page }) => {
+test("F4 추가하면 앞뒤 공백을 지우고 기타 바로 위에 저장한다", async ({ page }) => {
   const name = unique("차");
   const input = page.getByLabel("새 카테고리명", { exact: true });
   await input.fill(`  ${name}  `);
@@ -70,8 +71,45 @@ test("C5 추가하면 앞뒤 공백을 지우고 마지막에 저장한다", asy
 
   await expect(row(page, name)).toBeVisible();
   await expect(input).toHaveValue("");
+  await expect.poll(async () => (await rowNames(page)).slice(-2)).toEqual([name, "기타"]);
   await page.reload();
-  await expect(rows(page).locator('input[name="name"]').last()).toHaveValue(name);
+  await expect.poll(async () => (await rowNames(page)).slice(-2)).toEqual([name, "기타"]);
+});
+
+test("F1·F2 기타는 맨 아래에 고정되고 바로 위 행은 아래로 옮길 수 없다", async ({ page }) => {
+  const tea = await createCategory(page, unique("녹차"));
+  await page.reload();
+
+  await expect.poll(async () => (await rowNames(page)).at(-1)).toBe("기타");
+  const fallback = row(page, "기타");
+  await expect(fallback).toHaveAttribute("draggable", "false");
+  await expect(page.getByRole("button", { name: "기타 위로 이동", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "기타 아래로 이동", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: `${tea.name} 아래로 이동`, exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: `${tea.name} 위로 이동`, exact: true })).toBeEnabled();
+});
+
+test("F3 기타 위로 끌어 놓아도 순서가 바뀌지 않는다", async ({ page }) => {
+  const coffee = await createCategory(page, unique("커피"));
+  const tea = await createCategory(page, unique("녹차"));
+  await page.reload();
+  const before = await rowNames(page);
+  const actions: string[] = [];
+  page.on("request", (request) => { if (request.method() === "POST" && request.headers()["next-action"]) actions.push(request.url()); });
+
+  await row(page, coffee.name).dragTo(row(page, "기타"));
+
+  await expect.poll(() => rowNames(page)).toEqual(before);
+  expect(actions).toEqual([]);
+  await page.reload();
+  expect(await orderOf(page, [coffee.name, tea.name, "기타"])).toEqual([coffee.name, tea.name, "기타"]);
+});
+
+test("F5 공개 메뉴의 카테고리 탭은 기타가 마지막이다", async ({ page }) => {
+  await createCategory(page, unique("커피"));
+  await page.goto("/menus");
+  const tabs = page.getByRole("navigation", { name: "카테고리 필터" }).getByRole("link");
+  await expect(tabs.last()).toHaveText("기타");
 });
 
 test("C6 중복 이름은 백엔드 메시지를 보여 주고 입력값을 유지한다", async ({ page }) => {
