@@ -1,7 +1,5 @@
 package com.newcafe.backend.common.error;
 
-import com.newcafe.backend.common.security.AuthenticationRequiredException;
-
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
@@ -103,11 +101,5 @@ public class ApiExceptionHandler {
     public ResponseEntity<ErrorResponse> handleConstraintConflict(DataIntegrityViolationException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse("CONFLICT", "다른 변경과 충돌했습니다. 새로고침 후 다시 시도해 주세요."));
-    }
-
-    @ExceptionHandler(AuthenticationRequiredException.class)
-    public ResponseEntity<ErrorResponse> handleAuthenticationRequired(AuthenticationRequiredException exception) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ErrorResponse("UNAUTHENTICATED", exception.getMessage()));
     }
 }
