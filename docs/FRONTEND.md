@@ -423,7 +423,7 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | `/cart` ↔ my/CartItems | 화면 전체가 클라이언트, "주문하기"가 `router.push`(`CartView.tsx:22`), Context+localStorage | 서버 장바구니, 체크는 로컬 상태, `iced` | 담기, Auth |
 | `/checkout` ↔ my/Orders | 화면 전체가 클라이언트, `cart` CSS import, "주문 / 결제"·"결제하기" 용어 | `POST /orders`(`cartItemIds`·수령 방식·결제수단·요청사항) | `/cart`, 조회 방식 결정 |
 | `/my/orders*` ↔ my/Orders | metadata 없음 | API 연결, 고객 취소 결정 | `/checkout` |
-| `/admin/orders*` ↔ **admin/Orders** | metadata 없음, page 226줄, 상태 select가 `aria-label`만 | 백엔드 API 구현(2026-10-26). 인증·API 연결, 숫자 ID·`temperature`·`statusVersion`·`allowedStatuses`, 취소 사유 제거·`received`만 취소. [계약](admin/orders/2026-10-26-backend-order-management.md) | Auth, `/checkout`, 회원 FK 통합 |
+| `/admin/orders*` ↔ **admin/Orders** | metadata 없음, page 226줄, 상태 select가 `aria-label`만 | 백엔드 API 구현. [프론트 연결·컴포넌트 분리 계획](admin/orders/2026-10-26-frontend-order-management.md) 작성(2026-10-26), 구현 미착수. 실제 세션/CSRF·DB 페이지·숫자 ID·`temperature`·`statusVersion`·`allowedStatuses`, 사유 없는 접수 취소 적용. [계약](admin/orders/2026-10-26-backend-order-management.md) | 인증 코드는 작업 브랜치에 통합됨. 테스트 관리자/주문 필요. 고객 전체 흐름은 D·회원 FK 통합 후 검증 |
 | `/musicbox` ↔ **Songs** | metadata·canonical 없음, `<main>`이 page에 있음. 공유 컴포넌트는 `app/_components`로 옮김, `loading`·`error` 추가 | 공개 조회·신청·`revision` 폴링 연결 완료([계획](musicbox/2026-10-27-frontend-customer-songs.md)) | — |
 | `/my/songs` ↔ **my/Songs** | metadata 없음. `loading`·`error` 추가 | 조회·삭제 API 연결 완료, 현재 곡은 보조 조회(2-3) | — |
 | `/admin/songs` ↔ **admin/Songs** | metadata 없음, page 203줄 | 선곡 API 연결 완료(#85). 변경 요청 CSRF·`revision` 폴링 보완(2026-10-27) | — |
