@@ -72,7 +72,7 @@ class SongsServiceTest {
     }
 
     @Test
-    void finishCurrentIgnoresSongThatIsNotPlaying() {
+    void finishCurrentKeepsSongThatIsNotPlayingButTouches() {
         Song song = newSong(99L);
         setStatus(song, SongStatus.queued);
         MusicBoxState state = new MusicBoxState();
@@ -83,7 +83,7 @@ class SongsServiceTest {
         service.finishCurrent(99L);
 
         assertEquals(SongStatus.queued, song.getStatus());
-        assertEquals(0L, state.getRevision());
+        assertEquals(1L, state.getRevision());
     }
 
     @Test

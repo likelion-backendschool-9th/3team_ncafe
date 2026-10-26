@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -47,7 +46,7 @@ class MusicBoxSettlerTest {
     }
 
     @Test
-    void lockAndSettleReportsSettledSongWithoutTouching() {
+    void lockAndSettleSettlesWithoutTouching() {
         MusicBoxState state = new MusicBoxState();
         Song current = new Song(7L, "민지", "밤편지", "아이유", "사연");
         current.queue("abcdefghijk", 200);
@@ -56,10 +55,9 @@ class MusicBoxSettlerTest {
         when(songRepository.findFirstByStatus(SongStatus.playing)).thenReturn(Optional.of(current));
         when(songRepository.findByStatusOrderByPlaylistOrderAsc(SongStatus.queued)).thenReturn(List.of());
 
-        MusicBoxSettler.Locked locked = settler.lockAndSettle(STARTED_AT.plusSeconds(300));
+        MusicBoxState locked = settler.lockAndSettle(STARTED_AT.plusSeconds(300));
 
-        assertSame(state, locked.state());
-        assertTrue(locked.settled());
+        assertSame(state, locked);
         assertEquals(SongStatus.played, current.getStatus());
         assertEquals(0L, state.getRevision());
     }

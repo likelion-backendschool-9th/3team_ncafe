@@ -41,7 +41,7 @@ public class SongsService {
     @Transactional
     public void delete(Long userId, Long id) {
         Instant now = clock.instant();
-        MusicBoxState state = musicBoxSettler.lockAndSettle(now).state();
+        MusicBoxState state = musicBoxSettler.lockAndSettle(now);
 
         Song song = songRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new SongException(Reason.NOT_FOUND, "신청곡을 찾을 수 없습니다."));

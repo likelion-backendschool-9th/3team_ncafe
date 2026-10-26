@@ -26,9 +26,10 @@ public class MusicBoxSettler {
     private final MusicBoxStateRepository musicBoxStateRepository;
 
     // 쓰기용. 상태 행을 잠근 뒤 정리한다. revision은 호출한 서비스가 변경을 마친 뒤 한 번 올린다.
-    public Locked lockAndSettle(Instant now) {
+    public MusicBoxState lockAndSettle(Instant now) {
         MusicBoxState state = lockState();
-        return new Locked(state, settle(now));
+        settle(now);
+        return state;
     }
 
     // 조회용. 끝난 곡이 있을 때만 잠그고 정리한 뒤 revision을 올린다.
@@ -62,9 +63,5 @@ public class MusicBoxSettler {
         }
 
         return state;
-    }
-
-    // settled: 정리로 상태가 바뀌었는지. 변경 없이 끝나는 쓰기도 정리했다면 revision을 올려야 한다.
-    public record Locked(MusicBoxState state, boolean settled) {
     }
 }
