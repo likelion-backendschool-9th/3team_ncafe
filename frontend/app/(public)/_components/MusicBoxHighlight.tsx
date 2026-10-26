@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { mockMusicBoxRepository, musicBoxVersion, onAirOf, playlistOf } from "@/app/_lib/mock/music-box";
-import { DjBooth } from "./DjBooth";
-import { handwritingSequence } from "./handwriting";
-import styles from "./music-box-highlight.module.css";
-import { MusicBoxRefresher } from "./MusicBoxRefresher";
-import { RequestMemo, RequestMemoBoard } from "./RequestMemo";
+import { DjBooth } from "@/app/_components/DjBooth";
+import { handwritingSequence } from "@/app/_lib/songs/handwriting";
+import styles from "@/app/_components/music-box-highlight.module.css";
+import { MusicBoxRefresher } from "@/app/_components/MusicBoxRefresher";
+import { RequestMemo, RequestMemoBoard } from "@/app/_components/RequestMemo";
 
 // 홈 하단 뮤직박스 칸: 지금 흐르는 노래(DJ 부스)와 다음 차례 신청곡 3곡을 사연과 함께 보여 준다.
 // 곡이 끝나거나 관리자가 곡을 바꾸면 페이지를 다시 불러오지 않고 이 칸이 다음 곡으로 바뀐다.

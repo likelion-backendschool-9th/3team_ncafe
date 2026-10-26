@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { mockMusicBoxRepository, musicBoxVersion, onAirOf, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
 import { requireRole } from "@/app/_lib/session/session";
-import { DjBooth } from "@/app/(public)/musicbox/_components/DjBooth";
-import { handwritingSequence } from "@/app/(public)/musicbox/_components/handwriting";
-import boothStyles from "@/app/(public)/musicbox/_components/music-box-highlight.module.css";
-import { MusicBoxRefresher } from "@/app/(public)/musicbox/_components/MusicBoxRefresher";
-import { RequestMemo, RequestMemoBoard } from "@/app/(public)/musicbox/_components/RequestMemo";
+import { DjBooth } from "@/app/_components/DjBooth";
+import { handwritingSequence } from "@/app/_lib/songs/handwriting";
+import boothStyles from "@/app/_components/music-box-highlight.module.css";
+import { MusicBoxRefresher } from "@/app/_components/MusicBoxRefresher";
+import { RequestMemo, RequestMemoBoard } from "@/app/_components/RequestMemo";
 import styles from "../mypage.module.css";
 import { deleteMyMusicRequest } from "./_actions";
 import { DeleteRequestForm } from "./_components/DeleteRequestForm";

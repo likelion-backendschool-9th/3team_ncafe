@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/app/_lib/session/session";
 import { inboxOf, mockMusicBoxRepository, musicBoxVersion, onAirOf, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
-import { MusicBoxRefresher } from "./_components/MusicBoxRefresher";
+import { MusicBoxRefresher } from "@/app/_components/MusicBoxRefresher";
 import { NowPlaying } from "./_components/NowPlaying";
 import { RequestForm } from "./_components/RequestForm";
 import { RequestTable, type RequestRow } from "./_components/RequestTable";

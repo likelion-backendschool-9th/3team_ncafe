@@ -4,7 +4,7 @@ import { BrandLogo } from '@/app/_components/BrandLogo';
 import { getCurrentUser } from '@/app/_lib/session/session';
 import { MenuCard } from './_components/MenuCard';
 import { getRecommendedMenus } from './_lib/menus/api';
-import { MusicBoxHighlight } from './musicbox/_components/MusicBoxHighlight';
+import { MusicBoxHighlight } from './_components/MusicBoxHighlight';
 import styles from './page.module.css';
 
 // 이미지를 바꿀 때 이 URL에 로컬 경로나 직접 찾은 이미지 URL을 넣으세요.

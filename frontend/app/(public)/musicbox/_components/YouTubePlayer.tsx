@@ -4,8 +4,8 @@ import type { CSSProperties } from "react";
 import type { OnAir } from "@/app/_lib/mock/music-box";
 import { finishPlaying, reportDuration } from "../_actions";
 import styles from "../music-box.module.css";
-import { clock, useYouTubePlayback } from "./useYouTubePlayback";
-import { VolumeControl } from "./VolumeControl";
+import { clock, useYouTubePlayback } from "@/app/_components/useYouTubePlayback";
+import { VolumeControl } from "@/app/_components/VolumeControl";
 
 // LP 재킷 안에 들어가는 영상과 재생바. 재킷 틀은 NowPlaying이 그린다.
 // 손님은 관리자가 튼 곡을 듣기만 하고 소리만 조절한다. 곡이 올라오면 저절로 재생되고, onAir(서버 재생 시각)에 맞춰 다른 손님과 같은 지점을 듣는다.

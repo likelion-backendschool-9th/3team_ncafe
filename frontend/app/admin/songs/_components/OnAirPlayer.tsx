@@ -1,7 +1,7 @@
 "use client";
 
 import { finishPlaying, reportDuration } from "@/app/(public)/musicbox/_actions";
-import { clock, useYouTubePlayback } from "@/app/(public)/musicbox/_components/useYouTubePlayback";
+import { clock, useYouTubePlayback } from "@/app/_components/useYouTubePlayback";
 import type { OnAir } from "../_lib/helpers";
 import { youtubeWatchUrl } from "@/app/_lib/youtube";
 import styles from "../music-box.module.css";

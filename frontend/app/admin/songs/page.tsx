@@ -1,4 +1,4 @@
-import { MusicBoxRefresher } from "@/app/(public)/musicbox/_components/MusicBoxRefresher";
+import { MusicBoxRefresher } from "@/app/_components/MusicBoxRefresher";
 import { requireRole } from "@/app/_lib/session/session";
 import { cancelCurrent, cancelRequest, finishCurrent, moveInPlaylist, moveToPlayed, playNow, returnToInbox } from "./_actions";
 import { AddToPlaylistForm } from "./_components/AddToPlaylistForm";

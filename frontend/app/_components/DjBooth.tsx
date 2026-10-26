@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import type { MusicRequest, OnAir } from "@/app/_lib/mock/music-box";
-import { finishPlaying, reportDuration } from "../_actions";
+import { finishPlaying, reportDuration } from "@/app/(public)/musicbox/_actions";
 import styles from "./music-box-highlight.module.css";
 import { useStorySpeech } from "./useStorySpeech";
 import { clock, useYouTubePlayback } from "./useYouTubePlayback";
