@@ -3,7 +3,7 @@
 ## 목표와 현재 상태
 
 - 목표: `/admin/orders`·`/admin/orders/[id]`가 실제 관리자 주문 API를 사용하고, 검색·세 영역의 페이지 이동·상세·상태 변경·접수 취소를 실제 관리자 세션으로 수행한다.
-- 현재: **계획 작성 단계이며 프론트 구현은 미착수**다. 목록 226줄과 상세 페이지에 조회·가공·표시가 섞여 있고, 두 페이지와 `_actions.ts`가 목 주문 저장소를 호출한다.
+- 현재: **목록·상세·상태 변경의 실제 API 연결을 구현했다.** page는 서버 조회 결과를 조립하며, 관리자 주문 경로의 목 주문 저장소 의존을 제거했다. 실제 실행 결과와 남은 통합 범위는 10장에 기록한다.
 - 기준 코드: 2026-10-26 현재 관리자 화면·API를 `d8fb068`에서 확인하고, 이미 머지된 작업의 중복을 피하려고 문서 커밋만 `origin/develop`의 `5eeab69` 기준 위에 정리했다. 작업 브랜치는 계속 `feature/admin-orders`다. 인증 #61·고객 주문 #69 등 팀 코드가 포함되며, 이전 백엔드 문서의 "인증 미구현" 등은 작성 당시 상태와 구분한다.
 - 작업 브랜치: **`feature/admin-orders`만 사용**한다. 로컬 `develop`의 시작 커밋은 `62c139a7b6326caff606861b218bb1c846f943fa`이며 이 작업에서 변경하지 않는다. 다른 팀원 브랜치 수정·PR 머지도 하지 않는다.
 - 선행: 실제 백엔드·`API_ORIGIN`·테스트 관리자 세션과 주문 fixture. 고객 주문 화면 연결이나 회원 FK 완료를 관리자 화면 개발의 필수 선행으로 두지는 않는다. 전체 고객 흐름 검증은 별도 통합 단계다.
@@ -72,7 +72,7 @@ frontend/app/admin/orders/
 
 ## 3. 세션·CSRF와 공통 요청기
 
-현재 `api/client.ts`는 쿠키를 넘기는 GET 요청기지만 CSRF·응답 Set-Cookie 전달 기능은 없다. `BackendSession`은 해당 기능을 갖췄지만 `send`·`csrf`가 private이고 업무 PUT 메서드는 없다. **기존 `apiFetch`에 PUT만 추가하는 방식으로 연결하지 않는다.**
+착수 당시 `api/client.ts`에는 CSRF·응답 Set-Cookie 전달 기능이 없고, `BackendSession`의 `send`·`csrf`는 private이었다. 구현에서는 기존 메서드를 유지하며 업무용 `requestJson`을 추가했다. **기존 `apiFetch`에 PUT만 추가하는 방식으로 연결하지 않는다.**
 
 1. 인증 담당과 공유할 최소 변경으로 `BackendSession`에 업무용 `requestJson` 진입점을 추가하는 방향을 사용한다. 기존 private 전송·CSRF·쿠키 jar를 재사용하며 인증 메서드의 계약은 유지한다.
 2. 조회는 현재 요청의 JSESSIONID로 생성한 읽기용 세션을 `_lib/api.ts`에서 사용한다. no-store를 유지하고 Server Component에서는 쿠키를 쓰지 않는다. 조회 중 만료된 쿠키는 기존 Proxy·다음 액션의 전송 규칙을 따른다.
@@ -100,7 +100,7 @@ frontend/app/admin/orders/
 ## 5. 상세·상태 변경·오류
 
 - 상세 ID는 양의 안전한 정수인지 먼저 검사한다. 잘못된 ID와 상세 GET 404는 `notFound()`로 처리한다. 실제 주문의 당시 품목·가격·이미지·온도를 표시하고 현재 메뉴 데이터를 다시 조회하지 않는다.
-- 각 액션 첫 단계는 `requireRole("admin", 요청한 내부 경로)`다. `id`, `expectedStatus`, `statusVersion`(0 이상 Integer), `nextStatus`와 폼 입력은 bind 값도 포함해 서버에서 검증한다.
+- 페이지는 `requireRole("admin", 요청한 내부 경로)`를 사용한다. 각 액션 첫 단계는 지역 `requireOrderAdministrator`이며, 기존 `createAuthSession().current()`로 실제 회원 상태·역할을 검사한다. 읽기 전용 페이지 guard와 달리 정지/만료 응답의 삭제 쿠키를 브라우저로 전달하기 위한 어댑터다. 추가로 `/my`를 중복 조회하지 않는다. `id`, `expectedStatus`, `statusVersion`(0 이상 Integer), `nextStatus`와 폼 입력은 bind 값도 포함해 서버에서 검증한다.
 - 폼은 `useActionState`/pending으로 중복 제출을 막고 실패한 선택값과 필드 오류를 보존한다. 선택지의 최종 허용 여부는 백엔드가 검사한다. 성공 전 상태·버전을 낙관적으로 바꾸지 않는다.
 - 취소 확인은 주문번호·되돌릴 수 없음·확인/닫기만 제공한다. 접수에서만 서버 선택지에 나오며 취소 사유 필드와 기존 오류 문구·상세 취소 사유 영역을 제거한다.
 - 성공 시 `/admin/orders`, 해당 관리자 상세, `/my/orders`, 해당 고객 상세, `/admin`을 `revalidatePath`로 갱신하고 내부 URL로 redirect한다. redirect/notFound는 API try/catch 밖에 둔다.
@@ -127,7 +127,7 @@ frontend/app/admin/orders/
 | 3 | 상세·변경 폼·취소·충돌 안내 | 서버 상태·버전 사용, 사유 제거, 관리자/고객 경로 재검증. `feat: 관리자 주문 상세와 상태 변경 연동 추가` |
 | 4 | 접근성·로딩/오류·metadata·문서 | 아래 시나리오 확인 후 FRONTEND 8장 갭·계약 문서·PR 갱신. `fix: 관리자 주문 연동 접근성과 오류 처리 수정` |
 
-현재는 **0단계만 수행**한다. 백엔드 PR #80은 이미 머지되었으므로, 이번 계획은 같은 `feature/admin-orders`에서 문서 PR로 제안한다. 이미 squash 머지된 백엔드 커밋을 중복 제안하지 않도록 문서 커밋만 최신 기준 위에 놓고, 로컬 `develop`은 변경하지 않는다. 후속 구현 때 각 단계가 타입 검사·검증을 통과하는 단위로 커밋한다. `develop` 직접 커밋/푸시·머지·다른 사람 브랜치 수정은 하지 않는다. rebase 충돌 시 abort 후 보고한다.
+0단계 계획 이후 1단계 API 경계와 2·3단계 목록/상세/액션, 4단계 접근성·오류·검증을 구현했다. 목록과 상세가 같은 폼/액션 인터페이스를 사용하므로 2·3단계 UI는 함께 검증하고 커밋한다. 백엔드 PR #80은 이미 머지되었으며 기존 문서 PR #82를 이번 프론트 구현 내용으로 갱신한다. 이미 squash 머지된 백엔드 커밋은 중복 제안하지 않고, 로컬 `develop`은 변경하지 않는다. `develop` 직접 커밋/푸시·머지·다른 사람 브랜치 수정은 하지 않는다. rebase 충돌 시 abort 후 보고한다.
 
 ## 7. 검증 시나리오와 완료 조건
 
@@ -182,7 +182,7 @@ README·기존 청사진 일부에는 회원/메뉴가 아직 목이라는 설�
 ### 변경 파일 경계
 
 - 주 변경 범위는 `app/admin/orders/**`와 주문 E2E다. 이름·타입·CSS·컴포넌트는 주문 폴더에 두어 다른 기능과 섞이지 않게 한다.
-- 공통 변경 후보는 `app/_lib/api/backend-session.ts`의 추가 진입점뿐이다. 기존 `client.ts`, `auth.ts`, 세션·Proxy, 전역 레이아웃/스타일, Playwright의 포트·workers·testDir·기존 fixture 계약을 일괄 개편하지 않는다. 추가 변경이 꼭 필요하면 먼저 영향과 소비자를 계획/PR에 기록한다.
+- 기본 공통 변경은 `app/_lib/api/backend-session.ts`의 추가 진입점이다. 실검증에서 추가로 필요해진 `proxy.ts`의 주문 POST 처리와 테스트 fixture 변경은 10장에 이유·영향을 기록한다. 기존 `client.ts`, `auth.ts`, 세션·Proxy, 전역 레이아웃/스타일, Playwright의 포트·workers·testDir·기존 fixture 계약을 일괄 개편하지 않는다. 추가 변경이 꼭 필요하면 먼저 영향과 소비자를 계획/PR에 기록한다.
 - `docs/FRONTEND.md`는 다른 팀도 수정하는 파일이므로 주문 행과 필요한 계약 설명만 변경한다. 다른 담당자의 진행 상태를 덮어쓰지 않는다.
 - 회원 관리가 수정한 형제 key 중복 문제도 반영한다. 주문의 필터·안내·섹션 경계를 구분한 key를 사용하고, 페이지 이동·보기 전환 시 폼이나 행이 누적되지 않는지 확인한다.
 
@@ -197,6 +197,49 @@ README·기존 청사진 일부에는 회원/메뉴가 아직 목이라는 설�
 | 테스트 간 간섭 | 전용 DB·계정·주문 키/fixture를 식별하고 각 테스트가 만든 데이터만 정리. 인증 테스트 사용자를 전역 초기화하거나 기존 시나리오/포트 설정 변경 금지 |
 | 병합 결과 | 구현 직전/최종 재검토에서 최신 공통 파일과 열린 PR을 확인. 기능별 테스트뿐 아니라 실제 합쳐진 코드에서 lint·typecheck·build·위 회귀 확인. rebase 충돌 시 abort 후 보고 |
 
-현재는 계획·소스 대조 단계다. 이 표의 실제 브라우저·DB 통합 결과를 미리 통과로 표시하지 않는다. 아직 구현하지 않은 기능에 대해 "오류·충돌이 전혀 없다"고 확정하지 않고, 위 결과를 완료 조건으로 삼는다.
+위 소스 대조표는 착수 전 기록이다. 구현 후 실제 브라우저·DB 검증은 10장의 실행 결과로 구분하며, 향후 모든 팀 작업의 충돌·오류가 없음을 보장하지 않는다.
 
-이번 문서 보완에서 `npm run lint`, `npm run typecheck`, 기존 `npm run test:e2e -- e2e/backend-session.spec.ts`의 전송 검사 3개가 통과했다. 마지막 3개는 주입한 fetcher로 쿠키·CSRF·오류와 안전한 next를 검사하는 기존 테스트이며, 실제 브라우저/DB나 새 주문 연결 구현을 검증한 결과가 아니다.
+계획 문서 보완 당시에는 `npm run lint`, `npm run typecheck`, 기존 `npm run test:e2e -- e2e/backend-session.spec.ts`의 전송 검사 3개가 통과했다. 마지막 3개는 주입한 fetcher로 쿠키·CSRF·오류와 안전한 next를 검사하는 기존 테스트이며, 실제 브라우저/DB나 새 주문 연결 구현을 검증한 결과가 아니다.
+
+
+## 10. 구현 결과와 실검증 기록 (2026-10-26)
+
+### 최종 구현
+
+- 목록/상세의 목 의존을 제거하고 계획의 지역 `_lib`·서버 표시 컴포넌트·client 폼/대화상자로 분리했다. 각 page는 60줄 이내의 조립 코드다.
+- 검색·상태·정렬·보기와 세 그룹의 DB 페이지/복귀 주소를 유지한다. 상단 요약은 필터와 독립적이고, API 실패를 0건으로 바꾸지 않는다. 마지막 유효 페이지 재조회도 적용했다.
+- 상태 선택지는 응답 `allowedStatuses`, 변경 기준은 `expectedStatus`·`statusVersion`이다. 명시적 변경 버튼/pending을 사용하고 취소는 접수에서 확인 후 사유 없이 처리한다. 409에서 새 상태/버전을 보여 주며 재전송하지 않는다.
+- 숫자 주문번호 전체·품목 ID key·당시 이름/가격/이미지·`iced`·nullable 요청사항·원화·한국 시각을 표시한다. 상세 잘못된 ID/404, 401/403/CSRF 오류와 목록 조회 재시도 경계를 구현했다.
+- title/noindex, 보이는 폼 label, status/alert, 입력 오류 포커스, 모달 초기/복귀 포커스와 Tab 순환·Enter·Esc를 적용했다. 취소 영역 글자 대비를 수정했다.
+
+### 실검증에서 추가된 최소 변경
+
+1. **`frontend/proxy.ts`:** 세션 만료 후 기존 화면의 Server Action POST에 일반 HTTP redirect를 반환하면 Next 16.3.5의 fetch Action 응답 해석이 실패하는 문제가 재현됐다. `/admin/orders` 및 하위 경로의 POST만 Next Action handler까지 전달한다. 주문 GET과 다른 도메인의 Proxy 동작은 유지한다. 액션은 첫 단계에서 실제 세션/활성 상태/관리자 역할을 확인하고 백엔드도 ADMIN 권한·CSRF를 검사한다. **A 담당자 리뷰 대상**이다.
+2. **지역 액션 guard:** 페이지의 읽기 전용 `requireRole`는 쿠키를 쓸 수 없다. 정지/만료 응답의 삭제 쿠키까지 전달하도록 액션에서 기존 `createAuthSession().current()`를 호출하는 `requireOrderAdministrator`를 사용한다. 세션/로그인 정책을 새로 만들거나 공통 `session.ts`·`auth.ts`를 변경하지 않았다.
+3. **테스트 fixture:** 기존 Docker DB 계약을 기본으로 유지하고 localhost의 임시 PostgreSQL을 사용할 `E2E_TEST_DB_URL`만 선택적으로 추가했다. 실제 DB/사용자를 매번 확인한다. 주문 fixture는 자기 회원/주문/메뉴만 정리한다. 중계 서버의 장애 주입은 `E2E_ORDER_FAULTS=1`에서만, 해당 테스트 세션별로 작동한다. 제품 API에는 fixture 경로가 없다.
+4. **기존 인증 E2E 정합성:** B의 MemberCard가 회원 번호를 표시하지 않는 최신 UI에 맞게 화면의 번호 노출이 없음을 검사한다. API의 숫자 ID 검사는 유지했다. 기존 8개 가입/로그인/로그아웃/권한 시나리오는 유지한다.
+
+### 실행 환경과 결과
+
+개발 `.env`·DB와 분리된 임시 PostgreSQL 16(`ncafe_auth_e2e`, `ncafe_test`, localhost:15432), 실제 Spring 서버(:18080), 테스트 중계(:18081), Next **production build/start**(:13000), Chromium을 사용했다. 비밀번호/토큰/세션 쿠키는 Git과 보고서 본문에 넣지 않는다. 실행 절차는 [E2E 안내](../../../frontend/e2e/README.md)에 있다.
+
+| 검증 | 결과·범위 |
+| --- | --- |
+| lint / typecheck / build | 통과. Next 16.3.5 production 빌드 |
+| 최종 전체 프론트 검사 | **28개 일괄 통과(23.7초)**. 아래 전송/데이터 12개+인증 브라우저 8개+주문 브라우저 8개 |
+| 프론트 전송·데이터 검사 | 12개: 기존 인증 전송 3개+업무 GET/PUT/CSRF 3개+주문 응답/URL/페이지 6개 |
+| 실제 인증 브라우저 | 기존 8개: 가입·자동 로그인 실패·입력 검증·다중 탭·로그아웃·외부 next·CSRF·관리자/고객 |
+| 실제 주문 브라우저 | 8개: 37건 fixture(처리 중 13/완료 12/취소 12), 독립 페이지·필터/보기/복귀·스냅샷·인접 이동/되돌리기·접수 취소·409·마지막 페이지·401/403/404·정지/역할 변경·CSRF·503/잘못된 응답·재시도 |
+| B/C 회귀 | 회원 검색/상세·CSRF 정지/해제, 고객 마이페이지, 공개 메뉴 검색/카테고리/slug 상세·기존 localStorage 담기 통과. 장바구니 서버 연결 완료를 뜻하지 않음 |
+| axe / 키보드 / 화면 | 주문 목록 표·그리드·상세의 `main`과 취소 dialog: serious/critical 0건. 390px 모바일 가로 넘침 없음, 데스크톱/모바일 스크린샷·Tab/Enter/Esc·포커스 확인 |
+| Lighthouse 13.5.0 | 실제 관리자 세션의 `/admin/orders`, desktop: 접근성 100 / 권장사항 100. 성능·SEO 카테고리는 실행하지 않음. 점수 외 진단에는 기존 공통 헤더 브랜드 링크의 보이는 영문/aria-label 불일치가 남음(공통 컴포넌트 범위) |
+| 백엔드 `./gradlew test` | 총 398개 중 실패/오류 0, skipped 4. 별도 Testcontainers integrationTest 실행 결과와는 구분 |
+
+F1~F9와 담당 화면의 F11을 위 실제 브라우저/DB 검사로 확인했다. F10은 명시한 인증·B/C 회귀 범위에서 통과했고, F12의 명령 결과도 기록했다. **고객 주문 생성→관리자 처리→고객 HTTP/화면 재조회, 회원 FK 통합, 관리자 홈 집계·공개 홈의 남은 목 의존, 전역 skip link/헤더 갭은 미완료**다. 기존 인증 검사 중 홈/관리자 홈으로 이동하는 항목은 URL·세션 결과를 확인하며, 해당 목 대시보드의 production 콘텐츠 정상화를 증명하지 않는다.
+
+백엔드 Order/고객 DTO·장바구니·SecurityConfig, 회원/메뉴 프론트와 공통 `client.ts`는 수정하지 않았다. 최종 푸시 전 origin/develop을 다시 확인하고 작업 브랜치에서만 rebase한다. 로컬 develop 위치 유지·충돌 시 abort·사람만 머지 원칙을 지킨다.
+
+
+### 최종 원격 재확인
+
+`git fetch origin` 뒤에도 `origin/develop`은 `5eeab69`였다. 새로 확인된 미병합 `origin/feature/cart-frontend`(`bd3d646`)의 실제 코드도 읽었다. C는 별도 `api/csrf.ts`를 추가하고 장바구니/담기를 서버로 전환하며, 이번에 수정한 `backend-session.ts`·주문 코드·`proxy.ts`를 변경하지 않는다. E 회귀 fixture는 서버 장바구니 또는 현재 localStorage에 실제 담긴 결과를 검사하고, 자기 고객의 서버 cart 행도 정리하도록 보완했다. 공통 FRONTEND 문서는 임시 파일의 3-way `merge-file` 검사에서 충돌 없이 합쳐졌다. 이 검사는 다른 사람 브랜치·작업 트리·develop을 바꾸지 않았으며, C 브랜치 전체를 합친 빌드/브라우저 검증과는 구분한다.
