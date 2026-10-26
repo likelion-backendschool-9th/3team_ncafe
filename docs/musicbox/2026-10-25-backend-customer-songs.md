@@ -341,7 +341,7 @@ cha, #69, 이 PR이 모두 핸들러를 추가한다.
    - 확인: `./gradlew test --tests '*my.Songs*'`
 5. 공개 목록·현재 곡 — S7, S7b, S17, S17b, S18~S21 (약 2시간)
    - 최근 지난 선곡 20곡 조회 메서드도 `SongRepository` 맨 끝에 덧붙인다.
-   - 파일: `controller/SongsController`(`publicSongsController`), `service/SongsService`(`publicSongsService`), `dto/songs/MusicBoxSongsResponse`·`NowPlayingResponse`
+   - 파일: `controller/SongsController`, `service/SongsService` (Bean 이름은 기본값 `songsController`·`songsService`), `dto/songs/MusicBoxSongsResponse`·`NowPlayingResponse`
    - 확인: `./gradlew test` 전체 통과
    - PR 생성 (base: `feature/admin-songs-playback`)
 6. PR #78 머지 후 관리자 조작 연결 (약 1시간)

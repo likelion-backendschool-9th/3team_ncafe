@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 // 뮤직박스 신청곡 접수와 누구나 보는 신청곡 목록·현재 곡.
 // 상태를 바꿀 때는 뮤직박스 상태 행을 잠그고, 시간이 지난 곡을 먼저 정리한 뒤 바꾸고, revision을 한 번 올린다.
 // 조회 중에도 시간이 지난 곡을 정리할 수 있어 읽기 전용 트랜잭션을 쓰지 않는다.
-@Service("publicSongsService")
+@Service
 @RequiredArgsConstructor
 public class SongsService {
 

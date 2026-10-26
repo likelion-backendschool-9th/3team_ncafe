@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController("publicSongsController")
+@RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class SongsController {
