@@ -46,3 +46,13 @@ export async function adminApi<T = unknown>(page: Page, method: "POST" | "PUT" |
   expect(response.ok(), `${method} ${path} → ${response.status()}`).toBe(true);
   return response.status() === 204 ? (undefined as T) : response.json();
 }
+
+export type TestMenu = { id: number; slug: string; name: string; price: number; categoryId: number };
+
+// 시나리오 준비용 메뉴를 백엔드 API로 만든다. slug는 실행마다 겹치지 않는다.
+export function createMenu(page: Page, categoryId: number, overrides: Record<string, unknown> = {}) {
+  return adminApi<TestMenu>(page, "POST", "/api/v1/admin/menus", {
+    categoryId, slug: `e2e-${randomUUID()}`, name: `메뉴-${randomUUID().slice(0, 8)}`, description: "e2e 메뉴", imageUrl: "/images/menus/placeholder.svg",
+    price: 4500, available: true, isNew: false, recommended: false, supportsHot: true, supportsIced: false, ...overrides,
+  });
+}
