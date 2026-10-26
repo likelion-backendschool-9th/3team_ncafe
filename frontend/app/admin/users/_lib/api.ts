@@ -60,10 +60,3 @@ export async function getUser(id: number): Promise<UserResponse | null> {
     throw error;
   }
 }
-
-// 변경 요청(PUT 등)은 같은 세션의 CSRF 토큰을 헤더로 보내야 백엔드 Security를 통과한다.
-// apiFetch가 브라우저의 세션 쿠키를 그대로 전달하므로, 같은 세션으로 토큰을 받아 온다.
-export async function csrfHeaders(): Promise<Record<string, string>> {
-  const body = record(await apiFetch<unknown>("/api/v1/auth/csrf"));
-  return { [text(body.headerName)]: text(body.token) };
-}
