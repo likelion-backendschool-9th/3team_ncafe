@@ -39,6 +39,7 @@
 - Q1 현재 회원: #69(`feature/order-api`)와 **같은 파일 4개**(`AuthenticatedUser`, `CurrentUserContext`, `CurrentUserConfiguration`, `AuthenticationRequiredException`)와 `ApiExceptionHandler`의 401 핸들러를 같은 내용으로 쓴다.
   - 구현체가 없으면 회원 API는 `401`이다.
   - #61 세션 인증이 머지되면 `SessionUserDetails` 기반 구현체 하나만 추가한다.
+  - 10-27 반영: `common/security/SessionCurrentUserContext`를 추가하고, 항상 401을 던지던 `CurrentUserConfiguration`은 삭제했다.
 - Q2 재생 통지: 넣지 않는다. 곡 전환은 서버가 판단한다.
   - 지금 프론트의 종료·길이 통지는, 서버가 영상 길이를 모를 때 쓰는 보조 수단이다.
   - 영상 길이는 관리자가 플레이리스트에 담을 때 함께 저장한다 (PR #78, 10-26 합의).
@@ -247,9 +248,9 @@ S21 변경 감지 (R3·R7)
 
 | 요구사항 | 경로 | Controller | 권한 | 성공 응답 |
 | --- | --- | --- | --- | --- |
-| R3 | `POST /api/v1/musicbox/songs` | `SongsController` | 회원 | `201`, 신청곡 |
-| R4 | `GET /api/v1/my/songs` | `my/SongsController` | 회원 | `200`, 신청곡 배열 |
-| R5 | `DELETE /api/v1/my/songs/{id}` | `my/SongsController` | 회원 | `204` |
+| R3 | `POST /api/v1/musicbox/songs` | `SongsController` | 고객 | `201`, 신청곡 |
+| R4 | `GET /api/v1/my/songs` | `my/SongsController` | 고객 | `200`, 신청곡 배열 |
+| R5 | `DELETE /api/v1/my/songs/{id}` | `my/SongsController` | 고객 | `204` |
 | R6 | `GET /api/v1/musicbox/songs` | `SongsController` | 누구나 | `200`, `{playlist, inbox, played}` |
 | R7 | `GET /api/v1/songs/now` | `SongsController` | 누구나 | `200`, `{current, serverNow, revision}` |
 
@@ -263,10 +264,12 @@ S21 변경 감지 (R3·R7)
 - 오류는 공통 `{code, message}` 형식이다.
   - 입력 오류 `400`
   - 비로그인 `401`
+  - 관리자 계정으로 고객 전용 요청 `403`
   - 없음·남의 곡 `404`
   - 재생 중 삭제 `409`
 - 프론트는 지금 `GET /api/music-box/version`의 문자열 버전을 몇 초마다 확인한다. 연결할 때 `GET /api/v1/songs/now`의 `revision`으로 바꾼다 (프론트 계획).
-- #61이 머지되면 `SecurityConfig`에 위 권한을 선언한다. 등록하지 않은 경로는 `denyAll`이다.
+- `SecurityConfig`에 위 권한을 선언했다 (10-27). 누구나는 `permitAll`, 고객은 `hasRole("CUSTOMER")`이다. 등록하지 않은 경로는 `denyAll`이다.
+  - 쓰기 요청(`POST`·`DELETE`)은 CSRF 토큰이 필요하다. 장바구니와 같다.
 
 ## 병렬 작업 대응
 
@@ -309,7 +312,7 @@ cha, #69, 이 PR이 모두 핸들러를 추가한다.
 
 | PR | 현재 회원 처리 | 이 계획의 대응 |
 | --- | --- | --- |
-| #61 `session-auth` (보류) | `@AuthenticationPrincipal SessionUserDetails` | 머지되면 Q1 구현체를 추가하고 `SecurityConfig` 권한을 선언 |
+| #61 `session-auth` (머지됨) | `@AuthenticationPrincipal SessionUserDetails` | Q1 구현체 추가와 `SecurityConfig` 권한 선언 완료 (10-27) |
 | #66 `admin-user-api` | `User` 엔티티만 따로 만듦 | `user_id`는 FK 없이 `Long`. `User`가 develop에 들어오면 FK 추가 |
 | #67 `my-be` | 고정 회원 ID (`CurrentUser`) | 쓰지 않는다. 누가 호출해도 같은 회원이 된다. |
 | #69 `order-api` | `CurrentUserContext`, 없으면 `401` | Q1 A: 같은 파일을 쓴다 |
@@ -319,7 +322,7 @@ cha, #69, 이 PR이 모두 핸들러를 추가한다.
 - 관리자 선곡·재생 API (WBS 10.x). cha가 담당한다.
 - 공용 엔티티·Repository·`SongException` (R1). PR #78이 담당한다.
 - 홈 신청곡 요약 `GET /api/v1/index/songs`. 청사진의 `HomeController` 작업에서 다룬다.
-- 세션 인증, `SecurityConfig` 권한 선언, `user_id` FK. 각 PR 머지 후 한다.
+- `user_id` FK. 별도 작업으로 한다.
 - `playing`·`queued` DB 인덱스와 PostgreSQL 통합 테스트 (Q3, S3).
 - 손님 화면의 재생 종료·영상 길이 통지 (Q2). 서버 판단에 필요한 길이는 관리자 쪽에서 확보한다.
 - 프론트 연결과 YouTube Data API 호출. [YouTube 정리](./youtube-data-api.md)는 팀 공용 참고 문서다.
