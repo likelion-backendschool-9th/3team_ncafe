@@ -1,38 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useActionState, useEffect, useRef, useState, type ReactNode } from "react";
 import { BrandLogo } from "@/app/_components/BrandLogo";
-import { signup } from "../_actions/signup";
+import { signup, type SignupFormState } from "../_actions/signup";
 import styles from "../signup.module.css";
 
-const MIN_NAME = 2;
-const MIN_PASSWORD = 8;
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button className={styles.submit} type="submit" disabled={pending}>
-      {pending ? "장부에 적는 중…" : "단골로 등록하기"}
-    </button>
-  );
-}
-
-type SignupFormProps = {
-  error?: string;
+type Props = {
   issuedOn: string;
+  next: string | null;
+  heading: ReactNode;
 };
 
-export function SignupForm({ error, issuedOn }: SignupFormProps) {
+export function SignupForm({ issuedOn, next, heading }: Props) {
+  const initial: SignupFormState = {
+    values: { name: "", email: "", next: next ?? "" }, errors: {}, message: "", revision: 0,
+  };
+  const [state, action, pending] = useActionState(signup, initial);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const form = useRef<HTMLFormElement>(null);
+  const message = useRef<HTMLParagraphElement>(null);
 
   const trimmedName = name.trim();
-  const passwordLongEnough = password.length >= MIN_PASSWORD;
-  const confirmMatches = passwordConfirm.length > 0 && password === passwordConfirm;
+  useEffect(() => {
+    if (!state.revision) return;
+    const invalid = form.current?.querySelector<HTMLInputElement>('[aria-invalid="true"]');
+    if (invalid) invalid.focus();
+    else if (state.message) message.current?.focus();
+  }, [state]);
 
   return (
     <div className={styles.layout}>
@@ -60,7 +56,7 @@ export function SignupForm({ error, issuedOn }: SignupFormProps) {
               <dd>{issuedOn}</dd>
             </div>
           </dl>
-          <span className={`${styles.stamp} ${trimmedName.length >= MIN_NAME ? styles.stampOn : ""}`}>
+          <span className={`${styles.stamp} ${[...trimmedName].length >= 2 ? styles.stampOn : ""}`}>
             <small>삼다방</small>
             단골
           </span>
@@ -78,26 +74,31 @@ export function SignupForm({ error, issuedOn }: SignupFormProps) {
 
       <section className={styles.sheet} aria-labelledby="signup-title">
         <p className={styles.eyebrow}>회원가입</p>
-        <h1 id="signup-title" className={styles.title}>단골 장부에 이름 올리기</h1>
+        {heading}
         <p className={styles.lead}>몇 가지만 적어 주시면 바로 회원증을 내어 드려요.</p>
 
-        {error && <p className={styles.error} role="alert">{error}</p>}
+        <p ref={message} className={state.message ? styles.error : undefined} role="alert" tabIndex={-1} hidden={!state.message}>
+          {state.message}
+        </p>
 
-        <form action={signup} className={styles.form}>
+        <form ref={form} action={action} className={styles.form} noValidate aria-busy={pending}>
+          <input type="hidden" name="next" value={state.values.next} />
           <div className={styles.field}>
             <label htmlFor="signup-name">닉네임</label>
             <input
               id="signup-name"
               name="name"
               type="text"
-              minLength={MIN_NAME}
+              maxLength={100}
               autoComplete="nickname"
               required
-              value={name}
+              defaultValue={state.values.name}
               onChange={(event) => setName(event.target.value)}
-              aria-describedby="signup-name-hint"
+              aria-invalid={!!state.errors.name}
+              aria-describedby={`signup-name-hint${state.errors.name ? " signup-name-error" : ""}`}
             />
-            <p id="signup-name-hint" className={styles.hint}>주문서와 신청곡 메모에 적힐 닉네임이에요. 2자 이상.</p>
+            <p id="signup-name-hint" className={styles.hint}>주문서와 신청곡 메모에 적힐 닉네임이에요. 2~50자.</p>
+            {state.errors.name && <span id="signup-name-error" className={styles.hintWarn}>{state.errors.name}</span>}
           </div>
 
           <div className={styles.field}>
@@ -108,12 +109,15 @@ export function SignupForm({ error, issuedOn }: SignupFormProps) {
               type="email"
               autoComplete="email"
               inputMode="email"
+              maxLength={254}
               required
-              value={email}
+              defaultValue={state.values.email}
               onChange={(event) => setEmail(event.target.value)}
-              aria-describedby="signup-email-hint"
+              aria-invalid={!!state.errors.email}
+              aria-describedby={`signup-email-hint${state.errors.email ? " signup-email-error" : ""}`}
             />
             <p id="signup-email-hint" className={styles.hint}>로그인할 때 쓰는 주소예요.</p>
+            {state.errors.email && <span id="signup-email-error" className={styles.hintWarn}>{state.errors.email}</span>}
           </div>
 
           <div className={styles.field}>
@@ -122,16 +126,13 @@ export function SignupForm({ error, issuedOn }: SignupFormProps) {
               id="signup-password"
               name="password"
               type="password"
-              minLength={MIN_PASSWORD}
               autoComplete="new-password"
               required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              aria-describedby="signup-password-hint"
+              aria-invalid={!!state.errors.password}
+              aria-describedby={`signup-password-hint${state.errors.password ? " signup-password-error" : ""}`}
             />
-            <p id="signup-password-hint" className={`${styles.hint} ${passwordLongEnough ? styles.hintOk : ""}`}>
-              <span aria-hidden="true">{passwordLongEnough ? "✓" : "·"}</span> 8자 이상
-            </p>
+            <p id="signup-password-hint" className={styles.hint}>8자 이상, UTF-8 기준 72바이트 이하로 적어 주세요.</p>
+            {state.errors.password && <span id="signup-password-error" className={styles.hintWarn}>{state.errors.password}</span>}
           </div>
 
           <div className={styles.field}>
@@ -140,31 +141,22 @@ export function SignupForm({ error, issuedOn }: SignupFormProps) {
               id="signup-password-confirm"
               name="passwordConfirm"
               type="password"
-              minLength={MIN_PASSWORD}
               autoComplete="new-password"
               required
-              value={passwordConfirm}
-              onChange={(event) => setPasswordConfirm(event.target.value)}
-              aria-describedby="signup-password-confirm-hint"
+              aria-invalid={!!state.errors.passwordConfirm}
+              aria-describedby={`signup-password-confirm-hint${state.errors.passwordConfirm ? " signup-password-confirm-error" : ""}`}
             />
-            <p
-              id="signup-password-confirm-hint"
-              className={`${styles.hint} ${confirmMatches ? styles.hintOk : passwordConfirm ? styles.hintWarn : ""}`}
-              aria-live="polite"
-            >
-              {passwordConfirm.length === 0
-                ? "한 번 더 적어 주세요."
-                : confirmMatches
-                  ? <><span aria-hidden="true">✓</span> 비밀번호가 일치해요.</>
-                  : <><span aria-hidden="true">!</span> 아직 일치하지 않아요.</>}
-            </p>
+            <p id="signup-password-confirm-hint" className={styles.hint}>같은 비밀번호를 한 번 더 적어 주세요.</p>
+            {state.errors.passwordConfirm && <span id="signup-password-confirm-error" className={styles.hintWarn}>{state.errors.passwordConfirm}</span>}
           </div>
 
-          <SubmitButton />
+          <button className={styles.submit} type="submit" disabled={pending}>
+            {pending ? "장부에 적는 중…" : "단골로 등록하기"}
+          </button>
         </form>
 
         <p className={styles.aside}>
-          이미 단골이신가요? <Link href="/login">로그인</Link>
+          이미 단골이신가요? <Link href={`/login${next ? `?next=${encodeURIComponent(next)}` : ""}`}>로그인</Link>
         </p>
       </section>
     </div>

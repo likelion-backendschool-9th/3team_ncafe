@@ -14,3 +14,18 @@ spring:
         implicit-strategy: com.newcafe.backend.config.PluralTableNamingStrategy
         physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
     open-in-view: false
+
+server:
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        name: JSESSIONID
+        path: /
+        http-only: true
+        same-site: lax
+        secure: false
+
+app:
+  security:
+    allowed-origins: "${CORS_ALLOWED_ORIGINS:http://localhost:3000}"
