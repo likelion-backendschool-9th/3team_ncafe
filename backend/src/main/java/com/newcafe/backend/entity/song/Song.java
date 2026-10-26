@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 
+import java.time.Duration;
 import java.time.Instant;
 
 import lombok.AccessLevel;
@@ -26,6 +27,8 @@ import lombok.Setter;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Song {
 
+    private static final Duration END_GRACE = Duration.ofSeconds(1);
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -33,7 +36,7 @@ public class Song {
     @Column(nullable = false)
     private Long userId;
 
-    @Column(nullable = false, length = 40)
+    @Column(nullable = false, length = 50)
     private String requesterName;
 
     @Column(nullable = false, length = 100)
@@ -62,8 +65,10 @@ public class Song {
     @Column(nullable = false, columnDefinition = "TIMESTAMPTZ")
     private Instant updatedAt;
 
+    @Column(columnDefinition = "TIMESTAMPTZ")
     private Instant playedAt;
 
+    @Column(columnDefinition = "TIMESTAMPTZ")
     private Instant startedAt;
 
     public Song(Long userId, String requesterName, String songTitle, String artist, String story) {
@@ -90,11 +95,13 @@ public class Song {
         this.durationSeconds = durationSeconds;
     }
 
-    public void play() {
+    // 시간 경과 정리는 앞 곡이 끝났어야 할 시각을 시작 시각으로 기록한다.
+    public void play(Instant at) {
         requireStatus(SongStatus.queued, "플레이리스트에 있는 곡만 바로 재생할 수 있습니다.");
 
         this.status = SongStatus.playing;
-        this.startedAt = Instant.now();
+        this.playlistOrder = null;
+        this.startedAt = at;
     }
 
     public void requeue() {
@@ -102,11 +109,12 @@ public class Song {
         this.startedAt = null;
     }
 
-    public void finish() {
+    public void finish(Instant at) {
         requireStatus(SongStatus.playing, "재생 중인 곡만 종료할 수 있습니다.");
 
         this.status = SongStatus.played;
-        this.playedAt = Instant.now();
+        this.playlistOrder = null;
+        this.playedAt = at;
         this.startedAt = null;
     }
 
@@ -136,12 +144,25 @@ public class Song {
         this.playedAt = null;
     }
 
-    public void markAsPlayed() {
+    public void markAsPlayed(Instant at) {
         requireStatus(SongStatus.queued, "플레이리스트에 있는 곡만 재생완료로 옮길 수 있습니다.");
 
         this.status = SongStatus.played;
         this.playlistOrder = null;
-        this.playedAt = Instant.now();
+        this.playedAt = at;
+    }
+
+    // 재생 중인 곡이 끝나는 시각. 영상 길이를 모르면 null이다. 광고·버퍼링 여유로 1초를 더한다.
+    public Instant endsAt() {
+        return endsAt(startedAt, durationSeconds);
+    }
+
+    public static Instant endsAt(Instant startedAt, Integer durationSeconds) {
+        if (startedAt == null || durationSeconds == null) {
+            return null;
+        }
+
+        return startedAt.plus(Duration.ofSeconds(durationSeconds)).plus(END_GRACE);
     }
 
     private void requireStatus(SongStatus expected, String message) {

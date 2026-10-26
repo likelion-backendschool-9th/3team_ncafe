@@ -4,15 +4,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.newcafe.backend.common.error.ApiExceptionHandler;
+import com.newcafe.backend.entity.song.MusicBoxState;
 import com.newcafe.backend.entity.song.Song;
 import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
 import com.newcafe.backend.service.admin.SongsService;
+import com.newcafe.backend.service.support.MusicBoxSettler;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,7 +36,9 @@ class SongsControllerTest {
     void setUp() {
         songRepository = mock(SongRepository.class);
         MusicBoxStateRepository musicBoxStateRepository = mock(MusicBoxStateRepository.class);
-        SongsService songsService = new SongsService(songRepository, musicBoxStateRepository);
+        when(musicBoxStateRepository.findForUpdate()).thenReturn(new MusicBoxState());
+        SongsService songsService = new SongsService(songRepository,
+                new MusicBoxSettler(songRepository, musicBoxStateRepository), Clock.systemUTC());
 
         mockMvc = MockMvcBuilders.standaloneSetup(new SongsController(songsService))
                 .setControllerAdvice(new ApiExceptionHandler())
@@ -59,6 +65,15 @@ class SongsControllerTest {
                         .content("{\"songId\":99,\"youtubeVideoId\":\"abc123\"}"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    void reorderRejectsMissingDirection() throws Exception {
+        mockMvc.perform(put("/api/v1/admin/songs/playlist/1/order")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
     }
 
     private Song newSong(Long id) {

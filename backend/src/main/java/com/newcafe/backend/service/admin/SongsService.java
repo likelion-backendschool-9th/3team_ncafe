@@ -4,9 +4,10 @@ import com.newcafe.backend.common.error.SongException;
 import com.newcafe.backend.entity.song.MusicBoxState;
 import com.newcafe.backend.entity.song.Song;
 import com.newcafe.backend.entity.song.SongStatus;
-import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
+import com.newcafe.backend.service.support.MusicBoxSettler;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 
@@ -15,21 +16,27 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+// 조작마다 뮤직박스 상태 행을 잠그고, 시간이 지난 곡을 먼저 정리한 뒤 바꾸고, revision을 한 번 올린다.
 @Service("adminSongsService")
 @RequiredArgsConstructor
 public class SongsService {
 
     private final SongRepository songRepository;
-    private final MusicBoxStateRepository musicBoxStateRepository;
+    private final MusicBoxSettler musicBoxSettler;
+    private final Clock clock;
 
-    @Transactional(readOnly = true)
+    // 조회 중에도 정리가 일어날 수 있어 읽기 전용 트랜잭션을 쓰지 않는다.
+    @Transactional
     public List<Song> list() {
+        musicBoxSettler.settleIfDue(clock.instant());
+
         return songRepository.findAll();
     }
 
     @Transactional
     public Song addToPlaylist(Long id, String youtubeVideoId, Integer durationSeconds) {
-        MusicBoxState state = musicBoxStateRepository.findForUpdate();
+        Instant now = clock.instant();
+        MusicBoxState state = musicBoxSettler.lockAndSettle(now).state();
 
         Song song = songRepository.findById(id)
                 //orElseThrow() -> 옵셔널에서 값을 꺼내거나 없으면 예외 던지기
@@ -39,108 +46,125 @@ public class SongsService {
         song.queue(youtubeVideoId, durationSeconds);
         song.setPlaylistOrder(order);
 
-        playNextIfIdle();
-        state.touch(Instant.now());
+        playNextIfIdle(now);
+        state.touch(now);
 
         return song;
     }
 
     @Transactional
     public Song editPlaylistItem(Long id, String youtubeVideoId, Integer durationSeconds) {
-        MusicBoxState state = musicBoxStateRepository.findForUpdate();
+        Instant now = clock.instant();
+        MusicBoxState state = musicBoxSettler.lockAndSettle(now).state();
 
         Song song = songRepository.findById(id)
                 .orElseThrow(() -> new SongException(SongException.Reason.NOT_FOUND, "신청곡을 찾을 수 없습니다."));
 
         song.updatePlaylistItem(youtubeVideoId, durationSeconds);
 
-        state.touch(Instant.now());
+        state.touch(now);
 
         return song;
     }
 
     @Transactional
     public void playNow(Long id) {
-        MusicBoxState state = musicBoxStateRepository.findForUpdate();
+        Instant now = clock.instant();
+        MusicBoxState state = musicBoxSettler.lockAndSettle(now).state();
 
         Song target = songRepository.findById(id)
                 .orElseThrow(() -> new SongException(SongException.Reason.NOT_FOUND, "신청곡을 찾을 수 없습니다."));
 
+        // 순서는 되돌리기 전에 구한다. 되돌린 곡은 순서가 비어 있는 채로 대기열 조회에 잡힌다.
         songRepository.findFirstByStatus(SongStatus.playing).ifPresent(current -> {
+            int order = firstPlaylistOrder() - 1;
             current.requeue();
-            current.setPlaylistOrder(firstPlaylistOrder() - 1);
+            current.setPlaylistOrder(order);
         });
 
-        target.play();
-        state.touch(Instant.now());
+        target.play(now);
+        state.touch(now);
     }
 
     @Transactional
     public void finishCurrent(Long id) {
-        MusicBoxState state = musicBoxStateRepository.findForUpdate();
+        Instant now = clock.instant();
+        MusicBoxSettler.Locked locked = musicBoxSettler.lockAndSettle(now);
 
         Song current = songRepository.findById(id).orElse(null);
         if (current == null || current.getStatus() != SongStatus.playing) {
+            touchIfSettled(locked, now);
             return;
         }
 
-        current.finish();
+        current.finish(now);
 
-        playNextIfIdle();
-        state.touch(Instant.now());
+        playNextIfIdle(now);
+        locked.state().touch(now);
     }
 
     @Transactional
     public void cancelCurrent(Long id) {
-        MusicBoxState state = musicBoxStateRepository.findForUpdate();
+        Instant now = clock.instant();
+        MusicBoxSettler.Locked locked = musicBoxSettler.lockAndSettle(now);
 
         Song current = songRepository.findById(id).orElse(null);
         if (current == null || current.getStatus() != SongStatus.playing) {
+            touchIfSettled(locked, now);
             return;
         }
 
         current.cancel();
 
-        playNextIfIdle();
-        state.touch(Instant.now());
+        playNextIfIdle(now);
+        locked.state().touch(now);
     }
 
     @Transactional
     public void cancelRequest(Long id) {
-        MusicBoxState state = musicBoxStateRepository.findForUpdate();
+        Instant now = clock.instant();
+        MusicBoxState state = musicBoxSettler.lockAndSettle(now).state();
 
         Song song = songRepository.findById(id)
                 .orElseThrow(() -> new SongException(SongException.Reason.NOT_FOUND, "신청곡을 찾을 수 없습니다."));
 
+        boolean wasPlaying = song.getStatus() == SongStatus.playing;
         song.cancel();
-        state.touch(Instant.now());
+        if (wasPlaying) {
+            playNextIfIdle(now);
+        }
+
+        state.touch(now);
     }
 
     @Transactional
     public void returnToInbox(Long id) {
-        MusicBoxState state = musicBoxStateRepository.findForUpdate();
+        Instant now = clock.instant();
+        MusicBoxState state = musicBoxSettler.lockAndSettle(now).state();
 
         Song song = songRepository.findById(id)
                 .orElseThrow(() -> new SongException(SongException.Reason.NOT_FOUND, "신청곡을 찾을 수 없습니다."));
 
         song.returnToInbox();
-        state.touch(Instant.now());
+        state.touch(now);
     }
 
     @Transactional
     public void moveToPlayed(Long id) {
-        MusicBoxState state = musicBoxStateRepository.findForUpdate();
+        Instant now = clock.instant();
+        MusicBoxState state = musicBoxSettler.lockAndSettle(now).state();
 
         Song song = songRepository.findById(id)
                 .orElseThrow(() -> new SongException(SongException.Reason.NOT_FOUND, "신청곡을 찾을 수 없습니다."));
 
-        song.markAsPlayed();
-        state.touch(Instant.now());
+        song.markAsPlayed(now);
+        state.touch(now);
     }
 
     @Transactional
     public void moveInPlaylist(Long id, String direction) {
-        MusicBoxState state = musicBoxStateRepository.findForUpdate();
+        Instant now = clock.instant();
+        MusicBoxState state = musicBoxSettler.lockAndSettle(now).state();
 
         List<Song> playlist = songRepository.findByStatus(SongStatus.queued).stream()
                 .sorted((a, b) -> a.getPlaylistOrder() - b.getPlaylistOrder())
@@ -165,7 +189,14 @@ public class SongsService {
         target.setPlaylistOrder(neighbor.getPlaylistOrder());
         neighbor.setPlaylistOrder(targetOrder);
 
-        state.touch(Instant.now());
+        state.touch(now);
+    }
+
+    // 요청한 곡이 이미 정리로 끝났어도, 정리한 변화는 화면에 알려야 한다.
+    private void touchIfSettled(MusicBoxSettler.Locked locked, Instant now) {
+        if (locked.settled()) {
+            locked.state().touch(now);
+        }
     }
 
     private int firstPlaylistOrder() {
@@ -175,13 +206,13 @@ public class SongsService {
                 .orElse(1);
     }
 
-    private void playNextIfIdle() {
+    private void playNextIfIdle(Instant now) {
         if (songRepository.findFirstByStatus(SongStatus.playing).isPresent()) {
             return;
         }
 
         songRepository.findFirstByStatusOrderByPlaylistOrderAsc(SongStatus.queued)
-                .ifPresent(Song::play);
+                .ifPresent(song -> song.play(now));
     }
 
     private int nextPlaylistOrder() {
