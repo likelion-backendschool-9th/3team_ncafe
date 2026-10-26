@@ -118,7 +118,7 @@
 .usageEmpty { background: #efe0c4; color: var(--muted); }
 
 .fieldError { grid-column: 4 / -1; margin: 0; color: #9b2924; font-size: 0.85rem; font-weight: 700; }
-.createForm .fieldError, .dialogPanel .fieldError { grid-column: auto; }
+.createForm .fieldError, .dialogPanel .fieldError, .section > .fieldError { grid-column: auto; }
 
 .dragHandle {
   color: #9a7a55;
