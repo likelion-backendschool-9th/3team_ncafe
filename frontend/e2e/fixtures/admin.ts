@@ -40,7 +40,7 @@ export async function loginAsAdmin(page: Page, next: string) {
 
 // 뮤직박스 시나리오는 화면 순서와 개수를 확인하므로 전용 DB의 신청곡을 비우고 시작한다.
 export function resetMusicBox() {
-  testSql("delete from music_requests");
+  testSql("delete from songs");
 }
 
 // 같은 세션의 CSRF 토큰을 붙여 백엔드 관리자 API를 직접 부른다. 다른 창의 변경이나 시나리오 준비에 쓴다.
