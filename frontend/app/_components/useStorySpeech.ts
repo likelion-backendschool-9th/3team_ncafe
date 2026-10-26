@@ -21,7 +21,7 @@ function stopSession(session: SpeechSession) {
   if (session.objectUrl) URL.revokeObjectURL(session.objectUrl);
 }
 
-export function useStorySpeech(requestId: string | null, volumeLevel: number) {
+export function useStorySpeech(requestId: number | null, volumeLevel: number) {
   const [status, setStatus] = useState<SpeechStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const sessionRef = useRef<SpeechSession | null>(null);

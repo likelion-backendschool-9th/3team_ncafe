@@ -1,52 +1,40 @@
 import Link from "next/link";
-import { mockMusicBoxRepository, musicBoxVersion, onAirOf, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
-import { requireRole } from "@/app/_lib/session/session";
 import { DjBooth } from "@/app/_components/DjBooth";
-import { handwritingSequence } from "@/app/_lib/songs/handwriting";
 import boothStyles from "@/app/_components/music-box-highlight.module.css";
 import { MusicBoxRefresher } from "@/app/_components/MusicBoxRefresher";
 import { RequestMemo, RequestMemoBoard } from "@/app/_components/RequestMemo";
+import { requireRole } from "@/app/_lib/session/session";
+import { fetchMusicBoxSongs, fetchNowPlaying } from "@/app/_lib/songs/api";
+import { handwritingSequence } from "@/app/_lib/songs/handwriting";
+import { onAirOf } from "@/app/_lib/songs/types";
 import styles from "../mypage.module.css";
 import { deleteMyMusicRequest } from "./_actions";
 import { DeleteRequestForm } from "./_components/DeleteRequestForm";
+import { fetchMySongs } from "./_lib/api";
+import { sortMySongs } from "./_lib/mySongs";
 
 type SearchParams = Promise<{ deleted?: string; error?: string }>;
 
-const statusOrder: Record<MusicRequest["status"], number> = { playing: 0, queued: 1, pending: 2, played: 3, cancelled: 4 };
-
-function statusBadge(request: MusicRequest, position: number | undefined): string {
-  if (request.status === "playing") return "재생 중";
-  if (request.status === "played") return "재생 완료";
-  if (request.status === "cancelled") return "취소됨";
-  if (request.status === "pending") return "접수됨";
-  return `재생 대기 ${position}`;
-}
-
 export default async function MyMusicRequestsPage({ searchParams }: { searchParams: SearchParams }) {
-  const [user, { deleted, error }, requests] = await Promise.all([
-    requireRole("customer", "/my/songs"),
+  const user = await requireRole("customer", "/my/songs");
+  const [{ deleted, error }, songs, { playlist }, now] = await Promise.all([
     searchParams,
-    mockMusicBoxRepository.list(),
+    fetchMySongs(),
+    fetchMusicBoxSongs(),
+    fetchNowPlaying(),
   ]);
 
-  const playing = requests.find((request) => request.status === "playing");
-  const onAir = onAirOf(playing);
-  const playlist = playlistOf(requests);
-  const queuePosition = new Map(playlist.map((request, index) => [request.id, index + 1]));
-  const memberId = String(user.id);
-  // 내 신청곡은 재생 중 → 플레이리스트(차례 순) → 접수 → 재생 완료 → 취소됨으로 보여 준다.
-  const mine = requests
-    .filter((request) => request.userId === memberId)
-    .sort((a, b) =>
-      statusOrder[a.status] - statusOrder[b.status] ||
-      (queuePosition.get(a.id) ?? 0) - (queuePosition.get(b.id) ?? 0),
-    );
+  const playing = now.current;
+  const onAir = onAirOf(now);
+  const mine = sortMySongs(songs, playlist);
   // 내 메모는 모두 내 글씨 하나로, 다른 손님의 곡이 재생 중이면 메모지는 다른 글씨로 적는다.
-  const [myHand, otherHand] = handwritingSequence(memberId, 2);
+  // 현재 곡 응답에는 신청 회원이 없어 내 곡 목록에 있는지로 판단한다.
+  const [myHand, otherHand] = handwritingSequence(String(user.id), 2);
+  const playingIsMine = playing !== null && songs.some((song) => song.id === playing.id);
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
-      <MusicBoxRefresher version={musicBoxVersion(requests)} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
+      <MusicBoxRefresher revision={now.revision} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
       <nav className={styles.breadcrumb} aria-label="현재 위치">
         <Link href="/my">마이페이지</Link>
         <span aria-hidden="true">/</span>
@@ -73,7 +61,7 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
               story: playing.story,
               requesterName: playing.requesterName,
               youtubeVideoId: playing.youtubeVideoId,
-              handwriting: playing.userId === memberId ? myHand : otherHand,
+              handwriting: playingIsMine ? myHand : otherHand,
             } : null}
             onAir={onAir}
           />
@@ -85,15 +73,15 @@ export default async function MyMusicRequestsPage({ searchParams }: { searchPara
           caption={`총 ${mine.length}곡 · 재생 중인 곡은 삭제할 수 없어요`}
           empty={<>아직 보낸 신청곡이 없어요. <Link href="/musicbox">신청곡 보내러 가기 →</Link></>}
         >
-          {mine.map((request) => (
+          {mine.map(({ song, badge }) => (
             <RequestMemo
-              key={request.id}
-              request={request}
+              key={song.id}
+              request={song}
               handwriting={myHand}
-              badge={statusBadge(request, queuePosition.get(request.id))}
-              badgeTone={request.status === "playing" ? "accent" : request.status === "played" || request.status === "cancelled" ? "muted" : "default"}
-              action={request.status !== "playing" && (
-                <DeleteRequestForm action={deleteMyMusicRequest.bind(null, request.id)} songTitle={request.songTitle} />
+              badge={badge}
+              badgeTone={song.status === "playing" ? "accent" : song.status === "played" || song.status === "cancelled" ? "muted" : "default"}
+              action={song.status !== "playing" && (
+                <DeleteRequestForm action={deleteMyMusicRequest.bind(null, song.id)} songTitle={song.songTitle} />
               )}
             />
           ))}

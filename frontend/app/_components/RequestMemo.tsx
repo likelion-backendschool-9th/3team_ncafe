@@ -1,5 +1,5 @@
 import { Children, type ReactNode } from "react";
-import type { MusicRequest } from "@/app/_lib/mock/music-box";
+import type { SongResponse } from "@/app/_lib/songs/types";
 import styles from "./request-memo.module.css";
 
 const requestedAtFormat = new Intl.DateTimeFormat("ko-KR", {
@@ -44,7 +44,7 @@ export function RequestMemoBoard({ title, caption, titleLevel: Title = "h3", emp
 }
 
 type RequestMemoProps = {
-  request: Pick<MusicRequest, "songTitle" | "artist" | "story" | "requesterName" | "createdAt">;
+  request: Pick<SongResponse, "songTitle" | "artist" | "story" | "requesterName" | "createdAt">;
   // 사연에 쓸 손글씨 폰트 클래스 (handwritingSequence)
   handwriting?: string;
   // 홈 메모처럼 순번 배지가 필요 없으면 비워 둔다.

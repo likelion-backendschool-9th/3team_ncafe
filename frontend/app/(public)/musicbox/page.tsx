@@ -1,50 +1,35 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/app/_lib/session/session";
-import { inboxOf, mockMusicBoxRepository, musicBoxVersion, onAirOf, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
+import { fetchMusicBoxSongs, fetchNowPlaying } from "@/app/_lib/songs/api";
+import { onAirOf } from "@/app/_lib/songs/types";
 import { MusicBoxRefresher } from "@/app/_components/MusicBoxRefresher";
 import { NowPlaying } from "./_components/NowPlaying";
 import { RequestForm } from "./_components/RequestForm";
-import { RequestTable, type RequestRow } from "./_components/RequestTable";
+import { RequestTable } from "./_components/RequestTable";
+import { requestRows, todayCount } from "./_lib/rows";
 import styles from "./music-box.module.css";
 
 type SearchParams = Promise<{ submitted?: string; page?: string }>;
 
 const pageSize = 10;
-const seoulDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" });
-
-function byPlayedAtDesc(a: MusicRequest, b: MusicRequest): number {
-  return (b.playedAt ?? b.createdAt).localeCompare(a.playedAt ?? a.createdAt);
-}
 
 export default async function MusicBoxPage({ searchParams }: { searchParams: SearchParams }) {
-  const [{ submitted, page: pageParam }, user, requests] = await Promise.all([
+  const [{ submitted, page: pageParam }, user, songs, now] = await Promise.all([
     searchParams,
     getCurrentUser(),
-    mockMusicBoxRepository.list(),
+    fetchMusicBoxSongs(),
+    fetchNowPlaying(),
   ]);
 
-  // 목록은 재생 중 → 플레이리스트 → 접수 → 재생 완료 순서다. 취소된 신청은 보이지 않는다.
-  const playing = requests.find((request) => request.status === "playing");
-  const onAir = onAirOf(playing);
-  const playlist = playlistOf(requests);
-  const inbox = inboxOf(requests);
-  const played = requests.filter((request) => request.status === "played").sort(byPlayedAtDesc);
-  const rows: RequestRow[] = [
-    ...(playing ? [{ request: playing, queuePosition: null }] : []),
-    ...playlist.map((request, index) => ({ request, queuePosition: index + 1 })),
-    ...inbox.map((request) => ({ request, queuePosition: null })),
-    ...played.map((request) => ({ request, queuePosition: null })),
-  ];
-
+  const onAir = onAirOf(now);
+  const rows = requestRows(songs, now.current);
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   const page = Math.min(Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1), totalPages);
   const firstIndex = (page - 1) * pageSize;
-  const today = seoulDate.format(new Date());
-  const todayCount = requests.filter((request) => seoulDate.format(new Date(request.createdAt)) === today).length;
 
   return (
     <main className={styles.page}>
-      <MusicBoxRefresher version={musicBoxVersion(requests)} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
+      <MusicBoxRefresher revision={now.revision} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
       <div className="container">
         <header className={styles.hero}>
           <span className={styles.heroRecord} aria-hidden="true" />
@@ -61,8 +46,8 @@ export default async function MusicBoxPage({ searchParams }: { searchParams: Sea
         )}
 
         <div className={styles.topRow}>
-          <RequestForm memberName={user?.name ?? null} requestNumber={requests.length + 1} />
-          <NowPlaying playing={playing} onAir={onAir} next={playlist[0]} />
+          <RequestForm member={user ? { name: user.name, role: user.role } : null} requestNumber={rows.length + 1} />
+          <NowPlaying playing={now.current} onAir={onAir} next={songs.playlist[0]} />
         </div>
 
         <RequestTable
@@ -70,12 +55,12 @@ export default async function MusicBoxPage({ searchParams }: { searchParams: Sea
           firstNumber={firstIndex + 1}
           page={page}
           totalPages={totalPages}
-          waitingCount={playlist.length}
-          receivedCount={inbox.length}
-          todayCount={todayCount}
+          waitingCount={songs.playlist.length}
+          receivedCount={songs.inbox.length}
+          todayCount={todayCount(rows, now.serverNow)}
         />
 
-        {user && (
+        {user?.role === "customer" && (
           <div className={styles.pageFoot}>
             <Link className={styles.gatePrimary} href="/my/songs">내 신청곡 관리</Link>
           </div>

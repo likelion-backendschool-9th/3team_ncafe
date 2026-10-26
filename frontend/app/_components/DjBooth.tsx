@@ -1,15 +1,13 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import type { MusicRequest, OnAir } from "@/app/_lib/mock/music-box";
-import { finishPlaying, reportDuration } from "@/app/(public)/musicbox/_actions";
+import type { CurrentSong, OnAir } from "@/app/_lib/songs/types";
 import styles from "./music-box-highlight.module.css";
 import { useStorySpeech } from "./useStorySpeech";
 import { clock, useYouTubePlayback } from "./useYouTubePlayback";
 import { VolumeControl } from "./VolumeControl";
 
-type NowPlaying = Pick<MusicRequest, "songTitle" | "artist" | "story" | "requesterName" | "youtubeVideoId"> & {
-  id?: string;
+type NowPlaying = Pick<CurrentSong, "id" | "songTitle" | "artist" | "story" | "requesterName" | "youtubeVideoId"> & {
   // 메모지에 적을 손글씨 폰트 클래스 (handwritingSequence)
   handwriting?: string;
 };
@@ -36,14 +34,11 @@ function Bulbs({ side }: { side: "top" | "left" | "right" }) {
 // 이 페이지에서 아직 아무것도 누르지 않았으면 브라우저 정책상 음소거로 재생되므로 "소리 켜기"를 보여 준다.
 export function DjBooth({ nowPlaying, onAir = null, storySpeech = false }: { nowPlaying: NowPlaying | null; onAir?: OnAir | null; storySpeech?: boolean }) {
   const videoId = nowPlaying?.youtubeVideoId ?? null;
-  const playingId = nowPlaying?.id;
   const { frameRef, ready, playing, current, duration, progress, error, volume, soundBlocked, unmute } = useYouTubePlayback(videoId, {
     live: true,
     locked: true,
+    // 곡 전환은 서버가 시간으로 정한다. 영상이 끝나도 알리지 않고 MusicBoxRefresher가 화면을 새로 받는다.
     sync: onAir,
-    onEnded: playingId ? () => void finishPlaying(playingId) : undefined,
-    // 길이를 모르는 곡이면 이 화면이 읽은 길이를 알려, 그 뒤로는 서버가 시간에 맞춰 넘기게 한다.
-    onDuration: playingId && videoId && !onAir?.durationSeconds ? (seconds) => void reportDuration(playingId, videoId, seconds) : undefined,
   });
   const speech = useStorySpeech(storySpeech ? nowPlaying?.id ?? null : null, volume.level);
 

@@ -1,40 +1,56 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import type { Role } from "@/app/_lib/auth/types";
+import { ARTIST_MAX_LENGTH, SONG_TITLE_MAX_LENGTH, STORY_MAX_LENGTH } from "@/app/_lib/songs/types";
 import { submitMusicRequest, type RequestFormState } from "../_actions";
 import styles from "../music-box.module.css";
 
-const initialState: RequestFormState = {};
-const storyMaxLength = 500;
+const initialState: RequestFormState = { values: { songTitle: "", artist: "", story: "" }, errors: {} };
+const fields = ["songTitle", "artist", "story"] as const;
 
-type RequestFormProps = {
-  // 로그인한 회원 이름. 없으면 메모지를 잠그고 로그인 안내를 띄운다.
-  memberName: string | null;
+type Props = {
+  // 로그인한 회원. 고객 회원이 아니면 메모지를 잠그고 안내를 띄운다.
+  member: { name: string; role: Role } | null;
   requestNumber: number;
 };
 
-export function RequestForm({ memberName, requestNumber }: RequestFormProps) {
+export function RequestForm({ member, requestNumber }: Props) {
   const [state, formAction, pending] = useActionState(submitMusicRequest, initialState);
   const [storyLength, setStoryLength] = useState(0);
-  const locked = memberName === null;
+  const formRef = useRef<HTMLFormElement>(null);
+  const locked = member?.role !== "customer";
+  const memberName = member?.role === "customer" ? member.name : null;
+
+  // 제출이 거절되면 첫 오류 칸으로 포커스를 옮긴다.
+  useEffect(() => {
+    const first = fields.find((name) => state.errors[name]);
+    if (first) formRef.current?.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
+  }, [state]);
+
+  const errorProps = (name: (typeof fields)[number]) => state.errors[name]
+    ? { "aria-invalid": true, "aria-describedby": `${name}-error` }
+    : {};
 
   return (
     <section className={styles.memo} aria-labelledby="request-title">
       <span className={`${styles.tape} ${styles.tapeLeft}`} aria-hidden="true" />
       <span className={`${styles.tape} ${styles.tapeRight}`} aria-hidden="true" />
 
-      <form action={formAction} className={styles.slip} inert={locked} aria-hidden={locked}>
+      <form ref={formRef} action={formAction} className={styles.slip} inert={locked} aria-hidden={locked} noValidate>
         <h2 id="request-title" className={styles.slipTitle}>신 청 곡</h2>
         <p className={styles.slipNumber}>No. {String(requestNumber).padStart(4, "0")}</p>
 
         <label className={styles.slipLine}>
           <span className={styles.slipLabel}>곡 명</span>
-          <input name="songTitle" type="text" maxLength={100} placeholder="듣고 싶은 노래 제목" required />
+          <input name="songTitle" type="text" maxLength={SONG_TITLE_MAX_LENGTH} placeholder="듣고 싶은 노래 제목" required defaultValue={state.values.songTitle} {...errorProps("songTitle")} />
+          {state.errors.songTitle && <span id="songTitle-error" className={styles.fieldError}>{state.errors.songTitle}</span>}
         </label>
         <label className={styles.slipLine}>
           <span className={styles.slipLabel}>가수이름</span>
-          <input name="artist" type="text" maxLength={80} placeholder="가수 이름" required />
+          <input name="artist" type="text" maxLength={ARTIST_MAX_LENGTH} placeholder="가수 이름" required defaultValue={state.values.artist} {...errorProps("artist")} />
+          {state.errors.artist && <span id="artist-error" className={styles.fieldError}>{state.errors.artist}</span>}
         </label>
         <div className={styles.slipLine}>
           <span className={styles.slipLabel}>신 청 인</span>
@@ -48,15 +64,18 @@ export function RequestForm({ memberName, requestNumber }: RequestFormProps) {
           <textarea
             name="story"
             rows={5}
-            maxLength={storyMaxLength}
+            maxLength={STORY_MAX_LENGTH}
             placeholder="이 노래와 함께 전하고 싶은 이야기를 적어 주세요."
             required
+            defaultValue={state.values.story}
+            {...errorProps("story")}
             onChange={(event) => setStoryLength(event.target.value.length)}
           />
-          <span className={styles.counter} aria-live="polite">{storyLength} / {storyMaxLength}</span>
+          <span className={styles.counter} aria-live="polite">{storyLength} / {STORY_MAX_LENGTH}</span>
+          {state.errors.story && <span id="story-error" className={styles.fieldError}>{state.errors.story}</span>}
         </label>
 
-        {state.error && <p className={styles.formError} role="alert">{state.error}</p>}
+        {state.message && <p className={styles.formError} role="alert">{state.message}</p>}
 
         <div className={styles.slipFoot}>
           <span aria-hidden="true" />
@@ -70,7 +89,14 @@ export function RequestForm({ memberName, requestNumber }: RequestFormProps) {
         </div>
       </form>
 
-      {locked && (
+      {locked && member && (
+        <div className={styles.memberGate}>
+          <strong>🔒 신청은 고객 회원만 할 수 있어요</strong>
+          <p>신청곡은 고객 회원 계정으로 보낼 수 있어요.<br />신청곡 목록과 지금 나오는 음악은 누구나 볼 수 있어요.</p>
+        </div>
+      )}
+
+      {!member && (
         <div className={styles.memberGate}>
           <strong>🔒 신청은 회원만 할 수 있어요</strong>
           <p>로그인하면 신청곡 메모지에 노래와 사연을 적을 수 있어요.<br />신청곡 목록과 지금 나오는 음악은 누구나 볼 수 있어요.</p>

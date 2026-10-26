@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { mockMusicBoxRepository, musicBoxVersion, onAirOf, playlistOf } from "@/app/_lib/mock/music-box";
 import { DjBooth } from "@/app/_components/DjBooth";
+import { fetchMusicBoxSongs, fetchNowPlaying } from "@/app/_lib/songs/api";
 import { handwritingSequence } from "@/app/_lib/songs/handwriting";
+import { onAirOf } from "@/app/_lib/songs/types";
 import styles from "@/app/_components/music-box-highlight.module.css";
 import { MusicBoxRefresher } from "@/app/_components/MusicBoxRefresher";
 import { RequestMemo, RequestMemoBoard } from "@/app/_components/RequestMemo";
@@ -9,17 +10,16 @@ import { RequestMemo, RequestMemoBoard } from "@/app/_components/RequestMemo";
 // 홈 하단 뮤직박스 칸: 지금 흐르는 노래(DJ 부스)와 다음 차례 신청곡 3곡을 사연과 함께 보여 준다.
 // 곡이 끝나거나 관리자가 곡을 바꾸면 페이지를 다시 불러오지 않고 이 칸이 다음 곡으로 바뀐다.
 export async function MusicBoxHighlight() {
-  const requests = await mockMusicBoxRepository.list();
-  const playing = requests.find((request) => request.status === "playing");
-  const onAir = onAirOf(playing);
-  const playlist = playlistOf(requests);
+  const [{ playlist }, now] = await Promise.all([fetchMusicBoxSongs(), fetchNowPlaying()]);
+  const playing = now.current;
+  const onAir = onAirOf(now);
   const nextUp = playlist.slice(0, 3);
   // 턴테이블 옆 메모지와 다음 차례 메모 3장이 모두 다른 손글씨가 되게 한 번에 고른다.
-  const [playingHand, ...memoHands] = handwritingSequence(playing?.id ?? nextUp[0]?.id ?? "", nextUp.length + 1);
+  const [playingHand, ...memoHands] = handwritingSequence(String(playing?.id ?? nextUp[0]?.id ?? ""), nextUp.length + 1);
 
   return (
     <section className={`container ${styles.section}`} aria-labelledby="home-music-box-title">
-      <MusicBoxRefresher version={musicBoxVersion(requests)} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
+      <MusicBoxRefresher revision={now.revision} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
       <div className={styles.head}>
         <div>
           <p className={styles.eyebrow}>다방 이야기 · 뮤직박스</p>

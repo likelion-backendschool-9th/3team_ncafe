@@ -2,53 +2,53 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { mockMusicBoxRepository } from "@/app/_lib/mock/music-box";
+import { apiFetch, ApiRequestError, csrfHeaders } from "@/app/_lib/api/client";
 import { getCurrentUser } from "@/app/_lib/session/session";
+import { ARTIST_MAX_LENGTH, SONG_TITLE_MAX_LENGTH, STORY_MAX_LENGTH } from "@/app/_lib/songs/types";
 
-export type RequestFormState = { error?: string };
+type Field = "songTitle" | "artist" | "story";
 
-function field(formData: FormData, name: string): string {
-  const value = formData.get(name);
-  return typeof value === "string" ? value.trim() : "";
+export type RequestFormState = {
+  values: Record<Field, string>;
+  errors: Partial<Record<Field, string>>;
+  message?: string;
+};
+
+function readValues(formData: FormData): RequestFormState["values"] {
+  const text = (name: Field) => String(formData.get(name) ?? "").trim();
+  return { songTitle: text("songTitle"), artist: text("artist"), story: text("story") };
+}
+
+// 백엔드 CreateSongRequest와 같은 규칙이다. 필드 옆 오류를 보여 주려고 화면에서도 검사한다.
+function validate(values: RequestFormState["values"]): RequestFormState["errors"] {
+  const errors: RequestFormState["errors"] = {};
+  if (!values.songTitle || values.songTitle.length > SONG_TITLE_MAX_LENGTH) errors.songTitle = "곡명은 1~100자로 입력해 주세요.";
+  if (!values.artist || values.artist.length > ARTIST_MAX_LENGTH) errors.artist = "가수 이름은 1~80자로 입력해 주세요.";
+  if (!values.story || values.story.length > STORY_MAX_LENGTH) errors.story = "사연은 1~500자로 입력해 주세요.";
+  return errors;
 }
 
 export async function submitMusicRequest(_previous: RequestFormState, formData: FormData): Promise<RequestFormState> {
-  // 신청자는 폼 값이 아니라 세션에서 정한다. 화면에서 폼을 숨겨도 직접 요청할 수 있기 때문이다.
+  const values = readValues(formData);
+  // 신청자는 폼 값이 아니라 세션에서 정한다. 화면에서 폼을 숨겨도 직접 요청할 수 있어 여기서 다시 확인한다.
+  // 비로그인을 로그인 화면으로 보내지 않고 폼에 안내하는 것은, 신청 폼이 누구나 보는 뮤직박스 화면 안에 있기 때문이다.
   const user = await getCurrentUser();
-  if (!user) return { error: "신청곡은 로그인한 회원만 신청할 수 있습니다." };
+  if (!user) return { values, errors: {}, message: "신청곡은 로그인한 회원만 보낼 수 있어요." };
+  if (user.role !== "customer") return { values, errors: {}, message: "신청곡은 고객 회원만 보낼 수 있어요." };
 
-  const songTitle = field(formData, "songTitle");
-  const artist = field(formData, "artist");
-  const story = field(formData, "story");
-
-  if (!songTitle || songTitle.length > 100) return { error: "곡명은 1~100자로 입력해 주세요." };
-  if (!artist || artist.length > 80) return { error: "가수 이름은 1~80자로 입력해 주세요." };
-  if (!story || story.length > 500) return { error: "사연은 1~500자로 입력해 주세요." };
+  const errors = validate(values);
+  if (Object.keys(errors).length > 0) return { values, errors };
 
   try {
-    await mockMusicBoxRepository.create({ userId: String(user.id), requesterName: user.name, songTitle, artist, story });
-  } catch {
-    return { error: "신청곡을 접수하지 못했습니다. 잠시 후 다시 시도해 주세요." };
+    await apiFetch<unknown>("/api/v1/musicbox/songs", { method: "POST", headers: await csrfHeaders(), body: JSON.stringify(values) });
+  } catch (error) {
+    if (error instanceof ApiRequestError) return { values, errors: {}, message: error.error.message };
+    throw error;
   }
-  revalidatePath("/musicbox");
-  revalidatePath("/admin/songs");
+  refreshMusicBox();
   redirect("/musicbox?submitted=1");
 }
 
 function refreshMusicBox(): void {
   for (const path of ["/", "/musicbox", "/my/songs", "/admin/songs"]) revalidatePath(path);
-}
-
-// 손님 화면에서 지금 곡 영상이 끝나면 부른다. 그 곡이 아직 재생 중이고 서버 시각으로도 거의 끝났을 때만 다음 곡으로 넘긴다.
-// 이미 다른 화면이나 서버가 넘겼더라도 이 화면이 새 곡을 받아 가도록 화면은 항상 새로 그린다.
-export async function finishPlaying(id: string): Promise<void> {
-  if (typeof id !== "string" || !id) return;
-  await mockMusicBoxRepository.finishIfDue(id);
-  refreshMusicBox();
-}
-
-// 영상 길이를 아직 모르는 곡을 재생한 화면이 읽은 길이를 알려 준다. 처음 알려 준 값만 기록한다.
-export async function reportDuration(id: string, youtubeVideoId: string, durationSeconds: number): Promise<void> {
-  if (typeof id !== "string" || typeof youtubeVideoId !== "string") return;
-  if (await mockMusicBoxRepository.recordDuration(id, youtubeVideoId, durationSeconds)) refreshMusicBox();
 }

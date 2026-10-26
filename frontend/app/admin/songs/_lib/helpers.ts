@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import type { SongResponse } from "./types";
 
 export type OnAir = {
@@ -23,13 +22,6 @@ export function onAirOf(song: SongResponse | undefined): OnAir | null {
     endsAt: endsAt(song),
     serverNow: Date.now(),
   };
-}
-
-export function musicBoxVersion(all: SongResponse[]): string {
-  const state = [...all]
-    .sort((a, b) => a.id - b.id)
-    .map((song) => [song.id, song.status, song.playlistOrder, song.youtubeVideoId, song.startedAt, song.durationSeconds]);
-  return createHash("sha1").update(JSON.stringify(state)).digest("hex").slice(0, 16);
 }
 
 export function playlistOf(all: SongResponse[]): SongResponse[] {
