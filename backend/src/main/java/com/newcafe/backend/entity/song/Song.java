@@ -95,10 +95,6 @@ public class Song {
         this.durationSeconds = durationSeconds;
     }
 
-    public void play() {
-        play(Instant.now());
-    }
-
     // 시간 경과 정리는 앞 곡이 끝났어야 할 시각을 시작 시각으로 기록한다.
     public void play(Instant at) {
         requireStatus(SongStatus.queued, "플레이리스트에 있는 곡만 바로 재생할 수 있습니다.");
@@ -111,10 +107,6 @@ public class Song {
     public void requeue() {
         this.status = SongStatus.queued;
         this.startedAt = null;
-    }
-
-    public void finish() {
-        finish(Instant.now());
     }
 
     public void finish(Instant at) {
@@ -150,10 +142,6 @@ public class Song {
         this.status = SongStatus.pending;
         this.playlistOrder = null;
         this.playedAt = null;
-    }
-
-    public void markAsPlayed() {
-        markAsPlayed(Instant.now());
     }
 
     public void markAsPlayed(Instant at) {
