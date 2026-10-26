@@ -5,7 +5,7 @@
 - 끝나면: `/admin/categories`가 목 저장소 대신 백엔드 `admin/CategoriesController`를 읽고 쓴다. 관리자로 로그인해 추가·이름 수정·순서 변경·삭제한 결과가 DB에 남고, 공개 `/menus`의 카테고리 탭에도 보인다. `e2e/admin-categories.spec.ts`가 C1~C14를 확인한다.
 - 결정 필요: 없음 (아래 가정으로 진행하고 PR에 적는다)
 - 규모: 4단계, 약 3.5시간 (화면·컴포넌트 분리 2시간, e2e 1시간, 확인 30분)
-- 현재 (10-26): 1단계 진행 중. 관리자 메뉴·카테고리 상위 계획([2026-10-22-frontend-admin-api.md](../menus/2026-10-22-frontend-admin-api.md))의 PR 1 3단계를 이 문서로 상세화한다. 상위 계획 1·2단계(`5c43520`, `7b4ddb2`)는 완료.
+- 현재 (10-26): 1~4단계 완료. 전용 DB 컨테이너에서 e2e 13개(C1~C3, C5~C14)가 2회 연속 통과했다. C4는 범위 밖으로 옮겼다(시나리오의 고침 참고). 관리자 메뉴·카테고리 상위 계획([2026-10-22-frontend-admin-api.md](../menus/2026-10-22-frontend-admin-api.md))의 PR 1 3단계를 이 문서로 상세화한다. 상위 계획 1·2단계(`5c43520`, `7b4ddb2`)는 완료.
 - 위치: `docs/admin/categories/`의 프론트 계획. 백엔드 계약은 [2026-10-21-backend-category-management.md](./2026-10-21-backend-category-management.md).
 
 ## 대상 쌍
@@ -37,7 +37,7 @@ C3 권한
 C4 백엔드 꺼짐
 - Given 백엔드가 꺼져 있다.
 - When `/admin/categories`를 연다.
-- Then `error.tsx`가 "카테고리 정보를 불러오지 못했습니다"와 "다시 시도" 버튼을 보여 주고, 관리자 레이아웃의 다른 화면 이동 링크는 동작한다.
+- Then `error.tsx`가 "카테고리 정보를 불러오지 못했습니다"와 "다시 시도" 버튼을 보여 주고, 관리자 레이아웃의 다른 화면 이동 링크는 동작한다. (고침 10-26: 실행해 보니 `proxy.ts`의 세션 확인이 먼저 `BACKEND_UNAVAILABLE`을 던져 라우트 `error.tsx`까지 오지 않는다. `/admin/*` 전체의 공통 동작이라 이 계획 범위 밖으로 두고 별도 작업으로 넘긴다. `error.tsx`는 페이지 조회가 실패할 때를 위해 유지한다.)
 
 ## 2. 추가 (R2)
 
@@ -108,6 +108,7 @@ C14 이미 삭제됨
 - 관리자 대시보드(`/admin`) 집계.
 - `apiFetch`의 네트워크 오류 변환(상위 계획 가정 R1).
 - `e2e/session-auth.spec.ts` 수정.
+- 백엔드가 꺼졌을 때 `proxy.ts`가 던지는 오류 처리(C4): `/admin/*`·`/my/*` 등 보호 경로 전체의 공통 동작.
 
 ## 작업 순서
 
