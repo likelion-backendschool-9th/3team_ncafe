@@ -148,7 +148,7 @@ Boot 4.1에서는 기존 `spring-boot-starter-web`보다 `spring-boot-starter-we
 
 ## 3계층 아키텍처
 
-요청 흐름은 **Controller → Service → Repository → PostgreSQL**로 고정한다. Controller는 **시스템 단위**로 나눈다. 같은 시스템의 목록·상세·등록·수정 API는 하나의 Controller에서 다루고, 파일명은 `도메인명 + 계층명`으로 짓는다(예: `MenusController.java`·`MenusService.java`·`MenuRepository.java`). 여러 도메인의 데이터를 조합하는 화면은 `HomeController`처럼 화면 이름을 쓴다. `/musicbox`는 화면 경로이며 곡 관련 API는 `SongsController`가 담당한다. `/checkout`의 주문 확정은 주문 시스템의 기능이므로 `my/OrdersController`가 담당한다. 공개 조회 시스템은 `controller/`·`service/` 바로 아래에, 로그인한 회원의 장바구니·주문·곡 신청과 마이페이지는 각 `my/`, 관리자 시스템은 각 `admin/` 하위 폴더에 둔다. 폴더는 화면 URL이 아니라 API의 사용 권한과 업무 범위에 따라 정하며, 메서드별 인증·권한도 검사한다. Repository와 Entity는 여러 시스템이 공유한다.
+요청 흐름은 **Controller → Service → Repository → PostgreSQL**로 고정한다. Controller는 **시스템 단위**로 나눈다. 같은 시스템의 목록·상세·등록·수정 API는 하나의 Controller에서 다루고, 파일명은 `도메인명 + 계층명`으로 짓는다(예: `MenusController.java`·`MenusService.java`·`MenuRepository.java`). 여러 도메인의 데이터를 조합하는 화면은 `HomeController`처럼 화면 이름을 쓴다. `/musicbox`는 화면 경로이며 곡 관련 API는 `SongsController`가 담당한다. `/checkout`의 주문 확정은 주문 시스템의 기능이므로 `my/OrdersController`가 담당한다. 공개 조회 시스템은 `controller/`·`service/` 바로 아래에, 로그인한 회원의 장바구니·주문과 마이페이지는 각 `my/`, 관리자 시스템은 각 `admin/` 하위 폴더에 둔다. 폴더는 화면 URL이 아니라 API의 사용 권한과 업무 범위에 따라 정하며, 메서드별 인증·권한도 검사한다. 예외로 곡 신청(`POST /api/v1/musicbox/songs`)은 로그인이 필요하지만 같은 경로의 공개 목록과 함께 공통 `SongsController`가 받고, 메서드에서 회원을 확인한다. Repository와 Entity는 여러 시스템이 공유한다. 여러 시스템이 같은 업무 규칙을 실행해야 하면 `service/support/`에 둔다 (아래 트리 설명).
 
 ```text
 backend/
@@ -168,9 +168,10 @@ backend/
 │  │  ├─ MenusService.java, SongsService.java
 │  │  ├─ my/UsersService.java, CartItemsService.java
 │  │  │     OrdersService.java, SongsService.java
-│  │  └─ admin/UsersService.java, CategoriesService.java
-│  │           MenusService.java, OrdersService.java
-│  │           SongsService.java
+│  │  ├─ admin/UsersService.java, CategoriesService.java
+│  │  │        MenusService.java, OrdersService.java
+│  │  │        SongsService.java
+│  │  └─ support/MusicBoxSettler.java   # 여러 시스템이 같이 쓰는 Service 계층 부품
 │  ├─ repository/
 │  │  ├─ UserRepository.java, CategoryRepository.java, MenuRepository.java
 │  │  ├─ CartItemRepository.java, OrderRepository.java
@@ -204,7 +205,7 @@ backend/
    └─ repository/MenuRepositoryTest.java
 ```
 
-Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요청 주체인 `my/`·`admin/`이 아닌 **데이터 도메인** 아래에 둔다. 예를 들어 관리자 메뉴 등록과 공개 메뉴 조회의 DTO는 모두 `dto/menus/`에 두고, 관리자 전용 주문 응답은 `dto/orders/AdminOrderResponse.java`로 구별한다. 곡 신청·재생 목록·현재 곡의 DTO는 `dto/songs/`에 모은다. `Song.java`는 DB의 `music_requests`에 매핑되고, `MusicBoxState.java`는 재생 전환용 내부 상태를 나타낸다. 재생 목록은 별도 테이블 없이 곡의 상태·순서로 다룬다. 위 트리의 파일은 최초 구현 위치를 나타내며 필요한 요청·응답 DTO는 해당 도메인 폴더에 추가한다. 현재 프론트 페이지 및 WBS 화면과 대응은 다음과 같다.
+Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요청 주체인 `my/`·`admin/`이 아닌 **데이터 도메인** 아래에 둔다. 예를 들어 관리자 메뉴 등록과 공개 메뉴 조회의 DTO는 모두 `dto/menus/`에 두고, 관리자 전용 주문 응답은 `dto/orders/AdminOrderResponse.java`로 구별한다. 곡 신청·재생 목록·현재 곡의 DTO는 `dto/songs/`에 모은다. `Song.java`는 DB의 `music_requests`에 매핑되고, `MusicBoxState.java`는 재생 전환용 내부 상태를 나타낸다. 재생 목록은 별도 테이블 없이 곡의 상태·순서로 다룬다. `service/support/`에는 두 개 이상의 시스템이 같이 쓰는 Service 계층 부품만 둔다. 자기 API가 없어 Controller가 직접 부르지 않고, 자기 트랜잭션을 만들지 않는다(`@Transactional(propagation = MANDATORY)`). 예: `MusicBoxSettler`는 공개·회원·관리자 서비스가 곡을 읽거나 바꾸기 전에 시간이 지난 곡을 정리한다. 위 트리의 파일은 최초 구현 위치를 나타내며 필요한 요청·응답 DTO는 해당 도메인 폴더에 추가한다. 현재 프론트 페이지 및 WBS 화면과 대응은 다음과 같다.
 
 같은 클래스명이 여러 패키지에 있으면 `@RestController("publicMenusController")`·`@RestController("adminMenusController")`처럼 역할별 Bean 이름을 어노테이션에 지정하고, Service도 `@Service`에 고유 이름을 지정한다. 이 규칙은 `Users`·`Menus`·`Orders`·`Songs`에도 적용한다.
 
@@ -212,11 +213,11 @@ Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요
 
 | 위치 | 프론트 페이지 → 시스템 이름 (`*Controller.java`, `*Service.java`) |
 | --- | --- |
-| 기본 | `/` → `Home`, `/login`·`/signup` 및 `/my`의 로그아웃 동작 → `Auth`, `/menus`의 카테고리 필터·목록과 `/menus/[slug]` → `Menus`(조회), `/musicbox` → `Songs`(공개 목록·현재 곡) |
-| `my/` | `/my`·`/profile/update` → `Users`(`profile/update`는 WBS 화면, 추가 예정), `/menus/[slug]`의 담기 동작·`/cart` → `CartItems`, `/checkout`·`/my/orders`·`/my/orders/[id]` → `Orders`, `/musicbox`의 곡 신청·`/my/songs` → `Songs` |
+| 기본 | `/` → `Home`, `/login`·`/signup` 및 `/my`의 로그아웃 동작 → `Auth`, `/menus`의 카테고리 필터·목록과 `/menus/[slug]` → `Menus`(조회), `/musicbox` → `Songs`(공개 목록·현재 곡·곡 신청) |
+| `my/` | `/my`·`/profile/update` → `Users`(`profile/update`는 WBS 화면, 추가 예정), `/menus/[slug]`의 담기 동작·`/cart` → `CartItems`, `/checkout`·`/my/orders`·`/my/orders/[id]` → `Orders`, `/my/songs` → `Songs` |
 | `admin/` | `/admin/users`·`/admin/users/[id]`·`/admin/users/new` → `Users`(`users/new`는 DB 설계 확장, 추가 예정), `/admin/categories` → `Categories`, `/admin/menus`·`/admin/menus/[id]`·`/admin/menus/new`·`/admin/menus/[id]/edit` → `Menus`, `/admin/orders`·`/admin/orders/[id]` → `Orders`, `/admin/songs` → `Songs` |
 
-`controller/my/`와 `service/my/`는 로그인한 회원의 개인 데이터를 다루는 시스템을 담당한다. `/cart`와 `/checkout`이 `/my` URL 아래에 있지 않아도 장바구니와 주문 생성은 `my/CartItemsController.java`·`my/OrdersController.java`가 받는다. 주문 생성·내 주문 목록·상세는 한 `my/OrdersController.java` → `my/OrdersService.java` → `OrderRepository.java` 흐름으로 처리한다. 공개 곡 목록·현재 곡은 공통 `SongsController.java`, 회원 곡 신청·내 곡 관리는 `my/SongsController.java`가 받는다. 인증 시스템의 로그인·회원가입·로그아웃은 화면 위치와 관계없이 공통 `AuthController.java`가 담당한다. 관리자 메뉴의 목록·상세·등록·수정은 모두 `controller/admin/MenusController.java` → `service/admin/MenusService.java` → 공통 `repository/MenuRepository.java`를 사용한다. 관리자 회원 시스템은 `admin/UsersController.java`·`admin/UsersService.java`, 마이페이지 회원 정보 시스템은 `my/UsersController.java`·`my/UsersService.java`를 사용하며 두 시스템은 `UserRepository.java`를 공유한다. `/admin` 대시보드는 WBS에 전용 API가 없어 기존 메뉴·주문·신청곡 API를 조합하며 빈 DashboardController를 만들지 않는다. 테이블 생성은 Hibernate의 JPA 자동 스키마 갱신이 맡는다.
+`controller/my/`와 `service/my/`는 로그인한 회원의 개인 데이터를 다루는 시스템을 담당한다. `/cart`와 `/checkout`이 `/my` URL 아래에 있지 않아도 장바구니와 주문 생성은 `my/CartItemsController.java`·`my/OrdersController.java`가 받는다. 주문 생성·내 주문 목록·상세는 한 `my/OrdersController.java` → `my/OrdersService.java` → `OrderRepository.java` 흐름으로 처리한다. 공개 곡 목록·현재 곡과 회원 곡 신청은 공통 `SongsController.java`, 내 곡 관리는 `my/SongsController.java`가 받는다. 인증 시스템의 로그인·회원가입·로그아웃은 화면 위치와 관계없이 공통 `AuthController.java`가 담당한다. 관리자 메뉴의 목록·상세·등록·수정은 모두 `controller/admin/MenusController.java` → `service/admin/MenusService.java` → 공통 `repository/MenuRepository.java`를 사용한다. 관리자 회원 시스템은 `admin/UsersController.java`·`admin/UsersService.java`, 마이페이지 회원 정보 시스템은 `my/UsersController.java`·`my/UsersService.java`를 사용하며 두 시스템은 `UserRepository.java`를 공유한다. `/admin` 대시보드는 WBS에 전용 API가 없어 기존 메뉴·주문·신청곡 API를 조합하며 빈 DashboardController를 만들지 않는다. 테이블 생성은 Hibernate의 JPA 자동 스키마 갱신이 맡는다.
 
 | 계층 | 책임 |
 | --- | --- |
@@ -224,7 +225,7 @@ Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요
 | Service | 권한·업무 규칙, 가격 재검증, 상태 전이, 트랜잭션·중복 요청 제어 |
 | Repository | JPA 조회·저장 및 필요한 잠금·검색 쿼리 |
 
-`controller`는 `repository`를 직접 호출하지 않고, `service`는 HTTP 객체에 의존하지 않는다. 로그인·회원가입·로그아웃은 `AuthController`, 메뉴 상세에서 시작하는 장바구니 담기는 `my/CartItemsController`, 곡 신청은 `my/SongsController`, 현재 곡 조회는 공통 `SongsController`에 둔다. 관리자의 메뉴 삭제는 `admin/MenusController`, 주문 상태 변경은 `admin/OrdersController`, 회원 상태 변경은 `admin/UsersController`가 소유한다. API 경로는 WBS의 `/api/v1/...`를 기준으로 하되 화면 URL을 그대로 복제하지 않는다. 인증은 폴더가 아니라 메서드별로 검사한다. 공통 예외 형식과 페이지네이션을 API 계약으로 통일한다. ID는 `BIGINT IDENTITY`, 금액은 원 단위 정수, 시각은 DB `TIMESTAMPTZ`·API ISO 8601로 다룬다. DB 접속 정보와 첫 관리자 비밀번호는 환경 변수로만 주입한다.
+`controller`는 `repository`를 직접 호출하지 않고, `service`는 HTTP 객체에 의존하지 않는다. 로그인·회원가입·로그아웃은 `AuthController`, 메뉴 상세에서 시작하는 장바구니 담기는 `my/CartItemsController`, 곡 신청과 현재 곡 조회는 공통 `SongsController`에 둔다. 관리자의 메뉴 삭제는 `admin/MenusController`, 주문 상태 변경은 `admin/OrdersController`, 회원 상태 변경은 `admin/UsersController`가 소유한다. API 경로는 WBS의 `/api/v1/...`를 기준으로 하되 화면 URL을 그대로 복제하지 않는다. 인증은 폴더가 아니라 메서드별로 검사한다. 공통 예외 형식과 페이지네이션을 API 계약으로 통일한다. ID는 `BIGINT IDENTITY`, 금액은 원 단위 정수, 시각은 DB `TIMESTAMPTZ`·API ISO 8601로 다룬다. DB 접속 정보와 첫 관리자 비밀번호는 환경 변수로만 주입한다.
 
 계층별 책임, 입력 정규화, 공통 오류, 전체 목록 변경 검증, 잠금·flush 사용 기준은 [관리자 카테고리 백엔드 계획](../../docs/admin/categories/2026-10-21-backend-category-management.md)의 구현 기준을 참고한다. 카테고리의 잠금 방식은 다른 도메인에 그대로 적용하지 않고 해당 도메인의 동시 수정 규칙에 맞춰 결정한다.
 
@@ -239,14 +240,14 @@ Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요
 | `HomeController` | `GET /api/v1/index/menus`, `GET /api/v1/index/songs` | 인덱스 조회 |
 | `AuthController` | `POST /api/v1/auth/login`, `POST /api/v1/auth/signup`, `POST /api/v1/auth/logout` | 1.1~1.3 |
 | `MenusController` | `GET /api/v1/menus` (`q`, `category`, `status`, `sort`), `GET /api/v1/menus/categories`(공개 메뉴 필터용 추가 계약), `GET /api/v1/menus/{slug}` | 4.1~4.3, 화면 연동 |
-| `SongsController` | `GET /api/v1/musicbox/songs`, `GET /api/v1/songs/now` | 11.2~11.3 |
+| `SongsController` | `GET /api/v1/musicbox/songs`, `POST /api/v1/musicbox/songs`, `GET /api/v1/songs/now` | 11.1~11.3 |
 
 | `my/` Controller | 담당 API | WBS |
 | --- | --- | --- |
 | `UsersController` | `GET /api/v1/my`, `PUT /api/v1/users/{id}` | 1.5, 1.4 |
 | `CartItemsController` | `POST /api/v1/menus/{id}/cart/items`, `GET /api/v1/cart/items`, `PUT/DELETE /api/v1/cart/items/{id}` | 14.1~14.4 |
 | `OrdersController` | `POST /api/v1/orders`(실제 결제 없이 주문 접수), `GET /api/v1/orders`, `GET /api/v1/orders/{id}` | 6.1, 6.3~6.4 |
-| `SongsController` | `POST /api/v1/musicbox/songs`, `GET /api/v1/my/songs`, `DELETE /api/v1/my/songs/{id}` | 11.1, 11.4~11.5 |
+| `SongsController` | `GET /api/v1/my/songs`, `DELETE /api/v1/my/songs/{id}` | 11.4~11.5 |
 
 | `admin/` Controller | 담당 API | WBS |
 | --- | --- | --- |
@@ -346,7 +347,7 @@ WBS 5.3의 `/api/v1/admin/orders/focus`와 12.3의 `/api/v1/admin/orders/status`
 
 ### 곡 신청과 내 신청곡 (WBS 11.x)
 
-- [ ] `SongsController`의 공개 목록·현재 곡 조회와 `my/SongsController`의 회원 신청·내 신청 조회·삭제 API를 만든다. 신청자 권한을 검증한다.
+- [ ] `SongsController`의 공개 목록·현재 곡 조회·회원 신청과 `my/SongsController`의 내 신청 조회·삭제 API를 만든다. 신청자 권한을 검증한다.
 - [ ] `frontend/app/(public)/musicbox`, `frontend/app/(customer)/my/songs`와 홈의 목 호출을 API로 바꾼다. 신청 직후 공개 목록과 내 신청 내역을 확인한다.
 
 ### 관리자 선곡·재생 (WBS 10.x)

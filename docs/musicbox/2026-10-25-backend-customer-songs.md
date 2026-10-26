@@ -10,9 +10,9 @@
   - 공용 엔티티는 관리자 신청곡 PR #78(cha)이 DB 설계대로 고쳐서 만들었다 (10-26 합의·반영). 이 PR은 그 위에서 작업한다.
   - 10-26부터 cha와 추가 조율은 하지 않는다. 이 PR만으로 구조가 맞도록 필요한 공용 코드 수정도 직접 한다.
 - 결정 필요: 없음
-- 현재 (10-26): 단계 1~5 완료. `./gradlew test` 96개 통과 (PR #78 기준 55개 + 이 PR 41개). 남은 것은 PR #78 머지 후 단계 6.
+- 현재 (10-26): 단계 1~6 완료. `./gradlew test` 105개 통과. 남은 것은 PR #78 머지 후 develop 위로 옮기기.
   - 테스트는 모두 mock·MockMvc·Hibernate 메타데이터로 실행했다. `backend/.env`가 실제 DB를 가리키고 `ddl-auto: update`라서, 앱 기동·`@SpringBootTest`는 실제 DB 스키마와 데이터를 바꾸므로 실행하지 않았다.
-- 규모: PR 1개, 6단계, 약 10시간 (단계 6은 PR #78 머지 후)
+- 규모: PR 1개, 6단계, 약 10시간
 - 위치: `docs/musicbox/`의 고객 쪽 백엔드 계획. 프론트 연결은 별도 계획으로 쓴다.
 
 ## 구현 결과 (10-26)
@@ -24,6 +24,7 @@
 - 입력 길이 상수와 공백 제거는 `entity/song/SongFields`(`MenuFields` 방식), 고정 시각 테스트용 `Clock`은 `config/ClockConfiguration`에 둔다.
 - 응답은 PR #78의 `SongResponse`를 그대로 쓴다. 계획의 `updatedAt` 필드는 PR #78 파일을 고치지 않으려고 넣지 않았다.
 - 신청곡 접수(R3)는 `my/SongsController`가 아니라 공개 `SongsController`·`service/SongsService`에 둔다 (10-26 결정). 경로가 `/my`가 아닌 `/musicbox/songs`이고, 같은 경로의 공개 목록과 한 Controller에 모은다. `my/`는 `/my/songs` 조회·삭제만 맡는다.
+- 코드 리뷰 반영 (10-26): 재생 중 바로 재생 NPE, 재생 중인 곡 취소 후 멈춤, 순서 변경 방향 누락을 고쳤다. 바로 재생 NPE는 단계 3에서 재생 시 `playlistOrder`를 비우게 바꾼 것이 원인이었다.
 - 공개 응답의 `playlistOrder`는 별도 처리 없이 엔티티가 보장한다. `play(at)`·`finish(at)`과 PR #78의 `cancel`·`returnToInbox`·`markAsPlayed`가 `queued`가 아니게 될 때 순서를 비운다.
 
 실제 DB 없이는 확인하지 못한 것:
@@ -44,11 +45,14 @@
 - Q3 부분 유니크 인덱스: 이번에는 만들지 않는다.
   - `music_box_state` 행 잠금과 서비스 규칙으로 막는다.
   - 인덱스는 카테고리 `is_fallback`과 함께 팀 결정 뒤 PostgreSQL 검증 작업에서 추가한다.
-- 정리 구조 (10-26): 정리 규칙은 도메인 객체 `entity/song/SongSettlement`, 실행은 각 서비스가 맡는다. 서비스가 서비스를 부르는 것 자체보다, 정리 쓰기가 읽기 전용 트랜잭션에 섞이는 문제를 피하기 위해서다. 나중에 공용 서비스로 감싸는 것은 이 규칙 객체를 그대로 두고 할 수 있다.
+- 정리 구조 (10-26): 정리 규칙은 도메인 객체 `entity/song/SongSettlement`, 잠금과 실행은 공용 부품 `service/support/MusicBoxSettler`가 맡는다.
+  - 처음에는 서비스마다 복사했지만, 관리자 쪽에 정리가 빠지는 문제(리뷰)가 생겨 한 곳으로 모았다.
+  - `MusicBoxSettler`는 서비스가 아니고 자기 트랜잭션을 만들지 않는다(`MANDATORY`). 그래서 정리 쓰기가 다른 트랜잭션이나 읽기 전용 트랜잭션에 섞이지 않는다.
+  - 위치는 청사진의 시스템 폴더(공개·`my`·`admin`)와 구분되는 `service/support/`다. `musicbox`는 화면 이름, `song`은 도메인 이름이라 시스템 폴더 자리에 두면 기준이 섞인다.
 - 조율 없이 진행 (10-26): cha와 더 조율할 수 없으므로, 아래는 이 PR이 직접 한다.
   - `music_box_state` `id=1` 행 생성: `MusicBoxStateInitializer` (단계 3). 이미 있으면 만들지 않으므로 나중에 PR #78에 같은 처리가 들어와도 결과가 같다.
   - 엔티티 보완(시각 메서드, `playlistOrder` 정리, 시각 컬럼 `TIMESTAMPTZ`, `requesterName` 50자): 단계 3. 고객 API가 바로 쓰는 부분이라 미루면 임시 코드가 생긴다.
-  - 관리자 조작의 시간 경과 정리 호출: PR #78 머지 뒤 단계 6. `admin/SongsService`는 PR #78에서 가장 많이 바뀌는 파일이라, 바뀌는 중에 고치면 충돌이 커진다.
+  - 관리자 조작의 시간 경과 정리 호출: 단계 6. 처음에는 PR #78 머지 뒤로 미뤘지만, PR #78이 10-25 이후 바뀌지 않아 이 브랜치에서 바로 했다.
 
 ## 1. 신청곡 저장 형식과 상태 규칙 (R1)
 
@@ -95,8 +99,8 @@ S3 재생 중 최대 1건 (PostgreSQL 검증 남음)
 
 - 규칙: `entity/song/SongSettlement`. Repository·트랜잭션 없이, 넘겨받은 `Song` 객체만 바꾼다.
   - `settle(Song playing, List<Song> queue, Instant now)`: 끝난 곡을 `finish(endsAt)`, 다음 곡을 `play(시작 시각)` 처리하고, 여러 곡이 지났으면 반복한다. 바뀐 게 있으면 `true`를 돌려준다.
-- 실행: 각 서비스가 자기 트랜잭션 안에서 "`findForUpdate` 잠금 → 재생곡·대기열 조회 → `SongSettlement.settle` → 변경 → `touch()`" 순서로 부른다.
-  - 서비스가 다른 서비스를 부르지 않으므로, 정리가 항상 호출한 서비스의 트랜잭션에서 일어난다. 읽기 전용 트랜잭션에 쓰기가 섞여 저장되지 않는 문제가 없다.
+- 실행: `service/support/MusicBoxSettler`. 쓰기는 `lockAndSettle(now)`(잠금 → 정리) 뒤 변경하고 `touch()`, 조회는 `settleIfDue(now)`를 부른다.
+  - `MANDATORY`라 항상 호출한 서비스의 트랜잭션에서 일어난다. 읽기 전용 트랜잭션에 쓰기가 섞여 저장되지 않는 문제가 없다.
   - `touch()`는 트랜잭션마다 한 번만 부른다. 정리와 변경이 한 요청에서 같이 일어나도 `revision`은 1만 오른다.
 
 S4 정상
@@ -276,7 +280,7 @@ S21 변경 감지 (R3·R7)
 | `play()`·`finish()` 시각 | `Instant.now()`만 씀 | `play(Instant at)`, `finish(Instant at)`를 더하고 기존 메서드는 위임 | 3 |
 | 재생·종료 후 `playlistOrder` | 남음 | 위 메서드에서 `null`로 정리 | 3 |
 | `music_box_state` `id=1` 행 | 만드는 코드 없음 | `MusicBoxStateInitializer` (있으면 건너뜀) | 3 |
-| 관리자 조작의 시간 경과 정리 | 없음 | `admin/SongsService`의 각 조작에서 잠금 직후 `SongSettlement.settle` 호출, 목록 조회도 공개 조회와 같은 순서 | 6 |
+| 관리자 조작의 시간 경과 정리 | 없음 | `admin/SongsService`의 각 조작에서 `MusicBoxSettler.lockAndSettle`, 목록 조회는 `settleIfDue` | 6 |
 | 시각 컬럼 | `startedAt`, `playedAt`, `MusicBoxState.updatedAt`에 `TIMESTAMPTZ` 없음 | 지정 | 3 |
 | `requesterName` 길이 | 40자 | 50자 (#61 `UserFields.NAME_MAX_LENGTH`) | 3 |
 | enum 상수 이름 | 소문자 상수 | 그대로 둔다. 저장 값은 DB 설계와 같고, 바꾸면 PR #78 전체를 고쳐야 한다 | - |
@@ -288,7 +292,7 @@ S21 변경 감지 (R3·R7)
 1. 이 브랜치를 PR #78 위에서 작업한다 (단계 2 완료, `93fbfe5`).
 2. PR #78에 새 커밋이 올라오면 `git rebase origin/feature/admin-songs-playback`을 실행한다. 충돌이 나면 abort하고 보고한다.
 3. PR #78이 squash 머지되면 `git rebase --onto origin/develop origin/feature/admin-songs-playback`을 실행하고 PR base를 `develop`으로 바꾼다.
-4. 그 위에서 단계 6을 진행한다.
+4. 단계 6은 PR #78이 바뀌지 않아 머지 전에 이 브랜치에서 진행했다 (10-26).
 
 ### 충돌 지점: `ApiExceptionHandler`
 
@@ -344,9 +348,8 @@ cha, #69, 이 PR이 모두 핸들러를 추가한다.
    - 파일: `controller/SongsController`, `service/SongsService` (Bean 이름은 기본값 `songsController`·`songsService`), `dto/songs/MusicBoxSongsResponse`·`NowPlayingResponse`
    - 확인: `./gradlew test` 전체 통과
    - PR 생성 (base: `feature/admin-songs-playback`)
-6. PR #78 머지 후 관리자 조작 연결 (약 1시간)
-   - 전제: PR #78이 develop에 머지됐고, 이 브랜치를 develop 위로 옮겼다.
-   - 파일: `service/admin/SongsService`(조작마다 잠금 직후 `SongSettlement.settle`, `list()`는 공개 조회와 같은 순서)
+6. 관리자 조작 연결 (약 1.5시간)
+   - 파일: `service/support/MusicBoxSettler`(공개·회원 서비스의 정리 코드를 옮김), `service/admin/SongsService`(조작마다 `lockAndSettle`, `list()`는 `settleIfDue`, `Clock` 주입)
    - 확인: `./gradlew test` 전체 통과, 기존 `SongsServiceTest`도 통과
 
 - 각 S는 테스트 하나와 1:1로 맞춘다. Controller는 MockMvc, Service는 Mockito 단위 테스트로 한다 (카테고리·메뉴와 같은 구조).
@@ -377,7 +380,6 @@ cha, #69, 이 PR이 모두 핸들러를 추가한다.
   - 열려 있는 모든 화면이 몇 초마다 조회하기 때문이다.
   - 이 잠금 방식은 뮤직박스 전용 선택이다 (구현 기준 5).
 - R2: 길이를 모르는 곡은 관리자가 다음 곡으로 넘기거나 취소할 때까지 `playing`이다.
-- R2: 단계 6 전까지 관리자 조작은 정리를 거치지 않는다. 그 사이 develop에서는 관리자 화면이 끝난 곡을 `playing`으로 볼 수 있지만, 고객 조회와 고객 쓰기는 정리를 먼저 하므로 고객 화면은 맞다.
 - R3: 곡명 1~100자, 가수 1~80자, 사연 1~500자이고 앞뒤 공백을 제거한다. 프론트 `RequestForm.tsx`·`_actions.ts`와 같다.
 - R3: `requesterName`은 신청 당시 회원 이름이다. 회원 이름이 바뀌어도 그대로 둔다.
 - R3: `user_id`는 `User` 엔티티가 develop에 없으므로 FK 없는 `Long NOT NULL`로 둔다.
