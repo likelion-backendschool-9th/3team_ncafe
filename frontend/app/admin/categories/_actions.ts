@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { apiFetch, ApiRequestError, csrfHeaders } from "@/app/_lib/api/client";
 import { requireRole } from "@/app/_lib/session/session";
-import { CATEGORY_NAME_MAX_LENGTH, isCategoryId } from "./_lib/category";
+import { CATEGORY_NAME_MAX_LENGTH, isCategoryId } from "@/app/admin/_lib/categories/category";
 
 export type CategoryFormState = { error?: string; values?: { name: string } };
 export type CategoryActionResult = { error?: string };

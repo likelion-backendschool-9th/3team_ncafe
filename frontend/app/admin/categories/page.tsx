@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireRole } from "@/app/_lib/session/session";
-import { getCategories } from "./_lib/api";
+import { getCategories } from "@/app/admin/_lib/categories/api";
 import { CategoryListSection } from "./_components/CategoryListSection";
 import { CreateCategoryForm } from "./_components/CreateCategoryForm";
 import styles from "./categories.module.css";
