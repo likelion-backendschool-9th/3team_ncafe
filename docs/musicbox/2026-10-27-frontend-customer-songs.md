@@ -6,7 +6,8 @@
   - 대상 화면: `/musicbox`, `/my/songs`, 홈 뮤직박스 칸
   - 열린 화면은 3초마다 `GET /api/v1/songs/now`의 `revision`만 확인한다.
 - 결정: Q1 A, Q2 A (10-27 승인). #85는 10-27 develop에 머지돼 단계 6도 이 브랜치에서 한다.
-- 규모: 7단계, 약 7시간
+- 규모: 8단계(0~7), 약 7.5시간
+- 컴포넌트 분리(10-27 추가 결정): 다른 라우트의 `musicbox/_components` import 10건을 FRONTEND.md 5-1 배치 단계대로 옮긴다 (단계 0).
 
 ## 질문 (10-27 결정: 둘 다 A)
 
@@ -53,7 +54,7 @@ S2 빈 뮤직박스
 
 S3 백엔드 오류
 - Given 백엔드가 꺼져 있다.
-- Then 공통 `error.tsx` 화면이 보이고, 목 데이터는 보이지 않는다.
+- Then `/musicbox/error.tsx` 화면이 보이고, 목 데이터는 보이지 않는다.
 
 ## 2. 변경 감지 (R2)
 
@@ -159,10 +160,22 @@ S17 정리
 
 ## 작업 순서
 
+0. 공용 컴포넌트 위치 정리 (약 0.5시간, 완료)
+   - 기준: FRONTEND.md 5-1 배치 단계. 내용은 바꾸지 않고 위치와 import만 고친다.
+   - 이동:
+     - `app/_components/`: `MusicBoxRefresher`, `useYouTubePlayback`, `VolumeControl`, `DjBooth`, `useStorySpeech`, `RequestMemo`, CSS 3개. 여러 역할이 쓴다.
+     - `app/_lib/songs/handwriting.ts`: 순수 함수라서 `_lib`에 둔다 (5-3).
+     - `(public)/_components/MusicBoxHighlight.tsx`: 홈 전용이다 (`MenuCard` 선례).
+   - 그대로 두는 것: `NowPlaying`, `RequestForm`, `RequestTable`, `YouTubePlayer`. `/musicbox`에서만 쓴다.
+   - `useYouTubePlayback`(335줄)은 이번에 나누지 않는다.
+   - 확인: `grep -r "musicbox/_components" app` 결과가 `/musicbox` 안쪽뿐이다. `npm run typecheck`, `npm run lint`
+
 1. 공용 타입과 조회 함수 — S1, S2, S3 (약 1.5시간)
    - 파일:
      - `app/_lib/songs/types.ts`: `SongResponse`, `NowPlaying`, `MusicBoxSongs` (DTO와 같은 이름·타입)
-     - `app/_lib/songs/api.ts` (`server-only`): `fetchMusicBoxSongs`, `fetchNowPlaying`, 응답 검증
+     - `app/_lib/songs/api.ts` (`server-only`): `fetchMusicBoxSongs`, `fetchNowPlaying`, 응답 검증. 공개·고객이 같이 쓴다.
+     - `(public)/musicbox/_lib/`: 표 행·오늘 접수 수 계산. page는 조립만 한다 (5-1).
+     - `(public)/musicbox/loading.tsx`·`error.tsx` (5-1)
      - `(public)/musicbox/page.tsx`
      - 공용 컴포넌트(`RequestTable`, `NowPlaying`, `DjBooth`, `RequestMemo`)의 타입을 `MusicRequest`에서 `SongResponse`로 바꾼다 (id `string` → `number`).
    - 확인: `npm run typecheck`, `npm run lint`
@@ -173,7 +186,7 @@ S17 정리
    - 파일: `(public)/musicbox/_actions.ts`(`submitMusicRequest`: `requireRole` 대신 회원·역할 확인 → 검증 → `apiFetch` + `csrfHeaders`), `RequestForm.tsx`(필드 오류·입력값 유지·관리자 안내)
    - 확인: e2e S7~S9
 4. 내 신청곡 — S11~S13 (약 1시간)
-   - 파일: `(customer)/my/songs/page.tsx`, `_actions.ts`
+   - 파일: `(customer)/my/songs/page.tsx`, `_actions.ts`, `_lib/api.ts`(`fetchMySongs`, 이 화면만 쓴다), `_lib/`(정렬·순번 계산), `loading.tsx`·`error.tsx`
    - 확인: e2e S11~S13
 5. 홈 칸·사연 읽기 — S14~S16 (약 1시간)
    - 파일: `MusicBoxHighlight.tsx`, `api/story-speech/route.ts`
@@ -186,7 +199,12 @@ S17 정리
    - 확인: `grep` S17, `npm run typecheck`
 7. 문서와 e2e 정리 (약 0.5시간)
    - 파일:
-     - `docs/FRONTEND.md`: 2-2 비고, 2-3 예외 2줄(Q2), 2-2의 "페이지가 아닌 라우트 핸들러"에서 version 삭제, 8-2 세 쌍의 상태
+     - `docs/FRONTEND.md`:
+       - 2-2 `/musicbox` 행에 `POST /musicbox/songs`를 추가한다.
+       - 2-3의 `/musicbox` 보조 `my/SongsController POST /musicbox/songs` 줄을 지운다. #79에서 접수가 공개 `SongsController`로 옮겨 갔기 때문이다.
+       - 2-3 예외 2줄을 추가한다 (Q2).
+       - 2-2의 "페이지가 아닌 라우트 핸들러"에서 version을 지운다.
+       - 8-1 import 갭과 8-2 세 쌍의 상태를 고친다.
      - `backend/docs/2026-10-20-backend-blueprint.md`: 보조 조회 2줄(Q2)
      - `e2e/musicbox.spec.ts`
    - 확인: `npm run test:e2e -- musicbox`
@@ -202,6 +220,7 @@ S17 정리
 - 브랜치: `feature/musicbox-frontend-api` (`origin/develop`에서 분기)
 - 커밋:
   - `docs: 고객 신청곡 프론트 연결 계획 추가` — 이 문서
+  - `refactor: 뮤직박스 공용 컴포넌트 위치 수정` — 단계 0
   - `feat: 뮤직박스 공개 조회 API 연결 추가` — 단계 1
   - `feat: 뮤직박스 변경 감지를 revision 폴링으로 수정` — 단계 2
   - `feat: 신청곡 접수 API 연결 추가` — 단계 3
