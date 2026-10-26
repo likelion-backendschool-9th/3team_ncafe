@@ -82,6 +82,8 @@ frontend/app/admin/orders/
 
 `BackendSession`은 Proxy에서도 사용하므로 여기에 `next/headers`나 Server Action 전용 의존성을 넣지 않는다. 쿠키 읽기/쓰기는 SSR 어댑터·기존 `createAuthSession`·Proxy 콜백에 남기고, 사용자 간 세션 객체를 공유하지 않는다.
 
+회원 관리의 최신 `csrfHeaders()`도 확인했다. 이 함수는 `admin/users/_lib/api.ts`의 지역 코드이므로 다른 라우트에서 직접 가져오지 않는다. 주문은 기존 쿠키 교체·만료 전달까지 유지해야 하므로 공통 세션 전송을 최소 확장한다. 기존 `client.ts`의 export·오류 생성자·호출 동작은 변경하지 않아 회원·공개 메뉴 소비자를 그대로 유지한다. 구현 착수 직전 같은 공통 확장이 먼저 들어왔는지 재확인하고, 이미 있으면 재사용한다.
+
 구현 대상은 공통 전송의 최소 확장뿐이다. 로그인 정책·SecurityConfig·고객 주문의 `CurrentUserContext`를 이번 프론트 작업에서 새로 구현하지 않는다.
 
 ## 4. 목록 조회·URL·페이지
@@ -140,7 +142,7 @@ frontend/app/admin/orders/
 | F7 | 접수 취소 확인/닫기, 사유 없이 취소, 취소 후 선택지 없음. 마지막 행 이동 시 페이지·focus 보정 |
 | F8 | 두 관리자/탭에서 같은 주문 변경: 먼저 한 건만 성공, 두 번째는 409 안내와 최신 상태·버전 표시 |
 | F9 | 미인증·고객·만료 세션·역할/정지 변경·CSRF 누락/무효·서버 중단에서 적절한 안내. DB 오변경 없음 |
-| F10 | 기존 가입·로그인·로그아웃과 다중 Set-Cookie·쿠키 만료 회귀 없음. 토큰·임의 역할 우회 없음 |
+| F10 | 기존 가입·로그인·로그아웃과 다중 Set-Cookie·쿠키 만료 회귀 없음. 회원 관리 GET/CSRF 포함 PUT·마이페이지·공개 메뉴도 정상. 토큰·임의 역할 우회 없음 |
 | F11 | 모바일/데스크톱 표·그리드, Tab/Enter/Esc, 포커스·label·동적 안내·axe serious/critical 확인 |
 | F12 | 기존 인증 E2E와 주문 E2E, lint·typecheck·build 통과. 결과를 실제 실행/미실행으로 구분해 기록 |
 
@@ -159,3 +161,42 @@ frontend/app/admin/orders/
 - **공통 갭:** 전역 skip link·root metadata·다른 라우트 main/SEO·전체 디자인 재구성·신규 상태 관리 라이브러리는 이번 범위 밖이다. 담당 쌍의 실제 처리 항목과 남긴 8장 갭을 PR에 적는다.
 
 완료는 관리자 두 페이지가 실제 API로 동작하고 F1~F12 검증 결과를 기록한 시점이다. 계획 작성·타입 검사 통과·API 호출 코드 추가만으로 구현 완료로 표시하지 않는다.
+
+## 9. 최근 팀원 구현 대조와 병합 검증 조건
+
+2026-10-26 재검토에서 원격 PR 상태와 실제 `develop` 파일 내용을 확인했다. 로컬 `develop` 브랜치를 checkout하거나 변경하지 않았으며, 아래 대조는 구현 완료 검증과 구분한다.
+
+| 대조 대상 | 확인한 최신 결과물 | 관리자 주문 계획에 적용할 사항 |
+| --- | --- | --- |
+| A 인증 [#61](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/61), head `da6356a` | `BackendSession`, `createAuthSession`, `requireRole`, Proxy, 기존 전송 E2E | 기존 인증·쿠키·세션 생성자/메서드·오류 타입 유지. 권한 확인 후 `/my`를 별도로 중복 조회하지 않음 |
+| B 관리자 회원 [#65](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/65), head `6f2aaa6` | page 조립, 지역 API/URL 파서, 서버 표·페이지 컴포넌트, client 상태 폼, 같은 세션의 CSRF 포함 PUT | 분리 기준·응답 검증·페이지 변환을 참고. 회원 액션에는 없는 `expectedStatus`·`statusVersion`을 주문에서 빠뜨리지 않음 |
+| B 마이페이지 [#68](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/68), head `d0dede1` | `requireRole` 결과를 MemberCard에 전달, 별도의 회원 조회 모듈 제거, 기존 logout 재사용 | 인증·본인 정보 조회 중복 제거. 다른 라우트 컴포넌트를 직접 import하는 대신 주문 지역 컴포넌트로 분리 |
+| C 공개 메뉴 [#77](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/77), head `51cc6ab` | `_lib/menus/api.ts`의 unknown 응답 검증, 숫자 ID, `categoryId`, 공통 `client.ts` 사용 | 공통 조회 요청기나 메뉴·장바구니 타입을 일괄 교체하지 않음. 주문의 `iced`·숫자 타입은 주문 지역에 적용 |
+| C 장바구니 [#81](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/81), head `6e606ef` | 백엔드 CRUD·CUSTOMER 접근 정책까지 병합, 프론트 연결은 해당 PR 범위 밖 | CartContext·장바구니/체크아웃 계약을 E 작업에서 변경하지 않음. 장바구니 API 존재와 전체 주문 화면 연결 완료를 구분 |
+| D 주문 [#69](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/69), head `bd891f8` | 고객 DTO·주문 생성/멱등성·공유 모델과 관리자 전용 DTO가 공존 | `OrderResponse`·`OrderPageResponse`를 관리자 형태로 덮어쓰지 않음. 기존 키/지문·공유 모델과 본인 조회 계약 보존 |
+
+위 PR들은 재검토 시점에 병합된 상태였다. 핵심 프론트 7개 파일(`backend-session.ts`, `client.ts`, 회원 관리 `_actions.ts`·`_lib/api.ts`, 마이페이지 `page.tsx`, 공개 메뉴 `_lib/menus/api.ts`, `playwright.config.ts`)은 원격 `develop`의 Git blob SHA와 작업 파일이 모두 같았다. 예: 세션 전송 `f9217f0`, 공통 조회 `4299015`. 이 사실은 검토 기준이 최신 파일과 같다는 뜻이며, 앞으로의 기능 병합이 충돌 없이 성공한다는 보장은 아니다.
+
+README·기존 청사진 일부에는 회원/메뉴가 아직 목이라는 설명이 남아 있다. 규칙은 FRONTEND.md를 따르고, 진행 현황·API 계약은 최신 실제 코드·DTO와 함께 확인한다. 오래된 문구만 근거로 인증이나 이미 연결된 화면을 다시 만들지 않는다.
+
+### 변경 파일 경계
+
+- 주 변경 범위는 `app/admin/orders/**`와 주문 E2E다. 이름·타입·CSS·컴포넌트는 주문 폴더에 두어 다른 기능과 섞이지 않게 한다.
+- 공통 변경 후보는 `app/_lib/api/backend-session.ts`의 추가 진입점뿐이다. 기존 `client.ts`, `auth.ts`, 세션·Proxy, 전역 레이아웃/스타일, Playwright의 포트·workers·testDir·기존 fixture 계약을 일괄 개편하지 않는다. 추가 변경이 꼭 필요하면 먼저 영향과 소비자를 계획/PR에 기록한다.
+- `docs/FRONTEND.md`는 다른 팀도 수정하는 파일이므로 주문 행과 필요한 계약 설명만 변경한다. 다른 담당자의 진행 상태를 덮어쓰지 않는다.
+- 회원 관리가 수정한 형제 key 중복 문제도 반영한다. 주문의 필터·안내·섹션 경계를 구분한 key를 사용하고, 페이지 이동·보기 전환 시 폼이나 행이 누적되지 않는지 확인한다.
+
+### 구현 후 반드시 확인할 통합 결과
+
+| 확인 범위 | 병합 전 통과할 결과 |
+| --- | --- |
+| A 인증 | 기존 `backend-session.spec.ts`와 `session-auth.spec.ts` 통과. 모든 쿠키 전달·세션 ID 변경·만료·가입 후 로그인·로그아웃/Proxy 유지 |
+| B 회원 | 실제 관리자 세션에서 목록·검색·페이지·상세·CSRF 포함 정지/해제 정상. 마이페이지는 기존 Member/로그아웃 흐름 유지 |
+| C 메뉴 | 공개 목록·카테고리·slug 상세·홈 추천과 담기 경계 정상. 로그인 정보가 다른 사용자 요청과 섞이지 않음 |
+| D/E 주문 | 고객 생성 계약의 주문을 관리자 화면에서 처리한 뒤 고객 조회 API의 같은 주문 상태 확인. 고객 HTTP/화면 선행이 없으면 해당 검증을 미완료로 명시 |
+| 테스트 간 간섭 | 전용 DB·계정·주문 키/fixture를 식별하고 각 테스트가 만든 데이터만 정리. 인증 테스트 사용자를 전역 초기화하거나 기존 시나리오/포트 설정 변경 금지 |
+| 병합 결과 | 구현 직전/최종 재검토에서 최신 공통 파일과 열린 PR을 확인. 기능별 테스트뿐 아니라 실제 합쳐진 코드에서 lint·typecheck·build·위 회귀 확인. rebase 충돌 시 abort 후 보고 |
+
+현재는 계획·소스 대조 단계다. 이 표의 실제 브라우저·DB 통합 결과를 미리 통과로 표시하지 않는다. 아직 구현하지 않은 기능에 대해 "오류·충돌이 전혀 없다"고 확정하지 않고, 위 결과를 완료 조건으로 삼는다.
+
+이번 문서 보완에서 `npm run lint`, `npm run typecheck`, 기존 `npm run test:e2e -- e2e/backend-session.spec.ts`의 전송 검사 3개가 통과했다. 마지막 3개는 주입한 fetcher로 쿠키·CSRF·오류와 안전한 next를 검사하는 기존 테스트이며, 실제 브라우저/DB나 새 주문 연결 구현을 검증한 결과가 아니다.
