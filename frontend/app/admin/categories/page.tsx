@@ -1,22 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { EmptyState } from "@/app/_components/ui/EmptyState";
-import { FALLBACK_CATEGORY_NAME, mockCategoryRepository } from "@/app/_lib/mock/categories";
-import { mockMenuRepository } from "@/app/_lib/mock/menus";
 import { requireRole } from "@/app/_lib/session/session";
-import { CategoryList } from "./_components/CategoryList";
+import { getCategories } from "./_lib/api";
+import { CategoryListSection } from "./_components/CategoryListSection";
 import { CreateCategoryForm } from "./_components/CreateCategoryForm";
 import styles from "./categories.module.css";
 
+export const metadata: Metadata = { title: "카테고리 관리 | 삼다방" };
+
 export default async function AdminCategoriesPage() {
   await requireRole("admin", "/admin/categories");
-  const [categories, menus] = await Promise.all([mockCategoryRepository.list(), mockMenuRepository.list()]);
-  const menuCountByCategory = new Map<string, number>();
-  for (const menu of menus) {
-    for (const category of menu.categories) {
-      menuCountByCategory.set(category, (menuCountByCategory.get(category) ?? 0) + 1);
-    }
-  }
-  const menuCounts = Object.fromEntries(menuCountByCategory);
+  const categories = await getCategories();
 
   return (
     <div className={styles.page}>
@@ -33,19 +27,7 @@ export default async function AdminCategoriesPage() {
       </div>
 
       <CreateCategoryForm />
-
-      <section className={styles.section} aria-labelledby="category-list-title">
-        <div className={styles.sectionHeading}>
-          <h2 id="category-list-title">카테고리 목록</h2>
-          <span className={styles.count}>{categories.length}개</span>
-          <span className={styles.sectionHint}>⠿를 끌거나 ▲▼를 눌러 순서를 바꿀 수 있어요.</span>
-        </div>
-        {categories.length > 0 ? (
-          <CategoryList categories={categories} menuCounts={menuCounts} fallbackCategoryName={FALLBACK_CATEGORY_NAME} />
-        ) : (
-          <EmptyState title="등록된 카테고리가 없습니다" description="위 입력란에서 첫 카테고리를 추가해 주세요." />
-        )}
-      </section>
+      <CategoryListSection categories={categories} />
     </div>
   );
 }

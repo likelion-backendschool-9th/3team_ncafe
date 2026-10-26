@@ -1,9 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { apiFetch, ApiRequestError } from "@/app/_lib/api/client";
+import { apiFetch, ApiRequestError, csrfHeaders } from "@/app/_lib/api/client";
 import { requireRole } from "@/app/_lib/session/session";
-import { csrfHeaders } from "./_lib/api";
 import { isUserStatus, type UserResponse } from "./_lib/user";
 
 export type UserStatusState = { error?: string; success?: string };

@@ -37,3 +37,14 @@ export async function apiFetch<T>(path: `/api/v1/${string}`, init: RequestInit =
   if (!response.ok) throw new ApiRequestError(response.status, await readError(response));
   return response.status === 204 ? (undefined as T) : response.json();
 }
+
+// 변경 요청(POST·PUT·DELETE)은 같은 세션의 CSRF 토큰을 헤더로 보내야 백엔드 Security를 통과한다.
+// apiFetch가 브라우저의 세션 쿠키를 그대로 전달하므로, 같은 세션으로 토큰을 받아 온다.
+export async function csrfHeaders(): Promise<Record<string, string>> {
+  const body: unknown = await apiFetch<unknown>("/api/v1/auth/csrf");
+  if (typeof body === "object" && body !== null && "headerName" in body && "token" in body
+    && typeof body.headerName === "string" && typeof body.token === "string") {
+    return { [body.headerName]: body.token };
+  }
+  throw new Error("CSRF API 응답 형식이 올바르지 않습니다.");
+}

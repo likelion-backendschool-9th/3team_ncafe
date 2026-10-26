@@ -1,21 +1,18 @@
 "use client";
 
 import { useActionState, useRef, useState, type KeyboardEvent } from "react";
-import type { Category } from "@/app/_lib/mock/categories";
 import { renameCategory, type CategoryFormState } from "../_actions";
+import type { CategoryResponse } from "../_lib/category";
 import { DeleteCategoryDialog } from "./DeleteCategoryDialog";
 import styles from "../categories.module.css";
 
 const initialState: CategoryFormState = {};
 
-export function CategoryRow({ category, menuCount, position, locked, isFirst, isLast, onMoveUp, onMoveDown }: {
-  category: Category;
-  menuCount: number;
+export function CategoryRow({ category, position, canMoveUp, canMoveDown, onMoveUp, onMoveDown }: {
+  category: CategoryResponse;
   position: number;
-  // 삭제된 카테고리의 메뉴가 옮겨 가는 기타 카테고리는 수정·삭제를 막는다.
-  locked: boolean;
-  isFirst: boolean;
-  isLast: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
   onMoveUp: () => void;
   onMoveDown: () => void;
 }) {
@@ -28,7 +25,10 @@ export function CategoryRow({ category, menuCount, position, locked, isFirst, is
     return result;
   }, initialState);
   const error = editing ? state.error : undefined;
-  const lockedHint = "삭제된 카테고리의 메뉴가 옮겨 가는 기본 카테고리라 수정·삭제할 수 없어요.";
+  // 삭제된 카테고리의 메뉴가 옮겨 가는 기타 카테고리는 수정·삭제를 막는다.
+  const locked = category.isFallback;
+  const lockedHint = "삭제된 카테고리의 메뉴가 옮겨 가는 기타 카테고리라 수정·삭제할 수 없어요.";
+  const orderHint = locked ? "기타 카테고리는 항상 맨 아래에 있어요." : undefined;
 
   function startEditing() {
     setEditing(true);
@@ -45,10 +45,10 @@ export function CategoryRow({ category, menuCount, position, locked, isFirst, is
 
   return (
     <div className={styles.row}>
-      <span className={styles.dragHandle} aria-hidden="true" title="드래그해서 순서 변경">⠿</span>
+      <span className={`${styles.dragHandle} ${locked ? styles.dragHandleLocked : ""}`} aria-hidden="true" title={orderHint ?? "드래그해서 순서 변경"}>⠿</span>
       <div className={styles.orderButtons}>
-        <button type="button" className={styles.orderButton} onClick={onMoveUp} disabled={isFirst} aria-label={`${category.name} 위로 이동`}>▲</button>
-        <button type="button" className={styles.orderButton} onClick={onMoveDown} disabled={isLast} aria-label={`${category.name} 아래로 이동`}>▼</button>
+        <button type="button" className={styles.orderButton} onClick={onMoveUp} disabled={!canMoveUp} title={orderHint} aria-label={`${category.name} 위로 이동`}>▲</button>
+        <button type="button" className={styles.orderButton} onClick={onMoveDown} disabled={!canMoveDown} title={orderHint} aria-label={`${category.name} 아래로 이동`}>▼</button>
       </div>
       <span className={styles.number} aria-hidden="true">{String(position).padStart(2, "0")}</span>
       <form action={formAction} className={styles.rowForm}>
@@ -60,7 +60,7 @@ export function CategoryRow({ category, menuCount, position, locked, isFirst, is
           maxLength={40}
           required
           readOnly={!editing}
-          defaultValue={category.name}
+          defaultValue={error ? state.values?.name : category.name}
           onKeyDown={handleKeyDown}
           aria-label={`${category.name} 카테고리명`}
           aria-invalid={!!error}
@@ -76,7 +76,7 @@ export function CategoryRow({ category, menuCount, position, locked, isFirst, is
       <div className={styles.deleteCell}>
         <button className={styles.dangerButton} type="button" onClick={() => setDeleting(true)} disabled={locked} title={locked ? lockedHint : undefined}>삭제</button>
       </div>
-      <span className={`${styles.usage} ${menuCount === 0 ? styles.usageEmpty : ""}`}>메뉴 {menuCount}개에서 사용 중</span>
+      <span className={`${styles.usage} ${category.menuCount === 0 ? styles.usageEmpty : ""}`}>메뉴 {category.menuCount}개에서 사용 중</span>
       {error && <span id={`category-${category.id}-error`} className={styles.fieldError}>{error}</span>}
       {deleting && <DeleteCategoryDialog categoryId={category.id} categoryName={category.name} onClose={() => setDeleting(false)} />}
     </div>

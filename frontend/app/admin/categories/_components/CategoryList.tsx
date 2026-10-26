@@ -1,89 +1,50 @@
 "use client";
 
-import { useState, type DragEvent } from "react";
-import type { Category } from "@/app/_lib/mock/categories";
-import { moveCategory, reorderCategories } from "../_actions";
+import type { DragEvent } from "react";
+import { useCategoryOrder } from "../_hooks/useCategoryOrder";
+import type { CategoryResponse } from "../_lib/category";
 import { CategoryRow } from "./CategoryRow";
 import styles from "../categories.module.css";
 
-export function CategoryList({ categories, menuCounts, fallbackCategoryName }: {
-  categories: Category[];
-  menuCounts: Record<string, number>;
-  fallbackCategoryName: string;
-}) {
-  const [order, setOrder] = useState(categories);
-  const [syncedCategories, setSyncedCategories] = useState(categories);
-  const [dragId, setDragId] = useState<string | null>(null);
-  const [overId, setOverId] = useState<string | null>(null);
+type Props = { categories: CategoryResponse[] };
 
-  // 추가/삭제/이름수정 등 서버에서 새로 내려온 목록으로 동기화 (렌더 중 동기화, effect 대신)
-  if (categories !== syncedCategories) {
-    setSyncedCategories(categories);
-    setOrder(categories);
-  }
-
-  function handleDrop(targetId: string) {
-    if (!dragId || dragId === targetId) {
-      setDragId(null);
-      setOverId(null);
-      return;
-    }
-    const next = [...order];
-    const fromIndex = next.findIndex((category) => category.id === dragId);
-    const toIndex = next.findIndex((category) => category.id === targetId);
-    if (fromIndex < 0 || toIndex < 0) return;
-    const [moved] = next.splice(fromIndex, 1);
-    next.splice(toIndex, 0, moved);
-    setOrder(next);
-    setDragId(null);
-    setOverId(null);
-    void reorderCategories(next.map((category) => category.id));
-  }
-
-  function handleMove(id: string, direction: "up" | "down") {
-    const index = order.findIndex((category) => category.id === id);
-    const target = direction === "up" ? index - 1 : index + 1;
-    if (index < 0 || target < 0 || target >= order.length) return;
-    const next = [...order];
-    [next[index], next[target]] = [next[target], next[index]];
-    setOrder(next);
-    void moveCategory(id, direction);
-  }
+export function CategoryList({ categories }: Props) {
+  const { order, movableCount, error, dragId, overId, startDrag, dragOver, dragLeave, drop, clearDrag, move } = useCategoryOrder(categories);
 
   return (
-    <div className={styles.list}>
-      {order.map((category, index) => (
-        <div
-          key={category.id}
-          draggable
-          onDragStart={() => setDragId(category.id)}
-          onDragOver={(event: DragEvent<HTMLDivElement>) => {
-            event.preventDefault();
-            if (overId !== category.id) setOverId(category.id);
-          }}
-          onDragLeave={() => setOverId((current) => (current === category.id ? null : current))}
-          onDrop={(event: DragEvent<HTMLDivElement>) => {
-            event.preventDefault();
-            handleDrop(category.id);
-          }}
-          onDragEnd={() => {
-            setDragId(null);
-            setOverId(null);
-          }}
-          className={overId === category.id && dragId && dragId !== category.id ? styles.rowDragOver : undefined}
-        >
-          <CategoryRow
-            category={category}
-            menuCount={menuCounts[category.name] ?? 0}
-            position={index + 1}
-            locked={category.name === fallbackCategoryName}
-            isFirst={index === 0}
-            isLast={index === order.length - 1}
-            onMoveUp={() => handleMove(category.id, "up")}
-            onMoveDown={() => handleMove(category.id, "down")}
-          />
-        </div>
-      ))}
-    </div>
+    <>
+      <p className={styles.fieldError} role="alert">{error}</p>
+      <div className={styles.list}>
+        {order.map((category, index) => (
+          <div
+            key={category.id}
+            draggable={!category.isFallback}
+            onDragStart={() => startDrag(category.id)}
+            onDragOver={(event: DragEvent<HTMLDivElement>) => {
+              // 기타 행 위로는 놓을 수 없게 기본 동작(drop 거부)을 그대로 둔다.
+              if (category.isFallback) return;
+              event.preventDefault();
+              dragOver(category.id);
+            }}
+            onDragLeave={() => dragLeave(category.id)}
+            onDrop={(event: DragEvent<HTMLDivElement>) => {
+              event.preventDefault();
+              drop(category.id);
+            }}
+            onDragEnd={clearDrag}
+            className={overId === category.id && dragId && dragId !== category.id ? styles.rowDragOver : undefined}
+          >
+            <CategoryRow
+              category={category}
+              position={index + 1}
+              canMoveUp={!category.isFallback && index > 0}
+              canMoveDown={index < movableCount - 1}
+              onMoveUp={() => move(category.id, "up")}
+              onMoveDown={() => move(category.id, "down")}
+            />
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
