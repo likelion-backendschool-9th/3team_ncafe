@@ -7,7 +7,6 @@ import com.newcafe.backend.entity.song.MusicBoxState;
 import com.newcafe.backend.entity.song.Song;
 import com.newcafe.backend.entity.song.SongSettlement;
 import com.newcafe.backend.entity.song.SongStatus;
-import com.newcafe.backend.entity.song.SongTiming;
 import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
 
@@ -32,7 +31,7 @@ public class SongsService {
 
     // 조회 중에도 정리가 일어날 수 있어 읽기 전용 트랜잭션을 쓰지 않는다.
     @Transactional
-    public List<SongResponse> listMine(Long userId) {
+    public List<SongResponse> list(Long userId) {
         settleIfDue(clock.instant());
 
         return songRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()

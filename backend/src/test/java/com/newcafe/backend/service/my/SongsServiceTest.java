@@ -51,7 +51,7 @@ class SongsServiceTest {
         Song song = song(1L, 7L);
         when(songRepository.findByUserIdOrderByCreatedAtDesc(7L)).thenReturn(List.of(song));
 
-        List<SongResponse> songs = service.listMine(7L);
+        List<SongResponse> songs = service.list(7L);
 
         assertEquals(List.of(1L), songs.stream().map(SongResponse::id).toList());
         verify(musicBoxStateRepository, never()).findForUpdate();
@@ -59,7 +59,7 @@ class SongsServiceTest {
 
     @Test
     void s13ListReturnsEmptyWhenMemberHasNoSongs() {
-        assertEquals(List.of(), service.listMine(9L));
+        assertEquals(List.of(), service.list(9L));
     }
 
     @Test
@@ -69,7 +69,7 @@ class SongsServiceTest {
         when(songRepository.findFirstByStatus(SongStatus.playing)).thenReturn(Optional.of(current));
         when(songRepository.findByUserIdOrderByCreatedAtDesc(7L)).thenReturn(List.of(current));
 
-        List<SongResponse> songs = service.listMine(7L);
+        List<SongResponse> songs = service.list(7L);
 
         assertEquals("played", songs.get(0).status());
         assertEquals(1L, state.getRevision());

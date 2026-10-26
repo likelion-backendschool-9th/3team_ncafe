@@ -25,7 +25,7 @@ public class SongsController {
 
     @GetMapping
     public List<SongResponse> list() {
-        return songsService.listMine(currentUserContext.requireCurrentUser().id());
+        return songsService.list(currentUserContext.requireCurrentUser().id());
     }
 
     @DeleteMapping("/{id}")
