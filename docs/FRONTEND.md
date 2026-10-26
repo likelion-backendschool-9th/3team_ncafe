@@ -20,7 +20,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | 관리자 | 카테고리 관리 | 13.x | 구현. 백엔드 API 있음 |
 | 관리자 | 메뉴 CRUD | 3.x | 구현. 백엔드 API 있음 |
 | 고객 | 메뉴 목록·상세 | 4.x | 구현 |
-| 고객 | 장바구니 | 14.1~14.4 (15.0) | 구현(localStorage) |
+| 고객 | 장바구니 | 14.1~14.4 (15.0) | 구현. 백엔드 API 연결 |
 | 고객 | 주문 등록·목록·상세 | 6.1, 6.3~6.4 | 구현. 고객 취소(6.2)는 백엔드 보류(Q2) |
 | 고객 | 결제·결제수단 CRUD | 7.x, 8.x | **보류(Q1).** 카운터 결제수단 선택만 있음 |
 | 관리자 | 주문 목록·상세·상태 변경·취소 | 5.x/12.x | 구현 |
@@ -31,7 +31,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 **현재 데이터·인증 상태**
 - 2026-10-25 인증 6단계에서 가입·로그인·로그아웃·본인 조회를 실제 `/api/v1` 세션 API에 연결했다. `getCurrentUser`·`requireRole`은 백엔드 본인 응답을 사용하며 목 인증 쿠키는 사용하지 않는다.
 - 나머지 업무 화면은 목 저장소([app/_lib/mock/](../frontend/app/_lib/mock/), `.data/*.json`, 운영 환경에서는 차단)를 유지한다. 업무 데이터의 API 전환은 쌍 단위 후속 작업이다.
-- 장바구니는 localStorage의 React Context에 저장한다.
+- 장바구니는 백엔드 장바구니 API(회원별 서버 저장)를 쓴다. 주문 대상 체크만 `/cart` 화면 상태로 두고 `/checkout?cartItemIds=`로 넘긴다.
 
 ## 2. 라우트-컨트롤러 매핑
 
@@ -56,7 +56,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | `/menus` | `MenusController`(공개) | `GET /menus`(`q`,`categoryId`,`status`,`sort`,`page`,`size`), `GET /menus/categories` | 4.1 | 공유 |
 | `/menus/[slug]` | `MenusController`(공개) | `GET /menus/{slug}` | 4.2 | 공유, 보조 |
 | `/musicbox` | **`SongsController`**(공개) | `GET /musicbox/songs`, `GET /songs/now`, `POST /musicbox/songs` | 11.1~11.3 | 신청은 고객 회원만 |
-| `/cart` | `my/CartItemsController` | `GET /cart/items`, `PUT`·`DELETE /cart/items/{id}` | 14.2~14.4 | 현재 localStorage |
+| `/cart` | `my/CartItemsController` | `GET /cart/items`, `PUT`·`DELETE /cart/items/{id}` | 14.2~14.4 | |
 | `/checkout` | `my/OrdersController` | `POST /orders` | 6.1 | 공유 |
 | `/my` | **`my/UsersController`** | `GET /my` | 1.5 | 보조 |
 | `/my/orders`, `/my/orders/[id]` | `my/OrdersController` | `GET /orders`, `GET /orders/{id}` | 6.3~6.4 | 공유. 고객 취소 API 없음(Q2) |
@@ -91,11 +91,11 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | 보조 | `/` | `SongsController`(공개) `GET /musicbox/songs`, `GET /songs/now` | 홈 뮤직박스 칸의 현재 곡·다음 곡·`revision`. `GET /index/songs`가 없어 공개 조회를 쓴다(2026-10-27) |
 | 보조 | `/my/songs` | `SongsController`(공개) `GET /songs/now`, `GET /musicbox/songs` | 현재 곡 부스, 재생 대기 순번, `revision`(2026-10-27) |
 | 보조 | `/my` | `AuthController` `POST /auth/logout` | 백엔드 청사진: 로그아웃 |
+| 보조 | `/checkout` | `my/CartItemsController` `GET /cart/items` | 주문 대상 항목 조회. `/cart`가 넘긴 `?cartItemIds=`의 줄만 고른다(2026-10-26 결정, 새 엔드포인트 없음) |
 | 없음 | `/admin` | 관리자 목록 API 조합 | 백엔드 청사진: 대시보드 API 없음 |
 | 없음 | `/forbidden`, 결제·리뷰·주문 완료 화면 | — | 프론트 전용, 또는 보류·범위 밖 |
 
-다음 두 곳은 코드상 다른 컨트롤러가 필요하지만 근거가 없어 예외로 인정하지 않는다. 6-2에서 정한다.
-- `/checkout`의 주문 대상 항목 조회
+다음 한 곳은 코드상 다른 컨트롤러가 필요하지만 근거가 없어 예외로 인정하지 않는다. 6-2에서 정한다.
 - 관리자 메뉴 화면의 카테고리 목록
 
 ## 3. 라우트별 명세
@@ -113,8 +113,8 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | `/menus` | `q`(100자), `categoryId`, `sort`=`newest`\|`name`\|`price-low`\|`price-high`. GET 폼 제출, 탭은 Link | 없음 | 메뉴 · `/menus` |
 | `/menus/[slug]` | params `slug` | `OrderPanel`(온도·수량), `CartAddedDialog`, `LoginRequiredDialog`, `BackButton` | 메뉴명 · `/menus/{slug}`, 없으면 `notFound()` |
 | `/musicbox` | `page`(1부터, 10개), flash `submitted` | `RequestForm`, `DjBooth`, `YouTubePlayer`, `VolumeControl`, `MusicBoxRefresher` | 뮤직박스 · `/musicbox`(page 유지) |
-| `/cart` | 없음 | `CartView`(화면 전체) | 장바구니 |
-| `/checkout` | 없음. 성공하면 `/my/orders/[id]?placed=1`로 replace | `CheckoutView`(화면 전체) | 주문서 |
+| `/cart` | 없음. 주문하기는 `/checkout?cartItemIds=…` | `CartView`(선택 상태), `CartToolbar`, `CartItemRow`, `CartQuantityControl`, `RemoveCartItemButton`, `CartSummary` | 장바구니 |
+| `/checkout` | `cartItemIds`(쉼표로 구분한 장바구니 줄 id, `/cart`가 넘김). 성공하면 `/my/orders/[id]?placed=1`로 replace | `CheckoutView`(화면 전체) | 주문서 |
 | `/my` | 없음 | 없음 | 마이페이지 |
 | `/my/orders` | 없음 | 없음 | 내 주문 |
 | `/my/orders/[id]` | params `id`, flash `placed`·`canceled`·`error` | `CancelOrderForm` | 주문 {코드}, 본인 주문이 아니면 `notFound()` |
@@ -173,7 +173,7 @@ frontend/app/
 | 여러 클라이언트 컴포넌트가 공유하는 UI 상태 | 가까운 부모의 React Context(최소화) |
 
 - TanStack Query와 Zustand는 쓰지 않는다. 서버 데이터를 클라이언트 전역 상태로 복사하지 않는다.
-- 현재의 `CartContext` + localStorage는 장바구니 API를 연결할 때 걷어낸다.
+- 장바구니 `CartContext` + localStorage는 장바구니 API를 연결하면서 걷어냈다(2026-10-26).
 - URL 값을 `useState`로 중복해 들고 있지 않는다. 단, 입력 중인 값은 로컬 상태로 두고 제출할 때 URL에 반영한다. 이때 `key`로 URL 값과 다시 맞춘다.
 - **URL 파라미터:**
   - 파싱·기본값·검증을 거친 뒤 쓴다. 기본값은 URL에서 생략한다.
@@ -357,7 +357,7 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | 높음 | 역할별 가입·로그인 방식 | 목: 가입은 고객만, 이메일·비밀번호. 관리자 생성은 백엔드 계획 |
 | 높음 | 뮤직박스 신청 권한·사연 공개·대기 순서 | 회원만, 이름 공개, 글자 수 제한, 관리자가 순서 결정. 공개 동의는 없음 |
 | 높음 | 뮤직박스 음원 출처·사용 권한·동기화 | YouTube, 서버 시각 동기화. 사용 권한 미정 |
-| 높음 | 장바구니 세부 요구사항 | 코드: localStorage, 메뉴·온도별 한 줄, 1~20. 백엔드: 서버 저장 |
+| 높음 | 장바구니 세부 요구사항 | 서버 저장, 메뉴·온도별 한 줄, 1~20(넘으면 20으로 맞춤), 고객만 |
 | 중간 | 메뉴 카테고리·옵션·품절 정책 | 코드: 카테고리 여러 개, `hot`/`ice`. 백엔드: 카테고리 하나, `supportsHot`/`supportsIced`, 숨김 삭제 |
 | 중간 | 리뷰 작성 조건·평점·이미지, 관리자 리뷰 등록 의미 | 범위 밖 |
 | 중간 | 관리자 결제 관리 범위 | 백엔드 9.x 세부 없음 |
@@ -369,7 +369,7 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | 백엔드 인증 방식(세션·토큰, CSRF, 쿠키 이름) | 백엔드 |
 | 사이트 도메인, OG 이미지, 백엔드 주소 환경변수 이름 | 팀 |
 | 메뉴 `nameEn` 유지, 카테고리 단일·복수 (공개 메뉴 필터는 `categoryId`로 정함) | 백엔드 협의 |
-| `/checkout` 주문 대상 조회, 관리자 메뉴 카테고리 목록의 컨트롤러 | 백엔드 협의 |
+| 관리자 메뉴 카테고리 목록의 컨트롤러 | 백엔드 협의 |
 | 고객 취소 화면 유지 여부(Q2). 관리자 취소는 `PUT /admin/orders/status`의 `nextStatus=canceled`로 확정(2026-10-26) | 백엔드·팀 |
 | GLOSSARY에 없는 용어: 고객·회원·방문자, 인덱스, 주문·뮤직박스 상태 라벨 | GLOSSARY 관리자 |
 
@@ -402,7 +402,6 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | h1이 page 밖에 있음 | `SignupForm.tsx`, 공통 `StatePanel`(`/forbidden`, `error`, `not-found`) |
 | 인증 요청기·Proxy·`/api/v1` rewrites 완료. 라우트별 `loading`·`error`는 남음 | `frontend/` |
 | `MenuCard`를 `(public)`만 쓰는데 `app/_components`에 있음 | `app/_components/MenuCard.tsx` |
-| 장바구니 Context가 루트 layout 전체를 감쌈 | `app/layout.tsx`, `_lib/cart/CartContext.tsx` |
 
 ### 8-2. 쌍별 작업
 
@@ -418,10 +417,10 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | `/admin/categories` ↔ **admin/Categories** | metadata·"기타 카테고리" 문구 완료 | API 연결 완료(#86·#87, 기타 맨 밑 고정). 백엔드 꺼짐 화면은 `proxy.ts` 공통 작업으로 남음 | — |
 | `/admin/menus*` ↔ **admin/Menus** | 목록·등록 metadata, `categoryId`·`page` 완료. 상세·수정 `generateMetadata` 없음 | API 연결 완료([계획](admin/menus/2026-10-27-frontend-admin-menus.md)). 이미지 파일 업로드는 저장소 결정 후 | — |
 | `/menus` ↔ Menus | metadata·canonical 없음, `<main>`이 page에 있음 | 공개 메뉴 API | 백엔드 공개 Menus |
-| `/menus/[slug]` ↔ Menus | `generateMetadata` 없음, 대화상자 이동이 `router.push`(`OrderPanel.tsx:195,203`) | slug 조회, 담기 API | `/menus`, `/cart` API |
+| `/menus/[slug]` ↔ Menus | 대화상자 이동이 `router.push`(`OrderPanel`) | — | — |
 | `/` ↔ Home | `<main>`이 page에 있음 | index API. 뮤직박스 칸은 공개 Songs 조회로 연결 완료(2-3) | 공개 Menus |
-| `/cart` ↔ my/CartItems | 화면 전체가 클라이언트, "주문하기"가 `router.push`(`CartView.tsx:22`), Context+localStorage | 서버 장바구니, 체크는 로컬 상태, `iced` | 담기, Auth |
-| `/checkout` ↔ my/Orders | 화면 전체가 클라이언트, `cart` CSS import, "주문 / 결제"·"결제하기" 용어 | `POST /orders`(`cartItemIds`·수령 방식·결제수단·요청사항) | `/cart`, 조회 방식 결정 |
+| `/cart` ↔ my/CartItems | metadata 없음 | — | — |
+| `/checkout` ↔ my/Orders | 화면 전체가 클라이언트, `cart` CSS import, "주문 / 결제"·"결제하기" 용어 | `POST /orders`(`cartItemIds`·수령 방식·결제수단·요청사항). 주문 대상은 `?cartItemIds=`로 받아 서버 장바구니에서 고른다 | 백엔드 `/api/v1/orders` 접근 정책 |
 | `/my/orders*` ↔ my/Orders | metadata 없음 | API 연결, 고객 취소 결정 | `/checkout` |
 | `/admin/orders*` ↔ **admin/Orders** | metadata 없음, page 226줄, 상태 select가 `aria-label`만 | 백엔드 API 구현(2026-10-26). 인증·API 연결, 숫자 ID·`temperature`·`statusVersion`·`allowedStatuses`, 취소 사유 제거·`received`만 취소. [계약](admin/orders/2026-10-26-backend-order-management.md) | Auth, `/checkout`, 회원 FK 통합 |
 | `/musicbox` ↔ **Songs** | metadata·canonical 없음, `<main>`이 page에 있음. 공유 컴포넌트는 `app/_components`로 옮김, `loading`·`error` 추가 | 공개 조회·신청·`revision` 폴링 연결 완료([계획](musicbox/2026-10-27-frontend-customer-songs.md)) | — |

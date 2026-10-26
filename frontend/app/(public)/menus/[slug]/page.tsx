@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { Temperature } from "@/app/_lib/cart/CartContext";
 import { getCurrentUser } from "@/app/_lib/session/session";
 import { getMenu } from "../../_lib/menus/api";
 import type { MenuResponse } from "../../_lib/menus/types";
 import styles from "../menus.module.css";
 import { BackButton } from "./_components/BackButton";
 import { OrderPanel } from "./_components/OrderPanel";
+import type { Temperature } from "./_components/TemperaturePicker";
 
 const won = new Intl.NumberFormat("ko-KR");
 
@@ -101,10 +101,8 @@ export default async function MenuDetailPage({ params }: Props) {
               </div>
             </div>
             <OrderPanel
-              menuId={String(menu.id)}
+              menuId={menu.id}
               menuSlug={menu.slug}
-              menuName={menu.name}
-              imageUrl={menu.imageUrl}
               price={menu.price}
               temperatures={temperaturesOf(menu)}
               temperatureLabel={

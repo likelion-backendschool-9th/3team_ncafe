@@ -4,7 +4,6 @@ import localFont from "next/font/local";
 import { SiteFooter } from "./_components/SiteFooter";
 import { SiteHeader } from "./_components/SiteHeader";
 import { SessionSync } from "./_components/SessionSync";
-import { CartProvider } from "./_lib/cart/CartContext";
 import { getCurrentUser } from "./_lib/session/session";
 import "./globals.css";
 
@@ -24,12 +23,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="ko">
       <body className={`${display.variable} ${serif.variable} ${body.variable} ${menuName.variable}`}>
-        <CartProvider>
-          <SessionSync sessionKey={member ? `${member.role}:${member.id}` : "anonymous"} />
-          <SiteHeader />
-          <div className="site-content">{children}</div>
-          <SiteFooter />
-        </CartProvider>
+        <SessionSync sessionKey={member ? `${member.role}:${member.id}` : "anonymous"} />
+        <SiteHeader />
+        <div className="site-content">{children}</div>
+        <SiteFooter />
       </body>
     </html>
   );

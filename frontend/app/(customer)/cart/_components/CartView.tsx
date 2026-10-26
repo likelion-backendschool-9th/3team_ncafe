@@ -1,105 +1,61 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { MAX_CART_ITEM_QUANTITY, useCart } from "@/app/_lib/cart/CartContext";
+import { useState } from "react";
+import type { CartItemResponse } from "../../_lib/cart/types";
 import styles from "../cart.module.css";
+import { CartItemRow } from "./CartItemRow";
+import { CartSummary } from "./CartSummary";
+import { CartToolbar } from "./CartToolbar";
 
-const won = new Intl.NumberFormat("ko-KR");
+type Props = { items: CartItemResponse[] };
 
-export function CartView() {
-  const router = useRouter();
-  const { items, toggleAll, toggleSelected, setQuantity, removeItem } = useCart();
-  const allSelected = items.length > 0 && items.every((item) => item.selected);
-  const selectedItems = items.filter((item) => item.selected && item.available);
-  const selectedTotal = selectedItems
-    .reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const selectedCount = selectedItems.length;
+// 주문 대상 선택은 서버에 저장하지 않는 화면 상태다(DB 설계). 처음에는 주문 가능한 줄을 모두 고른다.
+export function CartView({ items }: Props) {
+  const [selectedIds, setSelectedIds] = useState(
+    () => new Set(items.filter((item) => item.orderable).map((item) => item.id)),
+  );
+  const [error, setError] = useState<string | null>(null);
 
-  function goToCheckout() {
-    if (selectedCount === 0) return;
-    router.push("/checkout");
+  // 수량 변경·삭제 뒤 서버가 새 목록을 내려주므로, 사라졌거나 주문할 수 없게 된 줄은 선택에서 뺀다.
+  const orderableItems = items.filter((item) => item.orderable);
+  const selectedItems = orderableItems.filter((item) => selectedIds.has(item.id));
+  const allSelected = orderableItems.length > 0 && selectedItems.length === orderableItems.length;
+
+  function toggle(id: number, selected: boolean) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (selected) next.add(id);
+      else next.delete(id);
+      return next;
+    });
   }
 
-  if (items.length === 0) {
-    return (
-      <div className={styles.empty}>
-        <p>장바구니가 비어 있습니다.</p>
-        <p>다방 메뉴를 둘러보고 담아보세요.</p>
-        <Link href="/menus">메뉴 담으러 가기</Link>
-      </div>
-    );
+  function toggleAll(selected: boolean) {
+    setSelectedIds(new Set(selected ? orderableItems.map((item) => item.id) : []));
   }
 
   return (
     <>
-      <div className={styles.toolbar}>
-        <label className={styles.selectAll}>
-          <input
-            type="checkbox"
-            checked={allSelected}
-            onChange={(event) => toggleAll(event.target.checked)}
-          />
-          전체 선택
-        </label>
-        <span>{items.length}개 담음</span>
+      <CartToolbar count={items.length} allSelected={allSelected} onToggleAll={toggleAll} />
+
+      {/* 오류 안내는 미리 DOM에 두어야 화면 읽기 프로그램이 바뀐 내용을 읽는다 */}
+      <div role="alert">
+        {error && <p className={styles.orderMessage} data-kind="error">{error}</p>}
       </div>
 
       <div className={styles.list}>
         {items.map((item) => (
-          <div key={item.id} className={styles.row} data-selected={item.selected}>
-            <input
-              type="checkbox"
-              checked={item.selected}
-              disabled={!item.available}
-              onChange={(event) => toggleSelected(item.id, event.target.checked)}
-              aria-label={`${item.name} 선택`}
-            />
-            <div className={styles.thumb}>
-              <Image src={item.imageUrl} alt={item.name} fill sizes="64px" />
-            </div>
-            <div className={styles.info}>
-              <span className={styles.nameRow}>
-                <span className={styles.name}>{item.name}</span>
-                {item.temperature && (
-                  <span className={styles.tempBadge} data-temp={item.temperature}>
-                    {item.temperature === "hot" ? "HOT" : "ICE"}
-                  </span>
-                )}
-              </span>
-              {item.available
-                ? <span className={styles.price}>{won.format(item.price)}원</span>
-                : <span className={styles.soldOut}>품절된 메뉴입니다</span>}
-            </div>
-            <div className={styles.actions}>
-              <div className={styles.qty}>
-                <button type="button" onClick={() => setQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1}>−</button>
-                <span>{item.quantity}</span>
-                <button type="button" onClick={() => setQuantity(item.id, item.quantity + 1)} disabled={item.quantity >= MAX_CART_ITEM_QUANTITY}>+</button>
-              </div>
-              <button type="button" className={styles.removeButton} onClick={() => removeItem(item.id)}>
-                삭제
-              </button>
-            </div>
-          </div>
+          <CartItemRow
+            key={item.id}
+            item={item}
+            selected={selectedIds.has(item.id) && item.orderable}
+            onToggle={toggle}
+            onError={setError}
+          />
         ))}
       </div>
 
-      <div className={styles.summary}>
-        <div className={styles.summaryRow}>
-          <span className={styles.label}>선택 {selectedCount}개</span>
-          <span className={styles.total}>{won.format(selectedTotal)}원</span>
-        </div>
-        <button
-          type="button"
-          className={styles.orderButton}
-          disabled={selectedCount === 0}
-          onClick={goToCheckout}
-        >
-          주문하기
-        </button>
-      </div>
+      <CartSummary selectedItems={selectedItems} />
     </>
   );
 }
