@@ -2,6 +2,7 @@ package com.newcafe.backend.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -24,10 +25,15 @@ import com.newcafe.backend.common.security.SessionMemberService;
 import com.newcafe.backend.common.security.SessionUserDetails;
 import com.newcafe.backend.config.PasswordConfig;
 import com.newcafe.backend.config.SecurityConfig;
+import com.newcafe.backend.controller.my.CartItemsController;
 import com.newcafe.backend.controller.my.UsersController;
 import com.newcafe.backend.dto.auth.MemberResponse;
 import com.newcafe.backend.dto.auth.SignupRequest;
 import com.newcafe.backend.dto.auth.SignupResponse;
+import com.newcafe.backend.dto.cartitems.CartItemQuantityRequest;
+import com.newcafe.backend.dto.cartitems.CartItemRequest;
+import com.newcafe.backend.dto.cartitems.CartItemResponse;
+import com.newcafe.backend.dto.cartitems.CartItemsResponse;
 import com.newcafe.backend.dto.menus.MenuCategoryResponse;
 import com.newcafe.backend.dto.menus.MenuPageResponse;
 import com.newcafe.backend.dto.menus.MenuResponse;
@@ -38,6 +44,7 @@ import com.newcafe.backend.repository.UserRepository;
 import com.newcafe.backend.service.AuthService;
 import com.newcafe.backend.service.HomeService;
 import com.newcafe.backend.service.MenusService;
+import com.newcafe.backend.service.my.CartItemsService;
 import com.newcafe.backend.service.my.UsersService;
 
 import java.util.List;
@@ -60,11 +67,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @WebMvcTest({AuthController.class, UsersController.class, MenusController.class, HomeController.class,
+        CartItemsController.class,
         ApiAccessPolicyTest.ProbeController.class})
 @Import({SecurityConfig.class, PasswordConfig.class, Passwords.class, DatabaseUserDetailsService.class,
         LoginSuccessHandler.class, SecurityErrorHandler.class, SessionMemberService.class,
@@ -91,6 +100,9 @@ class ApiAccessPolicyTest {
 
     @MockitoBean
     private HomeService homeService;
+
+    @MockitoBean
+    private CartItemsService cartItemsService;
 
     @BeforeEach
     void resetProbe() {
@@ -190,7 +202,58 @@ class ApiAccessPolicyTest {
                 Arguments.of("POST", "/api/v1/menus/categories"),
                 Arguments.of("POST", "/api/v1/menus/americano"),
                 Arguments.of("POST", "/api/v1/index/menus"),
-                Arguments.of("GET", "/api/v1/guest/menus"));
+                Arguments.of("GET", "/api/v1/guest/menus"),
+                Arguments.of("PATCH", "/api/v1/cart/items/11"),
+                Arguments.of("POST", "/api/v1/cart/items"));
+    }
+
+    static Stream<Arguments> cartRequests() {
+        return Stream.of(
+                Arguments.of("POST", "/api/v1/menus/1/cart/items", "{\"temperature\":\"iced\",\"quantity\":1}"),
+                Arguments.of("GET", "/api/v1/cart/items", null),
+                Arguments.of("PUT", "/api/v1/cart/items/11", "{\"quantity\":2}"),
+                Arguments.of("DELETE", "/api/v1/cart/items/11", null));
+    }
+
+    @ParameterizedTest
+    @MethodSource("cartRequests")
+    void cartRoutesAreForSignedInCustomersOnly(String method, String path, String body) throws Exception {
+        mockMvc.perform(cartRequest(method, path, body).with(csrf()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"));
+        mockMvc.perform(cartRequest(method, path, body).with(csrf()).with(user(principal(UserRole.ADMIN))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+        verifyNoInteractions(cartItemsService);
+
+        when(cartItemsService.add(eq(42L), eq(1L), any(CartItemRequest.class)))
+                .thenReturn(new CartItemsService.Added(cartLine(), true));
+        when(cartItemsService.list(42L)).thenReturn(new CartItemsResponse(List.of(cartLine()), 1, 3500));
+        when(cartItemsService.changeQuantity(eq(42L), eq(11L), any(CartItemQuantityRequest.class))).thenReturn(cartLine());
+        mockMvc.perform(cartRequest(method, path, body).with(csrf()).with(user(principal(UserRole.CUSTOMER))))
+                .andExpect(status().is2xxSuccessful());
+    }
+
+    @ParameterizedTest
+    @MethodSource("cartRequests")
+    void cartChangesRequireCsrf(String method, String path, String body) throws Exception {
+        var result = mockMvc.perform(cartRequest(method, path, body).with(user(principal(UserRole.CUSTOMER))));
+        if ("GET".equals(method)) {
+            result.andExpect(status().isOk());
+            return;
+        }
+        result.andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("CSRF_INVALID"));
+        verifyNoInteractions(cartItemsService);
+    }
+
+    private static MockHttpServletRequestBuilder cartRequest(String method, String path, String body) {
+        MockHttpServletRequestBuilder builder = request(HttpMethod.valueOf(method), path);
+        return body == null ? builder : builder.contentType(MediaType.APPLICATION_JSON).content(body);
+    }
+
+    private static CartItemResponse cartLine() {
+        return new CartItemResponse(11L, 1L, "coffee", "커피", "/images/menus/coffee.jpg", 3500, "iced", 1, 3500, true);
     }
 
     @ParameterizedTest

@@ -82,6 +82,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/menus", "/api/v1/menus/**",
                                 "/api/v1/index/menus").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/my").authenticated()
+                        // 장바구니는 고객 계정만 쓴다 (database-design.md cart_items).
+                        .requestMatchers(HttpMethod.POST, "/api/v1/menus/*/cart/items").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/cart/items").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/cart/items/*").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/cart/items/*").hasRole("CUSTOMER")
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().denyAll())
                 .addFilterBefore(new SessionMemberFilter(sessionMembers, errors, sessionCookies, contextRepository),
