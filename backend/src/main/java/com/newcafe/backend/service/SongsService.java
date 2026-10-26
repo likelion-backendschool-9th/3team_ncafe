@@ -35,7 +35,7 @@ public class SongsService {
     @Transactional
     public SongResponse create(Long userId, String requesterName, CreateSongRequest request) {
         Instant now = clock.instant();
-        MusicBoxState state = musicBoxSettler.lockAndSettle(now).state();
+        MusicBoxState state = musicBoxSettler.lockAndSettle(now);
 
         Song song = songRepository.save(
                 new Song(userId, requesterName, request.songTitle(), request.artist(), request.story()));

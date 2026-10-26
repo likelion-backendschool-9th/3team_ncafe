@@ -102,6 +102,7 @@ S3 재생 중 최대 1건 (PostgreSQL 검증 남음)
 - 실행: `service/support/MusicBoxSettler`. 쓰기는 `lockAndSettle(now)`(잠금 → 정리) 뒤 변경하고 `touch()`, 조회는 `settleIfDue(now)`를 부른다.
   - `MANDATORY`라 항상 호출한 서비스의 트랜잭션에서 일어난다. 읽기 전용 트랜잭션에 쓰기가 섞여 저장되지 않는 문제가 없다.
   - `touch()`는 트랜잭션마다 한 번만 부른다. 정리와 변경이 한 요청에서 같이 일어나도 `revision`은 1만 오른다.
+  - 쓰기는 바꾼 게 없어도 `touch()`한다. `lockAndSettle`은 잠근 상태 행만 돌려준다 (가정 R1).
 
 S4 정상
 - Given 재생곡 `20`(`startedAt=12:00:00`, `durationSeconds=200`)이 있다.
@@ -372,7 +373,8 @@ cha, #69, 이 PR이 모두 핸들러를 추가한다.
 
 - R1: `endsAt = startedAt + durationSeconds + 1초`다.
 - R1: 상태 값은 DB 설계대로 소문자(`pending` 등)로 저장한다.
-- R1: `revision`은 상태가 실제로 바뀐 트랜잭션에서만 `MusicBoxState.touch(now)`로 1 올린다. `touch()`는 트랜잭션마다 한 번만 부른다.
+- R1: `revision`은 쓰기 요청과, 정리로 상태가 바뀐 조회에서 `MusicBoxState.touch(now)`로 1 올린다. `touch()`는 트랜잭션마다 한 번만 부른다.
+  - 바꿀 게 없는 관리자 종료·취소 요청(화면이 늦게 보낸 요청)도 올린다. 손님 화면이 한 번 더 받아오는 비용으로 `lockAndSettle`이 정리 여부를 돌려주지 않아도 되게 했다 (10-27 결정).
 - R2: 다음 곡은 앞 곡의 `endsAt`부터 시작한 것으로 친다. 다음 곡의 길이를 모르면 정리한 시각부터 시작한다 (목 저장소 `settle`과 같음).
 - R2: 공개 조회는 먼저 잠금 없이 확인하고, 끝난 곡이 있을 때만 `findForUpdate`로 잠근 뒤 다시 조회해 정리한다.
   - 공개 조회 메서드는 `@Transactional(readOnly = true)`를 쓰지 않는다. 같은 트랜잭션에서 정리 쓰기가 일어날 수 있기 때문이다. 같은 클래스 안의 다른 `@Transactional` 메서드를 부르는 방식은 프록시를 거치지 않아 트랜잭션 설정이 무시되므로 쓰지 않는다.
