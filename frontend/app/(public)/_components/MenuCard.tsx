@@ -1,16 +1,16 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { MENU_IMAGE_PLACEHOLDER, type Menu } from '@/app/_lib/mock/menus';
+import type { MenuResponse } from '../_lib/menus/types';
 import styles from './MenuCard.module.css';
 
 const won = new Intl.NumberFormat('ko-KR');
 
-export function MenuCard({ menu }: { menu: Menu }) {
+export function MenuCard({ menu }: { menu: MenuResponse }) {
   return (
-    <Link href={`/menus/${menu.id}`} className={styles.card}>
+    <Link href={`/menus/${encodeURIComponent(menu.slug)}`} className={styles.card}>
       <div className={styles.cardImageWrap}>
         <Image
-          src={menu.imageUrl || MENU_IMAGE_PLACEHOLDER}
+          src={menu.imageUrl}
           alt={`${menu.name} 이미지`}
           width={240}
           height={180}

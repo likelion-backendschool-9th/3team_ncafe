@@ -116,7 +116,6 @@
 .detailBadgeRecommend { background: var(--red); }
 .detailBadgeSoldOut { background: var(--ink); }
 .detailName { margin: 0; font-family: var(--font-menu-name), var(--font-display), "Apple SD Gothic Neo", sans-serif; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1.2; letter-spacing: -0.06em; }
-.detailNameEn { margin: 0.3rem 0 0; color: #6e6359; font-family: Arial, sans-serif; letter-spacing: 0.06em; }
 .detailPrice { margin: 0; padding-bottom: 0.9rem; border-bottom: 2px dotted #a77c57; color: var(--red-dark); font-family: Arial, sans-serif; font-size: 1.8rem; font-weight: 800; }
 .detailDescription { max-width: 52ch; margin: 0; line-height: 1.8; }
 .detailMeta { display: grid; gap: 0.7rem; margin-top: 0.3rem; padding: 1rem 1.2rem; border-left: 5px solid var(--teal); background: var(--paper); color: var(--ink); }
