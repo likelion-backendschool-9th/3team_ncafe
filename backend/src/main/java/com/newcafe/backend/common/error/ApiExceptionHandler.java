@@ -24,6 +24,18 @@ public class ApiExceptionHandler {
                 .body(new ErrorResponse(exception.getReason().name(), exception.getMessage()));
     }
 
+    @ExceptionHandler(SongException.class)
+    public ResponseEntity<ErrorResponse> handleSongException(SongException exception) {
+        HttpStatus status = switch (exception.getReason()) {
+            case NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case CONFLICT -> HttpStatus.CONFLICT;
+            case INVALID_INPUT -> HttpStatus.BAD_REQUEST;
+        };
+
+        return ResponseEntity.status(status)
+                .body(new ErrorResponse(exception.getReason().name(), exception.getMessage()));
+    }
+
     @ExceptionHandler(MenuException.class)
     public ResponseEntity<ErrorResponse> handleMenuException(MenuException exception) {
         HttpStatus status = switch (exception.getReason()) {
