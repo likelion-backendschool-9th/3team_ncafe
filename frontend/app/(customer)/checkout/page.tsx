@@ -17,7 +17,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Che
     <div className={cart.page}>
       <div className={cart.heading}>
         <p className={cart.eyebrow}>CHECKOUT · 주문서</p>
-        <h1 className={cart.title}>주문 / 결제</h1>
+        <h1 className={cart.title}>주문서</h1>
       </div>
       <CheckoutView items={orderItems} />
     </div>

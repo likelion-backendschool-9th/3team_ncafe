@@ -1,4 +1,4 @@
-import type { Order, OrderItem } from "@/app/_lib/orders/types";
+import type { CustomerOrderResponse, OrderTemperature } from "./_lib/types";
 
 export const won = new Intl.NumberFormat("ko-KR");
 export const orderDate = new Intl.DateTimeFormat("ko-KR", {
@@ -11,15 +11,15 @@ export const orderDate = new Intl.DateTimeFormat("ko-KR", {
   hour12: false,
 });
 
-export function orderCode(order: Order): string {
-  return order.id.slice(0, 8).toUpperCase();
+export function orderCode(order: CustomerOrderResponse): string {
+  return `#${order.id}`;
 }
 
-export function orderSummary(order: Order): string {
+export function orderSummary(order: CustomerOrderResponse): string {
   const first = order.items[0];
   return first ? `${first.menuName}${order.items.length > 1 ? ` 외 ${order.items.length - 1}종` : ""}` : "품목 없음";
 }
 
-export function optionLabel(option: OrderItem["option"]): string {
-  return option === "hot" ? "HOT" : option === "ice" ? "ICE" : "옵션 없음";
+export function optionLabel(temperature: OrderTemperature): string {
+  return temperature === "hot" ? "HOT" : temperature === "iced" ? "ICE" : "옵션 없음";
 }

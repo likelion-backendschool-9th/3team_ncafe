@@ -51,8 +51,6 @@
 .status[data-status="canceled"] { background: #eed1cf; color: #8d272b; }
 .cardBody > div { display: grid; gap: 0.15rem; }
 .fieldLabel { color: var(--muted-ink); font-size: 0.8rem; font-weight: 700; }
-.cancelReason { display: grid; gap: 0.2rem; margin: 0; padding: 0.7rem 0.9rem; border-left: 4px solid var(--red); background: #f7e4df; color: #5e2124; font-weight: 700; line-height: 1.55; overflow-wrap: anywhere; }
-.cancelReason .fieldLabel { color: #8d272b; }
 .cancelNotice { display: grid; gap: 0.3rem; margin-top: 1.15rem; padding: 0.8rem 1rem; border-left: 4px solid var(--red); background: #f7e4df; }
 .cancelNotice strong { color: #8d272b; font-size: 1rem; }
 .cancelNotice p { margin: 0; color: #5e2124; font-weight: 700; line-height: 1.55; overflow-wrap: anywhere; white-space: pre-line; }
