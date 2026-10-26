@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MENU_IMAGE_PLACEHOLDER, type Menu } from "@/app/_lib/mock/menus";
+import { MENU_IMAGE_PLACEHOLDER, type MenuResponse } from "../_lib/menu";
 import { deleteMenu } from "../_actions";
 import { registeredDateLabel } from "../_lib/registeredDate";
 import { DeleteMenuButton } from "./DeleteMenuButton";
@@ -9,8 +9,8 @@ import styles from "../menus.module.css";
 const won = new Intl.NumberFormat("ko-KR");
 
 export function MenuTable({ menus, createdId }: {
-  menus: Menu[];
-  createdId?: string;
+  menus: MenuResponse[];
+  createdId?: number;
 }) {
   return (
     <>
@@ -21,7 +21,7 @@ export function MenuTable({ menus, createdId }: {
           <thead>
             <tr>
               <th scope="col">이미지</th>
-              <th scope="col">메뉴명 (한글 / 영어)</th>
+              <th scope="col">메뉴명 / slug</th>
               <th scope="col">카테고리</th>
               <th scope="col">가격</th>
               <th scope="col">상태</th>
@@ -41,9 +41,9 @@ export function MenuTable({ menus, createdId }: {
                     {menu.recommended && <span className={styles.recommendedBadge}>추천</span>}
                     {menu.isNew && <span className={styles.newBadge}>첫 개시</span>}
                   </div>
-                  <span className={styles.secondaryName}>{menu.nameEn || "영문명 없음"}</span>
+                  <span className={styles.secondaryName}>{menu.slug}</span>
                 </td>
-                <td>{menu.categories.join(", ")}</td>
+                <td>{menu.categoryName}</td>
                 <td>{won.format(menu.price)}원</td>
                 <td>
                   <span className={`${styles.status} ${menu.available ? styles.statusAvailable : styles.statusUnavailable}`}>

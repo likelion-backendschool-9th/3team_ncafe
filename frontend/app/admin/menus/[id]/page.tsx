@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MENU_IMAGE_PLACEHOLDER, mockMenuRepository } from "@/app/_lib/mock/menus";
 import { requireRole } from "@/app/_lib/session/session";
 import { deleteMenu } from "../_actions";
 import { DeleteMenuButton } from "../_components/DeleteMenuButton";
+import { getMenu } from "../_lib/api";
+import { MENU_IMAGE_PLACEHOLDER, temperatureLabel } from "../_lib/menu";
+import { parseMenuId } from "../_lib/searchParams";
 import styles from "../menus.module.css";
 
 const won = new Intl.NumberFormat("ko-KR");
@@ -14,10 +16,11 @@ export default async function MenuDetailPage({ params, searchParams }: {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ updated?: string; deleteError?: string }>;
 }) {
-  const { id } = await params;
-  await requireRole("admin", `/admin/menus/${id}`);
-  const menu = await mockMenuRepository.get(id);
-  if (!menu) notFound();
+  const { id: rawId } = await params;
+  await requireRole("admin", `/admin/menus/${rawId}`);
+  const id = parseMenuId(rawId);
+  const menu = id === null ? null : await getMenu(id);
+  if (id === null || !menu) notFound();
 
   const { updated, deleteError } = await searchParams;
   return (
@@ -34,10 +37,10 @@ export default async function MenuDetailPage({ params, searchParams }: {
       {deleteError === "1" && <p className="form-error" role="alert">메뉴를 삭제하지 못했습니다. 다시 시도해 주세요.</p>}
       <dl className={styles.detailCard}>
         <div><dt>이미지</dt><dd><Image className={styles.detailImage} src={menu.imageUrl || MENU_IMAGE_PLACEHOLDER} alt={`${menu.name} 이미지`} width={200} height={150} unoptimized /></dd></div>
-        <div><dt>메뉴명 (한글)</dt><dd>{menu.name}</dd></div>
-        <div><dt>메뉴명 (영어)</dt><dd>{menu.nameEn || "영문명 없음"}</dd></div>
-        <div><dt>카테고리</dt><dd>{menu.categories.join(", ")}</dd></div>
-        <div><dt>온도</dt><dd>{menu.temperatures.length > 0 ? menu.temperatures.map((t) => (t === "hot" ? "핫" : "아이스")).join(", ") : "온도 구분 없음"}</dd></div>
+        <div><dt>메뉴명</dt><dd>{menu.name}</dd></div>
+        <div><dt>slug</dt><dd>{menu.slug}</dd></div>
+        <div><dt>카테고리</dt><dd>{menu.categoryName}</dd></div>
+        <div><dt>온도</dt><dd>{temperatureLabel(menu)}</dd></div>
         <div><dt>설명</dt><dd>{menu.description}</dd></div>
         <div><dt>가격</dt><dd>{won.format(menu.price)}원</dd></div>
         <div><dt>판매 상태</dt><dd>{menu.available ? "판매 중" : "판매 중지"}</dd></div>

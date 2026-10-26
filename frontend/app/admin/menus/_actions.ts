@@ -2,12 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { MENU_IMAGE_PLACEHOLDER, mockMenuRepository, type MenuInput, type Temperature } from "@/app/_lib/mock/menus";
-import { mockCategoryRepository } from "@/app/_lib/mock/categories";
+import { apiFetch, ApiRequestError, csrfHeaders } from "@/app/_lib/api/client";
 import { requireRole } from "@/app/_lib/session/session";
-import { saveMenuImage, UploadError } from "@/app/_lib/mock/uploads";
+import {
+  MENU_DESCRIPTION_MAX_LENGTH, MENU_IMAGE_PLACEHOLDER, MENU_IMAGE_URL_MAX_LENGTH, MENU_IMAGE_URL_PATTERN, MENU_NAME_MAX_LENGTH,
+  MENU_PRICE_MAX, MENU_PRICE_MIN, MENU_SLUG_MAX_LENGTH, MENU_SLUG_PATTERN,
+} from "./_lib/menu";
+import { parseMenuId } from "./_lib/searchParams";
 
-type Field = "name" | "nameEn" | "imageUrl" | "description" | "categories" | "price" | "available" | "isNew" | "recommended" | "tempHot" | "tempIce";
+type Field = "slug" | "name" | "imageUrl" | "description" | "categoryId" | "price" | "available" | "isNew" | "recommended" | "supportsHot" | "supportsIced";
 
 export type MenuFormState = {
   values: Record<Field, string>;
@@ -15,153 +18,137 @@ export type MenuFormState = {
   message?: string;
 };
 
-async function validate(formData: FormData, existingCategories: string[] = [], singleCategory = false): Promise<{ state: MenuFormState; input?: MenuInput }> {
-  const selectedCategories = formData.getAll("categories").map((value) => String(value).trim()).filter(Boolean);
-  const values = {
-    name: String(formData.get("name") ?? "").trim(),
-    nameEn: String(formData.get("nameEn") ?? "").trim(),
-    imageUrl: String(formData.get("imageUrl") ?? "").trim(),
-    description: String(formData.get("description") ?? "").trim(),
-    categories: selectedCategories.join(","),
-    price: String(formData.get("price") ?? "").trim(),
-    available: String(formData.get("available") ?? ""),
-    isNew: formData.get("isNew") === "on" ? "true" : "false",
-    recommended: formData.get("recommended") === "on" ? "true" : "false",
-    tempHot: formData.get("tempHot") === "on" ? "true" : "false",
-    tempIce: formData.get("tempIce") === "on" ? "true" : "false",
+function readValues(formData: FormData): MenuFormState["values"] {
+  const text = (name: Field) => String(formData.get(name) ?? "").trim();
+  const checked = (name: Field) => (formData.get(name) === "on" ? "true" : "false");
+  return {
+    slug: text("slug"),
+    name: text("name"),
+    imageUrl: text("imageUrl"),
+    description: text("description"),
+    categoryId: text("categoryId"),
+    price: text("price"),
+    available: text("available"),
+    isNew: checked("isNew"),
+    recommended: checked("recommended"),
+    supportsHot: checked("supportsHot"),
+    supportsIced: checked("supportsIced"),
   };
+}
+
+// 백엔드 Bean Validation과 같은 규칙·문구다. 수정 요청에는 slug가 없어 검사하지 않는다.
+function validate(values: MenuFormState["values"], withSlug: boolean): MenuFormState["errors"] {
   const errors: MenuFormState["errors"] = {};
-  if (!values.name || values.name.length > 80) errors.name = "한글 메뉴명은 1~80자로 입력해 주세요.";
-  if (!values.nameEn || values.nameEn.length > 80) errors.nameEn = "영문 메뉴명은 1~80자로 입력해 주세요.";
-  if (values.imageUrl.length > 2048 || (values.imageUrl && !isValidImageUrl(values.imageUrl))) {
+  if (withSlug) {
+    if (!values.slug) errors.slug = "slug를 입력해 주세요.";
+    else if (values.slug.length > MENU_SLUG_MAX_LENGTH) errors.slug = "slug는 100자 이하로 입력해 주세요.";
+    else if (!MENU_SLUG_PATTERN.test(values.slug)) errors.slug = "slug는 소문자·숫자·하이픈만 사용할 수 있습니다.";
+  }
+  if (!values.name) errors.name = "메뉴명을 입력해 주세요.";
+  else if (values.name.length > MENU_NAME_MAX_LENGTH) errors.name = "메뉴명은 80자 이하로 입력해 주세요.";
+  if (!values.description) errors.description = "설명을 입력해 주세요.";
+  else if (values.description.length > MENU_DESCRIPTION_MAX_LENGTH) errors.description = "설명은 500자 이하로 입력해 주세요.";
+  if (values.imageUrl && (values.imageUrl.length > MENU_IMAGE_URL_MAX_LENGTH || !MENU_IMAGE_URL_PATTERN.test(values.imageUrl))) {
     errors.imageUrl = "HTTPS 이미지 주소나 /images/menus/ 경로를 입력해 주세요.";
   }
-  if (!values.description || values.description.length > 500) errors.description = "설명은 1~500자로 입력해 주세요.";
-  if (selectedCategories.length === 0) {
-    errors.categories = singleCategory ? "카테고리를 하나 선택해 주세요." : "카테고리를 하나 이상 선택해 주세요.";
-  } else if (singleCategory && selectedCategories.length > 1) {
-    errors.categories = "카테고리는 하나만 선택해 주세요.";
-  } else {
-    const availableCategories = (await mockCategoryRepository.list()).map((category) => category.name);
-    const hasInvalidCategory = selectedCategories.some(
-      (category) => !availableCategories.includes(category) && !existingCategories.includes(category),
-    );
-    if (hasInvalidCategory) errors.categories = "목록에 없는 카테고리가 선택되어 있습니다. 다시 선택해 주세요.";
-  }
+  if (parseMenuId(values.categoryId) === null) errors.categoryId = "카테고리를 선택해 주세요.";
   const price = Number(values.price);
-  if (!/^\d+$/.test(values.price) || !Number.isSafeInteger(price) || price < 1) {
-    errors.price = "가격은 1원 이상의 정수로 입력해 주세요.";
+  if (!/^\d+$/.test(values.price) || price < MENU_PRICE_MIN || price > MENU_PRICE_MAX) {
+    errors.price = "가격은 1~1,000,000원으로 입력해 주세요.";
   }
-  if (values.available !== "true" && values.available !== "false") {
-    errors.available = "판매 상태를 선택해 주세요.";
-  }
-  if (values.tempHot !== "true" && values.tempIce !== "true") {
-    errors.tempHot = "핫 또는 아이스를 하나 이상 선택해 주세요.";
-  }
+  if (values.available !== "true" && values.available !== "false") errors.available = "판매 상태를 선택해 주세요.";
+  return errors;
+}
 
-  // 파일 업로드가 있으면 입력한 URL 대신 업로드한 파일을 우선 사용
-  let resolvedImageUrl = values.imageUrl;
-  const imageFile = formData.get("imageFile");
-  if (imageFile instanceof File && imageFile.size > 0) {
-    try {
-      resolvedImageUrl = await saveMenuImage(imageFile);
-      values.imageUrl = resolvedImageUrl;
-    } catch (error) {
-      errors.imageUrl = error instanceof UploadError ? error.message : "이미지 업로드에 실패했습니다.";
-    }
-  }
-
-  if (Object.keys(errors).length > 0) {
-    return { state: { values, errors } };
-  }
-
-  const temperatures: Temperature[] = [
-    ...(values.tempHot === "true" ? (["hot"] as const) : []),
-    ...(values.tempIce === "true" ? (["ice"] as const) : []),
-  ];
-
+function toRequest(values: MenuFormState["values"]) {
   return {
-    state: { values, errors },
-    input: {
-      name: values.name,
-      nameEn: values.nameEn,
-      imageUrl: resolvedImageUrl || MENU_IMAGE_PLACEHOLDER,
-      description: values.description,
-      categories: selectedCategories,
-      price,
-      available: values.available === "true",
-      isNew: values.isNew === "true",
-      recommended: values.recommended === "true",
-      temperatures,
-    },
+    categoryId: Number(values.categoryId),
+    name: values.name,
+    description: values.description,
+    imageUrl: values.imageUrl || MENU_IMAGE_PLACEHOLDER,
+    price: Number(values.price),
+    available: values.available === "true",
+    isNew: values.isNew === "true",
+    recommended: values.recommended === "true",
+    supportsHot: values.supportsHot === "true",
+    supportsIced: values.supportsIced === "true",
   };
 }
 
-function isValidImageUrl(value: string): boolean {
-  if (/^\/images\/menus\/[a-zA-Z0-9/_-]+\.(svg|png|jpe?g|webp)$/.test(value)) return true;
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" && !url.username && !url.password;
-  } catch {
-    return false;
-  }
+// 백엔드가 거절한 이유를 해당 입력란에 붙인다. slug 중복은 409, 없는 카테고리는 400 INVALID_INPUT이다.
+function rejected(values: MenuFormState["values"], error: ApiRequestError): MenuFormState {
+  if (error.status === 409) return { values, errors: { slug: error.error.message } };
+  if (error.error.code === "INVALID_INPUT") return { values, errors: { categoryId: error.error.message } };
+  return { values, errors: {}, message: error.error.message };
 }
 
-function refreshMenus() {
+// 메뉴 수는 카테고리 화면에, 메뉴 자체는 공개 메뉴 화면에도 보인다.
+function refresh() {
   revalidatePath("/admin");
-  revalidatePath("/admin/menus");
-  revalidatePath("/menus");
+  revalidatePath("/admin/menus", "layout");
+  revalidatePath("/admin/categories");
+  revalidatePath("/menus", "layout");
 }
 
+// try는 API 호출만 감싼다. 백엔드가 거절한 요청만 폼으로 돌려주고, 나머지 예외는 error.tsx가 처리한다.
 export async function createMenu(_previous: MenuFormState, formData: FormData): Promise<MenuFormState> {
   await requireRole("admin", "/admin/menus/new");
-  const { state, input } = await validate(formData);
-  if (!input) return state;
+  const values = readValues(formData);
+  const errors = validate(values, true);
+  if (Object.keys(errors).length > 0) return { values, errors };
 
-  let createdId: string;
+  let created: { id: number };
   try {
-    createdId = (await mockMenuRepository.create(input)).id;
-  } catch {
-    return { ...state, message: "메뉴를 등록하지 못했습니다. 다시 시도해 주세요." };
+    created = await apiFetch<{ id: number }>("/api/v1/admin/menus", {
+      method: "POST",
+      headers: await csrfHeaders(),
+      body: JSON.stringify({ slug: values.slug, ...toRequest(values) }),
+    });
+  } catch (error) {
+    if (error instanceof ApiRequestError) return rejected(values, error);
+    throw error;
   }
-  refreshMenus();
-  redirect(`/admin/menus?created=${encodeURIComponent(createdId)}`);
+  refresh();
+  redirect(`/admin/menus?created=${created.id}`);
 }
 
-export async function updateMenu(id: string, _previous: MenuFormState, formData: FormData): Promise<MenuFormState> {
+export async function updateMenu(id: number, previous: MenuFormState, formData: FormData): Promise<MenuFormState> {
   await requireRole("admin", `/admin/menus/${id}/edit`);
-  let existingCategories: string[] = [];
-  try {
-    existingCategories = (await mockMenuRepository.get(id))?.categories ?? [];
-  } catch {
-    return { ..._previous, message: "메뉴를 수정하지 못했습니다. 다시 시도해 주세요." };
-  }
-  const { state, input } = await validate(formData, existingCategories, true);
-  if (!input) return state;
+  // slug는 바꿀 수 없으므로 화면에 보이던 값을 그대로 유지한다.
+  const values = { ...readValues(formData), slug: previous.values.slug };
+  if (parseMenuId(String(id)) === null) return { values, errors: {}, message: "수정할 메뉴를 찾을 수 없습니다." };
+  const errors = validate(values, false);
+  if (Object.keys(errors).length > 0) return { values, errors };
 
-  let updated;
   try {
-    updated = await mockMenuRepository.update(id, input);
-  } catch {
-    return { ...state, message: "메뉴를 수정하지 못했습니다. 다시 시도해 주세요." };
+    await apiFetch<unknown>(`/api/v1/admin/menus/${id}`, {
+      method: "PUT",
+      headers: await csrfHeaders(),
+      body: JSON.stringify(toRequest(values)),
+    });
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 404) return { values, errors: {}, message: "수정할 메뉴를 찾을 수 없습니다." };
+    if (error instanceof ApiRequestError) return rejected(values, error);
+    throw error;
   }
-  if (!updated) return { ...state, message: "수정할 메뉴를 찾을 수 없습니다." };
-  refreshMenus();
-  revalidatePath(`/admin/menus/${id}`);
-  revalidatePath(`/menus/${id}`);
+  refresh();
   redirect(`/admin/menus/${id}?updated=1`);
 }
 
-export async function deleteMenu(id: string): Promise<void> {
+// 백엔드 삭제는 메뉴를 숨긴다. 이미 숨겨졌거나 없으면 404다.
+export async function deleteMenu(id: number): Promise<void> {
   await requireRole("admin", `/admin/menus/${id}`);
-  let removed;
+  if (parseMenuId(String(id)) === null) redirect("/admin/menus?missing=1");
+
+  let status: number | null = null;
   try {
-    removed = await mockMenuRepository.remove(id);
-  } catch {
-    redirect(`/admin/menus/${id}?deleteError=1`);
+    await apiFetch<unknown>(`/api/v1/admin/menus/${id}`, { method: "DELETE", headers: await csrfHeaders() });
+  } catch (error) {
+    if (!(error instanceof ApiRequestError)) throw error;
+    status = error.status;
   }
-  if (!removed) redirect("/admin/menus?missing=1");
-  refreshMenus();
-  revalidatePath(`/menus/${id}`);
+  if (status === 404) redirect("/admin/menus?missing=1");
+  if (status !== null) redirect(`/admin/menus/${id}?deleteError=1`);
+  refresh();
   redirect("/admin/menus?deleted=1");
 }

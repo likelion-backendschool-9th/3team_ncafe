@@ -125,3 +125,6 @@
   .filters :global(.button) { width: 100%; }
   .detailCard div { grid-template-columns: 1fr; gap: 0.25rem; }
 }
+.pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.7rem; margin-top: 0.4rem; color: var(--muted); font-size: 0.85rem; }
+.pagination [aria-current="page"] { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; min-width: 36px; padding: 0.35rem 0.7rem; border: 1px solid var(--accent); border-radius: 2px; background: var(--accent); color: #fff8e5; }
+.pagination .editButton { min-height: 36px; padding: 0.35rem 0.7rem; }

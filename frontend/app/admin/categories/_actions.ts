@@ -10,9 +10,10 @@ export type CategoryActionResult = { error?: string };
 
 const invalidRequest = "요청이 올바르지 않습니다. 새로고침 후 다시 시도해 주세요.";
 
-// 관리자 메뉴 화면은 아직 목 카테고리를 쓰므로 갱신 대상에서 뺀다.
+// 카테고리는 관리자 메뉴 화면의 필터·폼과 공개 메뉴 탭에도 보인다.
 function refresh() {
   revalidatePath("/admin/categories");
+  revalidatePath("/admin/menus", "layout");
   revalidatePath("/menus", "layout");
 }
 
