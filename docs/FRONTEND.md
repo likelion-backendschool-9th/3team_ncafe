@@ -29,8 +29,8 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | 관리자/고객 | 리뷰 | (13.x, 14.x) | **범위 밖**, 미구현 |
 
 **현재 데이터·인증 상태**
-- 프론트의 `/api/v1` 호출은 0건이다. 모든 화면이 목 저장소([app/_lib/mock/](../frontend/app/_lib/mock/), `.data/*.json`, 운영 환경에서는 차단)와 목 인증을 쓴다.
-- 목 인증은 HMAC 서명 httpOnly 쿠키이고, `requireRole`로 역할을 검사한다.
+- 2026-10-25 인증 6단계에서 가입·로그인·로그아웃·본인 조회를 실제 `/api/v1` 세션 API에 연결했다. `getCurrentUser`·`requireRole`은 백엔드 본인 응답을 사용하며 목 인증 쿠키는 사용하지 않는다.
+- 나머지 업무 화면은 목 저장소([app/_lib/mock/](../frontend/app/_lib/mock/), `.data/*.json`, 운영 환경에서는 차단)를 유지한다. 업무 데이터의 API 전환은 쌍 단위 후속 작업이다.
 - 장바구니는 localStorage의 React Context에 저장한다.
 
 ## 2. 라우트-컨트롤러 매핑
@@ -52,13 +52,13 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | 페이지 URL | 주 컨트롤러 | 엔드포인트 (`/api/v1` 생략) | WBS | 비고 |
 | --- | --- | --- | --- | --- |
 | `/` | `HomeController` | `GET /index/menus`, `GET /index/songs` | 인덱스 | |
-| `/login`, `/signup` | `AuthController` | `POST /auth/login`, `POST /auth/signup` | 1.1, 1.3 | 공유 |
-| `/menus` | `MenusController`(공개) | `GET /menus`(`q`,`category`,`status`,`sort`), `GET /menus/categories` | 4.1 | 공유 |
-| `/menus/[slug]` | `MenusController`(공개) | `GET /menus/{slug}` | 4.2 | 공유, 보조. 현재 slug 자리에 UUID id를 씀 |
+| `/login`, `/signup` | **`AuthController`** | `POST /auth/login`, `POST /auth/signup` | 1.1, 1.3 | 공유 |
+| `/menus` | `MenusController`(공개) | `GET /menus`(`q`,`categoryId`,`status`,`sort`,`page`,`size`), `GET /menus/categories` | 4.1 | 공유 |
+| `/menus/[slug]` | `MenusController`(공개) | `GET /menus/{slug}` | 4.2 | 공유, 보조 |
 | `/musicbox` | `SongsController`(공개) | `GET /musicbox/songs`, `GET /songs/now` | 11.2~11.3 | 보조 |
 | `/cart` | `my/CartItemsController` | `GET /cart/items`, `PUT`·`DELETE /cart/items/{id}` | 14.2~14.4 | 현재 localStorage |
 | `/checkout` | `my/OrdersController` | `POST /orders` | 6.1 | 공유 |
-| `/my` | `my/UsersController` | `GET /my` | 1.5 | 보조 |
+| `/my` | **`my/UsersController`** | `GET /my` | 1.5 | 보조 |
 | `/my/orders`, `/my/orders/[id]` | `my/OrdersController` | `GET /orders`, `GET /orders/{id}` | 6.3~6.4 | 공유. 고객 취소 API 없음(Q2) |
 | `/my/songs` | `my/SongsController` | `GET /my/songs`, `DELETE /my/songs/{id}` | 11.4~11.5 | |
 | `/admin` | 없음 | 관리자 Menus·Orders·Songs 목록 조합 | — | 예외 |
@@ -109,9 +109,9 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | 페이지 | URL 상태 (기본값은 URL에서 생략) | 클라이언트 컴포넌트 | title · canonical |
 | --- | --- | --- | --- |
 | `/` | 없음 | `DjBooth`, `MusicBoxRefresher` | 기본값 · `/` |
-| `/login` | `next`(내부 경로 검증), flash `error` | 없음 | 로그인 |
-| `/signup` | flash `error`(`invalid`·`mismatch`·`exists`) | `SignupForm` | 회원가입 |
-| `/menus` | `q`(100자), `category`, `sort`=`newest`\|`name`\|`price-low`\|`price-high`. GET 폼 제출, 탭은 Link | 없음 | 메뉴 · `/menus` |
+| `/login` | `next`(안전한 상대 경로), `registered=1`(가입 후 로그인 안내) | `LoginForm` | 로그인 · noindex |
+| `/signup` | `next`, 필드 오류·이름/이메일은 action state | `SignupForm` | 회원가입 · noindex |
+| `/menus` | `q`(100자), `categoryId`, `sort`=`newest`\|`name`\|`price-low`\|`price-high`. GET 폼 제출, 탭은 Link | 없음 | 메뉴 · `/menus` |
 | `/menus/[slug]` | params `slug` | `OrderPanel`(온도·수량), `CartAddedDialog`, `LoginRequiredDialog`, `BackButton` | 메뉴명 · `/menus/{slug}`, 없으면 `notFound()` |
 | `/musicbox` | `page`(1부터, 10개), flash `submitted` | `RequestForm`, `DjBooth`, `YouTubePlayer`, `VolumeControl`, `MusicBoxRefresher` | 뮤직박스 · `/musicbox`(page 유지) |
 | `/cart` | 없음 | `CartView`(화면 전체) | 장바구니 |
@@ -327,7 +327,13 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 
 ### 5-7. 인증·백엔드 연동
 
-백엔드 인증 API가 생기면 적용한다. 그 전까지는 목 인증을 유지한다.
+2026-10-25 인증 6단계에서 적용했다. 로그인·로그아웃의 실제 처리는 표준 Security 필터이며, AuthController 매핑은 인증 영역의 소유를 뜻한다. 상세 계약은 [인증 청사진](../backend/docs/2026-10-22-auth-blueprint.md)을 따른다.
+
+- `app/_lib/api/auth.ts`는 server-only이며 변경 요청에 CSRF·쿠키를 연결한다. BackendSession은 액션마다 새 쿠키 저장소를 만들고 모든 Set-Cookie를 유지하며 후속 요청에 갱신된 ID를 전달한다. 인증 변경에 위의 단순 조회 예시 요청기를 사용하지 않는다.
+- 가입·로그인 액션은 공개 인증 진입점이므로 기존 회원 requireRole 없이 입력 검증·백엔드 인증을 수행한다. 보호된 업무 액션은 기존 requireRole 규칙을 유지한다.
+- 로그인 후 새 CSRF를 받고, 가입만 성공한 경우 로그인 재시도로 안내한다. 비밀번호는 action state·응답·브라우저 저장소에 넣지 않는다.
+- SSR 회원 조회는 no-store이며 React cache는 한 렌더 안의 중복만 제거한다. Proxy는 보호 경로의 상태·역할을 확인하고 만료 쿠키를 반영한다. Server Components에서는 쿠키를 변경하지 않는다.
+- 다른 탭에는 임의 변경 알림만 전송한다. 탭 복귀·뒤로 가기에서 서버 인증을 새로 확인한다.
 
 - 인증 정보는 httpOnly 쿠키에 두고, localStorage에 두지 않는다.
 - 브라우저 호출은 `next.config.ts` rewrites로 프록시한다. 대상은 **`/api/v1/:path*`만**이다. `/api/*` 전체를 넘기면 기존 라우트 핸들러가 가려진다.
@@ -363,7 +369,7 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | --- | --- |
 | 백엔드 인증 방식(세션·토큰, CSRF, 쿠키 이름) | 백엔드 |
 | 사이트 도메인, OG 이미지, 백엔드 주소 환경변수 이름 | 팀 |
-| 메뉴 `nameEn` 유지, 카테고리 단일·복수, 공개 메뉴 `category` 값이 이름인지 id인지 | 백엔드 협의 |
+| 메뉴 `nameEn` 유지, 카테고리 단일·복수 (공개 메뉴 필터는 `categoryId`로 정함) | 백엔드 협의 |
 | `/checkout` 주문 대상 조회, `/my/songs` 현재 곡, 관리자 메뉴 카테고리 목록의 컨트롤러 | 백엔드 협의 |
 | 관리자 주문 취소 API 계약, 고객 취소 화면 유지 여부(Q2) | 백엔드·팀 |
 | `/api/music-box/version` 대체(`revision`·`serverNow`) | 백엔드 협의 |
@@ -396,7 +402,7 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | noindex, `robots.ts`, `sitemap.ts`, 본문 바로가기 없음 | `app/` |
 | `(public)` 페이지 6개가 `<main>`을 직접 그리고, 그룹 layout은 children만 반환 | `(public)/layout.tsx` |
 | h1이 page 밖에 있음 | `SignupForm.tsx`, 공통 `StatePanel`(`/forbidden`, `error`, `not-found`) |
-| `proxy.ts`, `/api/v1` rewrites, `app/_lib/api/` 없음. 라우트별 `loading`·`error` 거의 없음 | `frontend/` |
+| 인증 요청기·Proxy·`/api/v1` rewrites 완료. 라우트별 `loading`·`error`는 남음 | `frontend/` |
 | `MenuCard`를 `(public)`만 쓰는데 `app/_components`에 있음 | `app/_components/MenuCard.tsx` |
 | 다른 라우트의 `_components`를 import(10건) | `(public)/page.tsx`→`musicbox`, `my/songs`→`musicbox` 6건, `admin/songs`→`musicbox` 3건 |
 | 장바구니 Context가 루트 layout 전체를 감쌈 | `app/layout.tsx`, `_lib/cart/CartContext.tsx` |
@@ -404,10 +410,12 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 
 ### 8-2. 쌍별 작업
 
+2026-10-25 사용자의 명시적 요청에 따라 에이전트가 인증 단계 PR #71~#74를 순서대로 `feature/session-auth`에 통합했다. 이번 통합은 사람 머지 일반 규칙의 예외다. 2026-10-26 최신 `develop`을 반영하고 공개 메뉴 GET 접근 정책을 수정했다. 최종 [PR #61](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/61)은 리뷰 대상으로 전환하며, `develop` 반영은 사람이 머지한다.
+
 | 쌍 | 규칙 갭 | 남은 기능 작업 | 선행 |
 | --- | --- | --- | --- |
-| `/login`·`/signup` ↔ Auth | metadata·noindex 없음, `<main>`이 page에 있음, signup h1 위치 | 인증 API 연결, 목 세션 교체 | 백엔드 Auth, 인증 방식 결정 |
-| `/my` ↔ my/Users | metadata 없음 | `GET /my`, 로그아웃 연결 | Auth |
+| `/login`·`/signup` ↔ Auth | 인증 API·목 세션 교체·필드 오류·metadata/noindex 완료. `<main>`의 layout 이동은 공통 갭으로 남음 | 인증 6단계 브라우저 검증 완료 | `feature/session-auth` 통합 완료 |
+| `/my` ↔ my/Users | 실제 본인 조회·로그아웃·숫자 ID·metadata/noindex 완료 | 인증 6단계 검증 완료 | `feature/session-auth` 통합 완료 |
 | `/profile/update` ↔ my/Users | — | 화면 신규 | `/my` |
 | `/admin/users*` ↔ admin/Users | title 직접 표기 | API 연결 | Auth |
 | `/admin/users/new` ↔ admin/Users | — | 화면 신규 | `/admin/users` |

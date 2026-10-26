@@ -1,57 +1,21 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { mockCategoryRepository } from "@/app/_lib/mock/categories";
-import { MenuCard } from "@/app/_components/MenuCard";
-import { mockMenuRepository, type Menu } from "@/app/_lib/mock/menus";
+import { MenuCard } from "../_components/MenuCard";
+import { getMenuCategories, getMenus } from "../_lib/menus/api";
+import { menuListHref, parseMenuSearchParams } from "./_lib/searchParams";
 import styles from "./menus.module.css";
 
-type MenuSearchParams = Promise<{
-  q?: string | string[];
-  category?: string | string[];
-  sort?: string | string[];
-}>;
+export const metadata: Metadata = {
+  title: "메뉴 | 삼다방",
+  description: "삼다방의 커피와 차, 다과 메뉴를 한눈에 둘러보세요.",
+};
 
-const sortOptions = ["newest", "name", "price-low", "price-high"] as const;
-type SortOption = typeof sortOptions[number];
-
-function single(value: string | string[] | undefined): string {
-  return typeof value === "string" ? value : "";
-}
-
-function sortMenus(menus: Menu[], sort: SortOption): Menu[] {
-  return [...menus].sort((a, b) => {
-    if (sort === "name") return a.name.localeCompare(b.name, "ko") || a.id.localeCompare(b.id);
-    if (sort === "price-low") return a.price - b.price || a.name.localeCompare(b.name, "ko");
-    if (sort === "price-high") return b.price - a.price || a.name.localeCompare(b.name, "ko");
-    return b.createdAt.localeCompare(a.createdAt) || a.name.localeCompare(b.name, "ko");
-  });
-}
+type MenuSearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function MenusPage({ searchParams }: { searchParams: MenuSearchParams }) {
-  const { q, category, sort } = await searchParams;
-  const [allMenus, categories] = await Promise.all([
-    mockMenuRepository.list(),
-    mockCategoryRepository.list(),
-  ]);
-  const query = single(q).trim().slice(0, 100);
-  const selectedCategory = categories.some((item) => item.name === single(category)) ? single(category) : "";
-  const requestedSort = single(sort);
-  const selectedSort: SortOption = sortOptions.includes(requestedSort as SortOption)
-    ? requestedSort as SortOption
-    : "newest";
-  const needle = query.toLocaleLowerCase("ko");
-  const visibleMenus = sortMenus(allMenus.filter((menu) => {
-    const matchesQuery = !needle || menu.name.toLocaleLowerCase("ko").includes(needle)
-      || menu.nameEn.toLocaleLowerCase("en").includes(needle);
-    return matchesQuery && (!selectedCategory || menu.categories.includes(selectedCategory));
-  }), selectedSort);
-
-  function categoryHref(name: string): string {
-    const params = new URLSearchParams();
-    if (query) params.set("q", query);
-    if (name) params.set("category", name);
-    if (selectedSort !== "newest") params.set("sort", selectedSort);
-    return params.size ? `/menus?${params.toString()}` : "/menus";
-  }
+  const query = parseMenuSearchParams(await searchParams);
+  const [menus, categories] = await Promise.all([getMenus(query), getMenuCategories()]);
+  const filtered = query.q !== "" || query.categoryId !== null;
 
   return (
     <main className={styles.page}>
@@ -64,18 +28,18 @@ export default async function MenusPage({ searchParams }: { searchParams: MenuSe
 
         <nav className={styles.filterRow} aria-label="카테고리 필터">
           <Link
-            href={categoryHref("")}
-            className={`${styles.filterChip} ${!selectedCategory ? styles.filterChipActive : ""}`}
-            aria-current={!selectedCategory ? "page" : undefined}
+            href={menuListHref({ ...query, categoryId: null })}
+            className={`${styles.filterChip} ${query.categoryId === null ? styles.filterChipActive : ""}`}
+            aria-current={query.categoryId === null ? "page" : undefined}
           >
             전체
           </Link>
           {categories.map((c) => (
             <Link
               key={c.id}
-              href={categoryHref(c.name)}
-              className={`${styles.filterChip} ${selectedCategory === c.name ? styles.filterChipActive : ""}`}
-              aria-current={selectedCategory === c.name ? "page" : undefined}
+              href={menuListHref({ ...query, categoryId: c.id })}
+              className={`${styles.filterChip} ${query.categoryId === c.id ? styles.filterChipActive : ""}`}
+              aria-current={query.categoryId === c.id ? "page" : undefined}
             >
               {c.name}
             </Link>
@@ -83,14 +47,14 @@ export default async function MenusPage({ searchParams }: { searchParams: MenuSe
         </nav>
 
         <form className={styles.searchForm} method="get" role="search">
-          {selectedCategory && <input type="hidden" name="category" value={selectedCategory} />}
+          {query.categoryId !== null && <input type="hidden" name="categoryId" value={query.categoryId} />}
           <label className={styles.searchField} htmlFor="customer-menu-query">
             메뉴 검색
-            <input id="customer-menu-query" name="q" type="search" maxLength={100} defaultValue={query} placeholder="한글 또는 영어 메뉴명" />
+            <input id="customer-menu-query" name="q" type="search" maxLength={100} defaultValue={query.q} placeholder="메뉴 이름" />
           </label>
           <label className={styles.sortField} htmlFor="customer-menu-sort">
             정렬
-            <select id="customer-menu-sort" name="sort" defaultValue={selectedSort}>
+            <select id="customer-menu-sort" name="sort" defaultValue={query.sort}>
               <option value="newest">최근 등록순</option>
               <option value="name">메뉴명순</option>
               <option value="price-low">가격 낮은순</option>
@@ -101,18 +65,18 @@ export default async function MenusPage({ searchParams }: { searchParams: MenuSe
         </form>
 
         <div className={styles.resultRow}>
-          <p>메뉴 <strong>{visibleMenus.length}</strong>개</p>
-          {(query || selectedCategory || selectedSort !== "newest") && <Link href="/menus">전체 메뉴 보기</Link>}
+          <p>메뉴 <strong>{menus.totalElements}</strong>개</p>
+          {(filtered || query.sort !== "newest") && <Link href="/menus">전체 메뉴 보기</Link>}
         </div>
 
-        {visibleMenus.length === 0 ? (
+        {menus.items.length === 0 ? (
           <div className={styles.empty} role="status">
-            <p>{allMenus.length === 0 ? "등록된 메뉴가 아직 없어요." : "조건에 맞는 메뉴가 없어요."}</p>
-            {allMenus.length > 0 && <Link href="/menus">검색 조건 초기화</Link>}
+            <p>{filtered ? "조건에 맞는 메뉴가 없어요." : "등록된 메뉴가 아직 없어요."}</p>
+            {filtered && <Link href="/menus">검색 조건 초기화</Link>}
           </div>
         ) : (
           <div className={styles.grid}>
-            {visibleMenus.map((menu) => (
+            {menus.items.map((menu) => (
               <MenuCard key={menu.id} menu={menu} />
             ))}
           </div>

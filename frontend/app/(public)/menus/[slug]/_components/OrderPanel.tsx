@@ -19,6 +19,7 @@ const MIN_QUANTITY = 1;
 
 type OrderPanelProps = {
   menuId: string;
+  menuSlug: string;
   menuName: string;
   imageUrl: string;
   price: number;
@@ -48,6 +49,7 @@ function TemperatureIcon({ type }: { type: Temperature }) {
 
 export function OrderPanel({
   menuId,
+  menuSlug,
   menuName,
   imageUrl,
   price,
@@ -200,7 +202,7 @@ export function OrderPanel({
         open={loginDialogOpen}
         onClose={() => setLoginDialogOpen(false)}
         onConfirm={() =>
-          router.push(`/login?next=${encodeURIComponent(`/menus/${menuId}`)}`)
+          router.push(`/login?next=${encodeURIComponent(`/menus/${menuSlug}`)}`)
         }
       />
     </section>

@@ -1,27 +1,35 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  MENU_IMAGE_PLACEHOLDER,
-  mockMenuRepository,
-} from "@/app/_lib/mock/menus";
+import type { Temperature } from "@/app/_lib/cart/CartContext";
 import { getCurrentUser } from "@/app/_lib/session/session";
+import { getMenu } from "../../_lib/menus/api";
+import type { MenuResponse } from "../../_lib/menus/types";
 import styles from "../menus.module.css";
 import { BackButton } from "./_components/BackButton";
 import { OrderPanel } from "./_components/OrderPanel";
 
 const won = new Intl.NumberFormat("ko-KR");
 
-export default async function MenuDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug: id } = await params;
-  const [menu, user] = await Promise.all([
-    mockMenuRepository.get(id),
-    getCurrentUser(),
-  ]);
+type Props = { params: Promise<{ slug: string }> };
+
+function temperaturesOf(menu: MenuResponse): Temperature[] {
+  const temperatures: Temperature[] = [];
+  if (menu.supportsHot) temperatures.push("hot");
+  if (menu.supportsIced) temperatures.push("ice");
+  return temperatures;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const menu = await getMenu((await params).slug);
+  if (!menu) notFound();
+  return { title: `${menu.name} | 삼다방`, description: menu.description };
+}
+
+export default async function MenuDetailPage({ params }: Props) {
+  const { slug } = await params;
+  const [menu, user] = await Promise.all([getMenu(slug), getCurrentUser()]);
   if (!menu) notFound();
 
   return (
@@ -39,7 +47,7 @@ export default async function MenuDetailPage({
         <div className={styles.detail}>
           <div className={styles.detailImageWrap}>
             <Image
-              src={menu.imageUrl || MENU_IMAGE_PLACEHOLDER}
+              src={menu.imageUrl}
               alt={`${menu.name} 이미지`}
               width={520}
               height={390}
@@ -74,10 +82,7 @@ export default async function MenuDetailPage({
                 )}
               </div>
 
-              <div>
-                <h1 className={styles.detailName}>{menu.name}</h1>
-                <p className={styles.detailNameEn}>{menu.nameEn}</p>
-              </div>
+              <h1 className={styles.detailName}>{menu.name}</h1>
 
               <p className={styles.detailPrice}>{won.format(menu.price)}원</p>
               <p className={styles.detailDescription}>{menu.description}</p>
@@ -86,9 +91,7 @@ export default async function MenuDetailPage({
             <div className={styles.detailMeta}>
               <div className={styles.detailMetaRow}>
                 <span className={styles.detailMetaLabel}>카테고리</span>
-                <span className={styles.detailMetaValue}>
-                  {menu.categories.join(", ") || "미분류"}
-                </span>
+                <span className={styles.detailMetaValue}>{menu.categoryName}</span>
               </div>
               <div className={styles.detailMetaRow}>
                 <span className={styles.detailMetaLabel}>판매 상태</span>
@@ -98,13 +101,14 @@ export default async function MenuDetailPage({
               </div>
             </div>
             <OrderPanel
-              menuId={menu.id}
+              menuId={String(menu.id)}
+              menuSlug={menu.slug}
               menuName={menu.name}
-              imageUrl={menu.imageUrl || MENU_IMAGE_PLACEHOLDER}
+              imageUrl={menu.imageUrl}
               price={menu.price}
-              temperatures={menu.temperatures}
+              temperatures={temperaturesOf(menu)}
               temperatureLabel={
-                menu.categories.includes("세트") ? "음료 온도" : "온도"
+                menu.categoryName === "세트" ? "음료 온도" : "온도"
               }
               available={menu.available}
               isLoggedIn={user !== null}
