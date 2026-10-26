@@ -18,6 +18,7 @@ import com.newcafe.backend.entity.song.SongTiming;
 import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
 import com.newcafe.backend.service.support.MusicBoxSettler;
+import com.newcafe.backend.entity.user.TestUsers;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -131,7 +132,7 @@ class SongsServiceTest {
     }
 
     private Song song(Long id, Long userId) {
-        Song song = new Song(userId, "민지", "밤편지", "아이유", "사연");
+        Song song = new Song(TestUsers.withId(userId), "민지", "밤편지", "아이유", "사연");
         ReflectionTestUtils.setField(song, "id", id);
         return song;
     }

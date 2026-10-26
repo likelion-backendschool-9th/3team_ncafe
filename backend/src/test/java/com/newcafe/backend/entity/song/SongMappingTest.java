@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.newcafe.backend.config.PluralTableNamingStrategy;
+import com.newcafe.backend.entity.user.User;
 import com.newcafe.backend.repository.SongRepository;
 
 import java.util.List;
@@ -35,6 +36,7 @@ class SongMappingTest {
             var metadata = new MetadataSources(registry)
                     .addAnnotatedClass(Song.class)
                     .addAnnotatedClass(MusicBoxState.class)
+                    .addAnnotatedClass(User.class)
                     .buildMetadata();
             Table songs = metadata.getEntityBinding(Song.class.getName()).getTable();
             Table state = metadata.getEntityBinding(MusicBoxState.class.getName()).getTable();
@@ -56,6 +58,13 @@ class SongMappingTest {
                 assertEquals("TIMESTAMPTZ", column(songs, name).getSqlType(), name);
             }
 
+            // DB 설계: music_requests.user_id는 users를 가리키는 필수 FK다.
+            var userKey = songs.getForeignKeyCollection().stream()
+                    .filter(key -> key.getColumns().equals(List.of(column(songs, "user_id"))))
+                    .findFirst()
+                    .orElseThrow();
+            assertEquals("users", userKey.getReferencedTable().getName());
+
             assertEquals("music_box_state", state.getName());
             assertFalse(column(state, "revision").isNullable());
             assertFalse(column(state, "updated_at").isNullable());
@@ -74,6 +83,7 @@ class SongMappingTest {
 
         try (var sessionFactory = new MetadataSources(registry)
                 .addAnnotatedClass(Song.class)
+                .addAnnotatedClass(User.class)
                 .buildMetadata()
                 .buildSessionFactory()) {
             var entityManager = sessionFactory.createEntityManager();

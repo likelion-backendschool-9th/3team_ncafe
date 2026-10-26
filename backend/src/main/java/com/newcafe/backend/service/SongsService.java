@@ -9,6 +9,7 @@ import com.newcafe.backend.entity.song.Song;
 import com.newcafe.backend.entity.song.SongStatus;
 import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
+import com.newcafe.backend.repository.UserRepository;
 import com.newcafe.backend.service.support.MusicBoxSettler;
 
 import java.time.Clock;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SongsService {
 
     private final SongRepository songRepository;
+    private final UserRepository userRepository;
     private final MusicBoxStateRepository musicBoxStateRepository;
     private final MusicBoxSettler musicBoxSettler;
     private final Clock clock;
@@ -38,7 +40,7 @@ public class SongsService {
         MusicBoxState state = musicBoxSettler.lockAndSettle(now);
 
         Song song = songRepository.save(
-                new Song(userId, requesterName, request.songTitle(), request.artist(), request.story()));
+                new Song(userRepository.getReferenceById(userId), requesterName, request.songTitle(), request.artist(), request.story()));
 
         state.touch(now);
         return SongResponse.from(song);

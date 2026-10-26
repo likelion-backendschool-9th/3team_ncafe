@@ -15,6 +15,7 @@ import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
 import com.newcafe.backend.service.admin.SongsService;
 import com.newcafe.backend.service.support.MusicBoxSettler;
+import com.newcafe.backend.entity.user.TestUsers;
 
 import java.time.Clock;
 import java.util.List;
@@ -77,7 +78,7 @@ class SongsControllerTest {
     }
 
     private Song newSong(Long id) {
-        Song song = new Song(1L, "강태윤", "이등병의 편지", "김광석", "사연");
+        Song song = new Song(TestUsers.withId(1L), "강태윤", "이등병의 편지", "김광석", "사연");
         ReflectionTestUtils.setField(song, "id", id);
         return song;
     }
