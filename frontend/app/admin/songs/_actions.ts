@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { isValidDuration, mockMusicBoxRepository } from "@/app/_lib/mock/music-box";
+import { apiFetch, ApiRequestError } from "@/app/_lib/api/client";
 import { requireRole } from "@/app/_lib/session/session";
 import { parseYouTubeVideoId } from "@/app/_lib/youtube";
 
@@ -13,12 +13,11 @@ async function requireAdmin(): Promise<void> {
   await requireRole("admin", pagePath);
 }
 
-// 뮤직박스 상태가 바뀌면 DJ 부스·신청곡 목록을 보여 주는 화면을 모두 새로 그린다.
 function refreshMusicBox(): void {
   for (const path of ["/", "/musicbox", "/my/songs", pagePath]) revalidatePath(path);
 }
 
-export async function addToPlaylist(id: string, _previous: PlaylistFormState, formData: FormData): Promise<PlaylistFormState> {
+export async function addToPlaylist(id: number, _previous: PlaylistFormState, formData: FormData): Promise<PlaylistFormState> {
   await requireAdmin();
   const raw = formData.get("youtubeUrl");
   const link = typeof raw === "string" ? raw.trim() : "";
@@ -27,60 +26,77 @@ export async function addToPlaylist(id: string, _previous: PlaylistFormState, fo
     return { error: "YouTube 영상 링크를 넣어 주세요. (youtube.com/watch?v=…, youtu.be/…, 쇼츠 링크)" };
   }
 
-  // 미리보기 플레이어가 읽은 영상 길이. 아직 못 읽었으면 비어 있고, 나중에 재생한 화면이 채운다.
   const duration = Number(formData.get("durationSeconds"));
-  const durationSeconds = isValidDuration(duration) ? duration : null;
+  const durationSeconds = Number.isFinite(duration) && duration > 0 ? duration : null;
 
   try {
-    if (!await mockMusicBoxRepository.addToPlaylist(id, videoId, durationSeconds)) {
-      return { error: "접수된 신청곡을 찾을 수 없습니다. 목록을 새로고침해 주세요." };
-    }
-  } catch {
+    await apiFetch("/api/v1/admin/songs/playlist", {
+      method: "POST",
+      body: JSON.stringify({ songId: id, youtubeVideoId: videoId, durationSeconds }),
+    });
+  } catch (e) {
+    if (e instanceof ApiRequestError) return { error: e.error.message };
     return { error: "플레이리스트에 담지 못했습니다. 다시 시도해 주세요." };
   }
   refreshMusicBox();
   return {};
 }
 
-export async function returnToInbox(id: string): Promise<void> {
+export async function returnToInbox(id: number): Promise<void> {
   await requireAdmin();
-  await mockMusicBoxRepository.returnToInbox(id);
+  await apiFetch(`/api/v1/admin/songs/${id}/return-to-inbox`, {
+    method: "PUT",
+  });
   refreshMusicBox();
 }
 
-export async function moveToPlayed(id: string): Promise<void> {
+export async function moveToPlayed(id: number): Promise<void> {
   await requireAdmin();
-  await mockMusicBoxRepository.moveToPlayed(id);
+  await apiFetch(`/api/v1/admin/songs/${id}/move-to-played`, {
+    method: "PUT",
+  });
   refreshMusicBox();
 }
 
-export async function moveInPlaylist(id: string, direction: "up" | "down"): Promise<void> {
+export async function moveInPlaylist(id: number, direction: "up" | "down"): Promise<void> {
   await requireAdmin();
-  await mockMusicBoxRepository.moveInPlaylist(id, direction);
+  await apiFetch(`/api/v1/admin/songs/playlist/${id}/order`, {
+    method: "PUT",
+    body: JSON.stringify({ direction }),
+  });
   refreshMusicBox();
 }
 
-export async function playNow(id: string): Promise<void> {
+export async function playNow(id: number): Promise<void> {
   await requireAdmin();
-  await mockMusicBoxRepository.playNow(id);
+  await apiFetch(`/api/v1/admin/songs/playlist/${id}/play`, {
+    method: "POST",
+  });
   refreshMusicBox();
 }
 
-// 화면에 보이던 곡(id)이 아직 재생 중일 때만 처리한다. 그사이 시간이 다 돼 다음 곡으로 넘어갔다면 다음 곡은 건드리지 않는다.
-export async function finishCurrent(id: string): Promise<void> {
+export async function finishCurrent(id: number): Promise<void> {
   await requireAdmin();
-  await mockMusicBoxRepository.advance(id);
+  await apiFetch("/api/v1/admin/songs/current/finish", {
+    method: "POST",
+    body: JSON.stringify({ id }),
+  });
   refreshMusicBox();
 }
 
-export async function cancelCurrent(id: string): Promise<void> {
+export async function cancelCurrent(id: number): Promise<void> {
   await requireAdmin();
-  await mockMusicBoxRepository.cancelCurrent(id);
+  await apiFetch("/api/v1/admin/songs/current/cancel", {
+    method: "POST",
+    body: JSON.stringify({ id }),
+  });
   refreshMusicBox();
 }
 
-export async function cancelRequest(id: string): Promise<void> {
+export async function cancelRequest(id: number): Promise<void> {
   await requireAdmin();
-  await mockMusicBoxRepository.cancelRequest(id);
+  await apiFetch(`/api/v1/admin/songs/${id}/cancel`, {
+    method: "PUT",
+  });
   refreshMusicBox();
 }

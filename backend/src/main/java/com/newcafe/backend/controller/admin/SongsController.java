@@ -71,4 +71,14 @@ public class SongsController {
     public void cancelCurrent(@Valid @RequestBody CurrentSongRequest request) {
         songsService.cancelCurrent(request.id());
     }
+
+    @PutMapping("/{id}/return-to-inbox")
+    public void returnToInbox(@PathVariable Long id) {
+        songsService.returnToInbox(id);
+    }
+
+    @PutMapping("/{id}/move-to-played")
+    public void moveToPlayed(@PathVariable Long id) {
+        songsService.moveToPlayed(id);
+    }
 }
