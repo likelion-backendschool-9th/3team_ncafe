@@ -18,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.newcafe.backend.common.error.ApiExceptionHandler;
 import com.newcafe.backend.common.error.CartItemException;
 import com.newcafe.backend.common.error.CartItemException.Reason;
+import com.newcafe.backend.common.error.CartItemsExceptionHandler;
 import com.newcafe.backend.common.security.SessionUserDetails;
 import com.newcafe.backend.dto.cartitems.CartItemQuantityRequest;
 import com.newcafe.backend.dto.cartitems.CartItemRequest;
@@ -56,7 +57,7 @@ class CartItemsControllerTest {
         cartItemsService = mock(CartItemsService.class);
         mockMvc = MockMvcBuilders.standaloneSetup(new CartItemsController(cartItemsService))
                 .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
-                .setControllerAdvice(new ApiExceptionHandler())
+                .setControllerAdvice(new CartItemsExceptionHandler(), new ApiExceptionHandler())
                 .build();
         signIn();
     }
