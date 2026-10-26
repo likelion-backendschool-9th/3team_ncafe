@@ -41,7 +41,7 @@ class SongMappingTest {
             Table songs = metadata.getEntityBinding(Song.class.getName()).getTable();
             Table state = metadata.getEntityBinding(MusicBoxState.class.getName()).getTable();
 
-            assertEquals("music_requests", songs.getName());
+            assertEquals("songs", songs.getName());
             assertEquals(100L, column(songs, "song_title").getLength());
             assertEquals(80L, column(songs, "artist").getLength());
             assertEquals(50L, column(songs, "requester_name").getLength());
@@ -58,7 +58,7 @@ class SongMappingTest {
                 assertEquals("TIMESTAMPTZ", column(songs, name).getSqlType(), name);
             }
 
-            // DB 설계: music_requests.user_id는 users를 가리키는 필수 FK다.
+            // DB 설계: songs.user_id는 users를 가리키는 필수 FK다.
             var userKey = songs.getForeignKeyCollection().stream()
                     .filter(key -> key.getColumns().equals(List.of(column(songs, "user_id"))))
                     .findFirst()
