@@ -66,9 +66,11 @@ public class SongsService {
         Song target = songRepository.findById(id)
                 .orElseThrow(() -> new SongException(SongException.Reason.NOT_FOUND, "신청곡을 찾을 수 없습니다."));
 
+        // 순서는 되돌리기 전에 구한다. 되돌린 곡은 순서가 비어 있는 채로 대기열 조회에 잡힌다.
         songRepository.findFirstByStatus(SongStatus.playing).ifPresent(current -> {
+            int order = firstPlaylistOrder() - 1;
             current.requeue();
-            current.setPlaylistOrder(firstPlaylistOrder() - 1);
+            current.setPlaylistOrder(order);
         });
 
         target.play();
@@ -112,7 +114,12 @@ public class SongsService {
         Song song = songRepository.findById(id)
                 .orElseThrow(() -> new SongException(SongException.Reason.NOT_FOUND, "신청곡을 찾을 수 없습니다."));
 
+        boolean wasPlaying = song.getStatus() == SongStatus.playing;
         song.cancel();
+        if (wasPlaying) {
+            playNextIfIdle();
+        }
+
         state.touch(Instant.now());
     }
 
