@@ -87,6 +87,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/cart/items").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/cart/items/*").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/cart/items/*").hasRole("CUSTOMER")
+                        // 뮤직박스 화면은 비로그인 손님도 본다. 신청과 내 신청곡은 고객 계정만 쓴다.
+                        .requestMatchers(HttpMethod.GET, "/api/v1/musicbox/songs", "/api/v1/songs/now").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/musicbox/songs").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/my/songs").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/my/songs/*").hasRole("CUSTOMER")
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().denyAll())
                 .addFilterBefore(new SessionMemberFilter(sessionMembers, errors, sessionCookies, contextRepository),
