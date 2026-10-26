@@ -17,6 +17,7 @@ import com.newcafe.backend.entity.song.SongStatus;
 import com.newcafe.backend.entity.song.SongTiming;
 import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
+import com.newcafe.backend.service.support.MusicBoxSettler;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -43,7 +44,8 @@ class SongsServiceTest {
         musicBoxStateRepository = mock(MusicBoxStateRepository.class);
         state = new MusicBoxState();
         when(musicBoxStateRepository.findForUpdate()).thenReturn(state);
-        service = new SongsService(songRepository, musicBoxStateRepository, Clock.fixed(NOW, ZoneOffset.UTC));
+        service = new SongsService(songRepository,
+                new MusicBoxSettler(songRepository, musicBoxStateRepository), Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     @Test

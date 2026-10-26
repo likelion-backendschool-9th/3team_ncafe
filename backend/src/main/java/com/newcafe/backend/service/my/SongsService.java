@@ -5,10 +5,9 @@ import com.newcafe.backend.common.error.SongException.Reason;
 import com.newcafe.backend.dto.songs.SongResponse;
 import com.newcafe.backend.entity.song.MusicBoxState;
 import com.newcafe.backend.entity.song.Song;
-import com.newcafe.backend.entity.song.SongSettlement;
 import com.newcafe.backend.entity.song.SongStatus;
-import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
+import com.newcafe.backend.service.support.MusicBoxSettler;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -26,13 +25,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class SongsService {
 
     private final SongRepository songRepository;
-    private final MusicBoxStateRepository musicBoxStateRepository;
+    private final MusicBoxSettler musicBoxSettler;
     private final Clock clock;
 
     // 조회 중에도 정리가 일어날 수 있어 읽기 전용 트랜잭션을 쓰지 않는다.
     @Transactional
     public List<SongResponse> list(Long userId) {
-        settleIfDue(clock.instant());
+        musicBoxSettler.settleIfDue(clock.instant());
 
         return songRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(SongResponse::from)
@@ -42,8 +41,7 @@ public class SongsService {
     @Transactional
     public void delete(Long userId, Long id) {
         Instant now = clock.instant();
-        MusicBoxState state = lockState();
-        settle(now);
+        MusicBoxState state = musicBoxSettler.lockAndSettle(now).state();
 
         Song song = songRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new SongException(Reason.NOT_FOUND, "신청곡을 찾을 수 없습니다."));
@@ -53,37 +51,5 @@ public class SongsService {
 
         songRepository.delete(song);
         state.touch(now);
-    }
-
-    private void settleIfDue(Instant now) {
-        boolean due = songRepository.findPlayingTiming()
-                .map(timing -> timing.isDue(now))
-                .orElse(false);
-        if (!due) {
-            return;
-        }
-
-        MusicBoxState state = lockState();
-        if (settle(now)) {
-            state.touch(now);
-        }
-    }
-
-    private boolean settle(Instant now) {
-        Song playing = songRepository.findFirstByStatus(SongStatus.playing).orElse(null);
-        if (playing == null) {
-            return false;
-        }
-
-        return SongSettlement.settle(playing, songRepository.findByStatusOrderByPlaylistOrderAsc(SongStatus.queued), now);
-    }
-
-    private MusicBoxState lockState() {
-        MusicBoxState state = musicBoxStateRepository.findForUpdate();
-        if (state == null) {
-            throw new IllegalStateException("뮤직박스 상태가 초기화되지 않았습니다.");
-        }
-
-        return state;
     }
 }

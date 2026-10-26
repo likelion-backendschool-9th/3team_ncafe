@@ -6,10 +6,10 @@ import com.newcafe.backend.dto.songs.NowPlayingResponse;
 import com.newcafe.backend.dto.songs.SongResponse;
 import com.newcafe.backend.entity.song.MusicBoxState;
 import com.newcafe.backend.entity.song.Song;
-import com.newcafe.backend.entity.song.SongSettlement;
 import com.newcafe.backend.entity.song.SongStatus;
 import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
+import com.newcafe.backend.service.support.MusicBoxSettler;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -29,13 +29,13 @@ public class SongsService {
 
     private final SongRepository songRepository;
     private final MusicBoxStateRepository musicBoxStateRepository;
+    private final MusicBoxSettler musicBoxSettler;
     private final Clock clock;
 
     @Transactional
     public SongResponse create(Long userId, String requesterName, CreateSongRequest request) {
         Instant now = clock.instant();
-        MusicBoxState state = lockState();
-        settle(now);
+        MusicBoxState state = musicBoxSettler.lockAndSettle(now).state();
 
         Song song = songRepository.save(
                 new Song(userId, requesterName, request.songTitle(), request.artist(), request.story()));
@@ -46,7 +46,7 @@ public class SongsService {
 
     @Transactional
     public MusicBoxSongsResponse list() {
-        settleIfDue(clock.instant());
+        musicBoxSettler.settleIfDue(clock.instant());
 
         return new MusicBoxSongsResponse(
                 responses(songRepository.findByStatusOrderByPlaylistOrderAsc(SongStatus.queued)),
@@ -57,45 +57,13 @@ public class SongsService {
     @Transactional
     public NowPlayingResponse now() {
         Instant now = clock.instant();
-        settleIfDue(now);
+        musicBoxSettler.settleIfDue(now);
 
         Song playing = songRepository.findFirstByStatus(SongStatus.playing).orElse(null);
         MusicBoxState state = musicBoxStateRepository.findById(MusicBoxState.ID)
                 .orElseThrow(() -> new IllegalStateException("뮤직박스 상태가 초기화되지 않았습니다."));
 
         return NowPlayingResponse.of(playing, now, state.getRevision());
-    }
-
-    private void settleIfDue(Instant now) {
-        boolean due = songRepository.findPlayingTiming()
-                .map(timing -> timing.isDue(now))
-                .orElse(false);
-        if (!due) {
-            return;
-        }
-
-        MusicBoxState state = lockState();
-        if (settle(now)) {
-            state.touch(now);
-        }
-    }
-
-    private boolean settle(Instant now) {
-        Song playing = songRepository.findFirstByStatus(SongStatus.playing).orElse(null);
-        if (playing == null) {
-            return false;
-        }
-
-        return SongSettlement.settle(playing, songRepository.findByStatusOrderByPlaylistOrderAsc(SongStatus.queued), now);
-    }
-
-    private MusicBoxState lockState() {
-        MusicBoxState state = musicBoxStateRepository.findForUpdate();
-        if (state == null) {
-            throw new IllegalStateException("뮤직박스 상태가 초기화되지 않았습니다.");
-        }
-
-        return state;
     }
 
     private List<SongResponse> responses(List<Song> songs) {

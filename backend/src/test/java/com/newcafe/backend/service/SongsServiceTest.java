@@ -19,6 +19,7 @@ import com.newcafe.backend.entity.song.SongStatus;
 import com.newcafe.backend.entity.song.SongTiming;
 import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
+import com.newcafe.backend.service.support.MusicBoxSettler;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -165,7 +166,8 @@ class SongsServiceTest {
     void s21RevisionChangesAfterMemberRequestsSong() {
         Clock clock = clock("03:01:00");
         when(songRepository.save(any(Song.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        SongsService service = new SongsService(songRepository, musicBoxStateRepository, clock);
+        SongsService service = new SongsService(songRepository, musicBoxStateRepository,
+                new MusicBoxSettler(songRepository, musicBoxStateRepository), clock);
 
         service.create(7L, "민지", new CreateSongRequest("밤편지", "아이유", "사연"));
 
@@ -173,7 +175,8 @@ class SongsServiceTest {
     }
 
     private SongsService service(String time) {
-        return new SongsService(songRepository, musicBoxStateRepository, clock(time));
+        return new SongsService(songRepository, musicBoxStateRepository,
+                new MusicBoxSettler(songRepository, musicBoxStateRepository), clock(time));
     }
 
     private void playingNow(Song current) {

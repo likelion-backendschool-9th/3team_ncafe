@@ -21,6 +21,7 @@ import com.newcafe.backend.entity.song.SongTiming;
 import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
 import com.newcafe.backend.service.SongsService;
+import com.newcafe.backend.service.support.MusicBoxSettler;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -62,6 +63,7 @@ class SongsControllerTest {
             return song;
         });
         songsService = new SongsService(songRepository, musicBoxStateRepository,
+                new MusicBoxSettler(songRepository, musicBoxStateRepository),
                 Clock.fixed(Instant.parse("2026-10-26T03:01:00Z"), ZoneOffset.UTC));
     }
 
