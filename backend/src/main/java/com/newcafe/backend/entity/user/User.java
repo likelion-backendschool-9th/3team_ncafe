@@ -1,6 +1,8 @@
 package com.newcafe.backend.entity.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.newcafe.backend.common.error.UserException;
+import com.newcafe.backend.common.error.UserException.Reason;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,6 +17,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 import java.time.Instant;
+import java.util.Objects;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -64,6 +67,26 @@ public class User {
 
     public static User createCustomer(String name, String email, String passwordHash) {
         return new User(name, email, passwordHash);
+    }
+
+    public boolean isAdmin() {
+        return role == UserRole.ADMIN;
+    }
+
+    // 관리자 회원관리의 이용 정지·해제. 관리자 계정의 상태는 바꾸지 않는다 (DB 설계).
+    public void changeStatus(UserStatus status) {
+        Objects.requireNonNull(status);
+
+        if (isAdmin()) {
+            throw new UserException(Reason.CONFLICT, "관리자 계정의 상태는 변경할 수 없습니다.");
+        }
+
+        if (this.status == status) {
+            return;
+        }
+
+        this.status = status;
+        updatedAt = Instant.now();
     }
 
     @PrePersist
