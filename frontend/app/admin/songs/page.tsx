@@ -1,5 +1,4 @@
 import { MusicBoxRefresher } from "@/app/(public)/musicbox/_components/MusicBoxRefresher";
-import { inboxOf, mockMusicBoxRepository, musicBoxVersion, onAirOf, playlistOf, type MusicRequest } from "@/app/_lib/mock/music-box";
 import { requireRole } from "@/app/_lib/session/session";
 import { cancelCurrent, cancelRequest, finishCurrent, moveInPlaylist, moveToPlayed, playNow, returnToInbox } from "./_actions";
 import { AddToPlaylistForm } from "./_components/AddToPlaylistForm";
@@ -7,6 +6,9 @@ import { CancelRequestForm } from "./_components/CancelRequestForm";
 import { OnAirPlayer } from "./_components/OnAirPlayer";
 import { RequestCard } from "./_components/RequestCard";
 import { YouTubePreview } from "./_components/YouTubePreview";
+import { fetchSongs } from "./_lib/api";
+import { inboxOf, musicBoxVersion, onAirOf, playlistOf } from "./_lib/helpers";
+import type { SongResponse } from "./_lib/types";
 import styles from "./music-box.module.css";
 
 const requestedAtFormat = new Intl.DateTimeFormat("ko-KR", {
@@ -17,15 +19,15 @@ const requestedAtFormat = new Intl.DateTimeFormat("ko-KR", {
   minute: "2-digit",
 });
 
-function requester(request: MusicRequest): string {
-  return `${request.requesterName} · ${requestedAtFormat.format(new Date(request.createdAt))}`;
+function requester(song: SongResponse): string {
+  return `${song.requesterName} · ${requestedAtFormat.format(new Date(song.createdAt))}`;
 }
 
-function Story({ request }: { request: MusicRequest }) {
+function Story({ request }: { request: SongResponse }) {
   return <blockquote className={styles.story}>{request.story}</blockquote>;
 }
 
-function MediaPreview({ request }: { request: MusicRequest }) {
+function MediaPreview({ request }: { request: SongResponse }) {
   return request.youtubeVideoId
     ? <YouTubePreview videoId={request.youtubeVideoId} title={request.songTitle} />
     : <div className={styles.previewEmpty}>연결된 영상이 없어요.</div>;
@@ -33,19 +35,19 @@ function MediaPreview({ request }: { request: MusicRequest }) {
 
 export default async function AdminMusicBoxPage() {
   await requireRole("admin", "/admin/songs");
-  const requests = await mockMusicBoxRepository.list();
-  const playing = requests.find((request) => request.status === "playing");
-  const playlist = playlistOf(requests);
-  const inbox = inboxOf(requests);
-  const played = requests
-    .filter((request) => request.status === "played")
+  const songs = await fetchSongs();
+  const playing = songs.find((song) => song.status === "playing");
+  const playlist = playlistOf(songs);
+  const inbox = inboxOf(songs);
+  const played = songs
+    .filter((song) => song.status === "played")
     .sort((a, b) => (b.playedAt ?? "").localeCompare(a.playedAt ?? ""))
     .slice(0, 10);
   const onAir = onAirOf(playing);
 
   return (
     <div className={styles.page}>
-      <MusicBoxRefresher version={musicBoxVersion(requests)} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
+      <MusicBoxRefresher version={musicBoxVersion(songs)} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
       <header className={styles.heading}>
         <p className="eyebrow">MUSIC BOX</p>
         <h1>뮤직박스 운영</h1>

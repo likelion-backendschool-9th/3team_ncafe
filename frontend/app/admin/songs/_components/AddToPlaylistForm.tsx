@@ -9,7 +9,7 @@ import { YouTubePreview } from "./YouTubePreview";
 const initialState: PlaylistFormState = {};
 
 type AddToPlaylistFormProps = {
-  requestId: string;
+  requestId: number;
   songTitle: string;
   // 플레이리스트에서 뺐던 곡이면 붙어 있던 영상 ID로 미리보기를 바로 보여 준다.
   initialVideoId: string | null;
