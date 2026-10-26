@@ -32,7 +32,8 @@ public class ApiExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAuthenticationRequired(AuthenticationRequiredException exception) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ErrorResponse("UNAUTHENTICATED", exception.getMessage()));
-
+    }
+    
     @ExceptionHandler(SignupException.class)
     public ResponseEntity<ErrorResponse> handleSignupException(SignupException exception) {
         HttpStatus status = switch (exception.getReason()) {
