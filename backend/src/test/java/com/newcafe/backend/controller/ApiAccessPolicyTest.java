@@ -28,12 +28,19 @@ import com.newcafe.backend.controller.my.UsersController;
 import com.newcafe.backend.dto.auth.MemberResponse;
 import com.newcafe.backend.dto.auth.SignupRequest;
 import com.newcafe.backend.dto.auth.SignupResponse;
+import com.newcafe.backend.dto.menus.MenuCategoryResponse;
+import com.newcafe.backend.dto.menus.MenuPageResponse;
+import com.newcafe.backend.dto.menus.MenuResponse;
+import com.newcafe.backend.dto.menus.MenuSearchRequest;
 import com.newcafe.backend.entity.user.User;
 import com.newcafe.backend.entity.user.UserRole;
 import com.newcafe.backend.repository.UserRepository;
 import com.newcafe.backend.service.AuthService;
+import com.newcafe.backend.service.HomeService;
+import com.newcafe.backend.service.MenusService;
 import com.newcafe.backend.service.my.UsersService;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -57,7 +64,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-@WebMvcTest({AuthController.class, UsersController.class, ApiAccessPolicyTest.ProbeController.class})
+@WebMvcTest({AuthController.class, UsersController.class, MenusController.class, HomeController.class,
+        ApiAccessPolicyTest.ProbeController.class})
 @Import({SecurityConfig.class, PasswordConfig.class, Passwords.class, DatabaseUserDetailsService.class,
         LoginSuccessHandler.class, SecurityErrorHandler.class, SessionMemberService.class,
         SessionCookieLogoutHandler.class, ApiLogoutSuccessHandler.class, ApiAccessPolicyTest.ProbeController.class})
@@ -77,6 +85,12 @@ class ApiAccessPolicyTest {
 
     @MockitoBean
     private UsersService usersService;
+
+    @MockitoBean
+    private MenusService menusService;
+
+    @MockitoBean
+    private HomeService homeService;
 
     @BeforeEach
     void resetProbe() {
@@ -122,6 +136,35 @@ class ApiAccessPolicyTest {
         verify(usersService).getCurrent(42L);
     }
 
+    @Test
+    void anonymousVisitorsCanReadPublicMenusAndHomeRecommendations() throws Exception {
+        MenuResponse menu = new MenuResponse(5L, "americano", "아메리카노", "진한 커피",
+                "/images/menus/coffee.png", 4500, 10L, "커피", true, false, true, true, true, null, null);
+        when(menusService.list(any(MenuSearchRequest.class)))
+                .thenReturn(new MenuPageResponse(List.of(menu), 0, 20, 1, 1));
+        when(menusService.categories()).thenReturn(List.of(new MenuCategoryResponse(10L, "커피")));
+        when(menusService.get("americano")).thenReturn(menu);
+        when(homeService.recommendedMenus()).thenReturn(List.of(menu));
+
+        mockMvc.perform(get("/api/v1/menus"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].slug").value("americano"));
+        mockMvc.perform(get("/api/v1/menus/categories"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(10));
+        mockMvc.perform(get("/api/v1/menus/americano"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.slug").value("americano"));
+        mockMvc.perform(get("/api/v1/index/menus"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].slug").value("americano"));
+
+        verify(menusService).list(any(MenuSearchRequest.class));
+        verify(menusService).categories();
+        verify(menusService).get("americano");
+        verify(homeService).recommendedMenus();
+    }
+
     @ParameterizedTest
     @MethodSource("unsupportedRequests")
     void incorrectMethodsAndUndeclaredRoutesAreDeniedBeforeControllers(String method, String path) throws Exception {
@@ -132,7 +175,7 @@ class ApiAccessPolicyTest {
                         .with(user(principal(UserRole.CUSTOMER))))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("FORBIDDEN"));
-        verifyNoInteractions(authService, usersService);
+        verifyNoInteractions(authService, usersService, menusService, homeService);
     }
 
     static Stream<Arguments> unsupportedRequests() {
@@ -143,7 +186,10 @@ class ApiAccessPolicyTest {
                 Arguments.of("POST", "/api/v1/auth/csrf"),
                 Arguments.of("POST", "/api/v1/my"),
                 Arguments.of("PUT", "/api/v1/my"),
-                Arguments.of("GET", "/api/v1/menus"),
+                Arguments.of("POST", "/api/v1/menus"),
+                Arguments.of("POST", "/api/v1/menus/categories"),
+                Arguments.of("POST", "/api/v1/menus/americano"),
+                Arguments.of("POST", "/api/v1/index/menus"),
                 Arguments.of("GET", "/api/v1/guest/menus"));
     }
 

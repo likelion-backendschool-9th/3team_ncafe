@@ -410,7 +410,7 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 
 ### 8-2. 쌍별 작업
 
-2026-10-25 사용자의 명시적 요청에 따라 에이전트가 인증 단계 PR #71~#74를 순서대로 `feature/session-auth`에 통합했다. 이번 통합은 사람 머지 일반 규칙의 예외다. `develop`에는 미반영이며, 최종 [PR #61](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/61)은 열린 초안으로 유지한다.
+2026-10-25 사용자의 명시적 요청에 따라 에이전트가 인증 단계 PR #71~#74를 순서대로 `feature/session-auth`에 통합했다. 이번 통합은 사람 머지 일반 규칙의 예외다. 2026-10-26 최신 `develop`을 반영하고 공개 메뉴 GET 접근 정책을 수정했다. 최종 [PR #61](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/61)은 리뷰 대상으로 전환하며, `develop` 반영은 사람이 머지한다.
 
 | 쌍 | 규칙 갭 | 남은 기능 작업 | 선행 |
 | --- | --- | --- | --- |

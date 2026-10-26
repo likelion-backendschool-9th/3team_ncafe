@@ -226,4 +226,4 @@ CSRF 토큰을 받기 위한 익명 세션과 인증된 세션은 구별한다. 
 
 **0~6단계의 구현·검증과 `feature/session-auth` 통합을 완료했다.** 2026-10-25 사용자의 명시적 요청에 따라 이번 통합만 에이전트가 수행했다. [#71](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/71) → [#72](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/72) → [#73](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/73) → [#74](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/74) 순서로 후속 단계만 rebase하고 대상을 통합 브랜치로 변경해 squash 병합했다. 일반적인 사람 머지 규칙은 유지한다.
 
-`develop`에는 반영하지 않았으며, `feature/session-auth` → `develop` [#61](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/61)은 열린 초안으로 유지한다. 인증 외 업무 데이터의 프론트 API 연결과 운영 전환은 별도 작업이다.
+2026-10-26 최신 `develop`을 반영하고 공개 메뉴 GET 접근 정책을 수정했다. `feature/session-auth` → `develop` [#61](https://github.com/likelion-backendschool-9th/3team_ncafe/pull/61)은 리뷰 대상으로 전환하며, `develop` 반영은 사람이 머지한다. 인증 외 업무 데이터의 프론트 API 연결과 운영 전환은 해당 기능의 후속 작업이다.
