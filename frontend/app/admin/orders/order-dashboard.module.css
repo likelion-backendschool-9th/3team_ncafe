@@ -22,10 +22,10 @@
 .resultsHeader > div:first-child { display: flex; align-items: baseline; gap: 0.8rem; }
 .resultsHeader h2 { margin: 0; font-size: 1.45rem; }
 .resultsHeader span, .muted { color: var(--muted); font-size: 0.85rem; }
-.orderSection { --section-tone: #9a7a55; display: block; min-width: 0; overflow: hidden; border: 1px solid var(--border); border-left: 5px solid var(--section-tone); border-radius: 12px; background: #fbf3e4; }
+.orderSection { --section-tone: #795b3a; display: block; min-width: 0; overflow: hidden; border: 1px solid var(--border); border-left: 5px solid var(--section-tone); border-radius: 12px; background: #fbf3e4; }
 .activeSection { --section-tone: #a82b2d; }
 .completedSection { --section-tone: #207a72; }
-.canceledSection { --section-tone: #9a7a55; }
+.canceledSection { --section-tone: #795b3a; }
 .sectionHeading { margin: 0; font-size: inherit; }
 .sectionToggle { display: flex; width: 100%; min-height: 64px; align-items: center; gap: 0.75rem; padding: 0.6rem 1.1rem; border: 0; background: transparent; color: var(--text); cursor: pointer; font: inherit; text-align: left; }
 .sectionToggle:hover { background: #f0ddbf; }
@@ -38,7 +38,7 @@
 .sectionBody { min-width: 0; }
 .sectionEmpty { margin: 0; padding: 1.5rem; color: var(--muted); text-align: center; }
 .viewSwitch { display: inline-flex; padding: 3px; border: 1px solid var(--border); border-radius: 3px; background: #fff8ec; }
-.viewSwitch a { display: inline-flex; min-width: 70px; min-height: 36px; align-items: center; justify-content: center; padding: 0.3rem 0.65rem; border-radius: 2px; color: var(--text); font-size: 0.85rem; font-weight: 700; text-align: center; text-decoration: none; }
+.viewSwitch a { display: inline-flex; min-width: 70px; min-height: 44px; align-items: center; justify-content: center; padding: 0.3rem 0.65rem; border-radius: 2px; color: var(--text); font-size: 0.85rem; font-weight: 700; text-align: center; text-decoration: none; }
 .viewSwitch a[aria-current="page"] { background: var(--accent); color: white; }
 .tableWrap { max-width: 100%; overflow-x: auto; }
 .tableWrap:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
@@ -53,7 +53,7 @@
 .table th:first-child, .table td:first-child { width: 1%; padding-left: 1.1rem; text-align: left; }
 .table th:last-child, .table td:last-child { width: 1%; min-width: 220px; padding-right: 1.1rem; text-align: right; }
 /* 양 끝 칸은 제목과 내용을 같은 폭의 틀에 넣고 틀 안에서 가운데 정렬해 중심을 맞춘다. */
-.codeBox { display: inline-block; width: 6rem; text-align: center; }
+.codeBox { display: inline-block; min-width: 6rem; text-align: center; }
 .statusBox { display: inline-flex; width: 220px; justify-content: center; vertical-align: middle; }
 .code { font-family: ui-monospace, monospace; font-weight: 700; letter-spacing: 0.025em; }
 .code a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
@@ -88,7 +88,7 @@
 .receiptCancelReason { display: grid; gap: 0.2rem; margin: 0; padding: 0.6rem 0.75rem; border-left: 3px solid #b4a69a; background: #eee9e4; color: #4f4239; font-size: 0.85rem; line-height: 1.5; overflow-wrap: anywhere; }
 .receiptCancelReason span { color: #6b5c50; font-size: 0.75rem; font-weight: 800; }
 .pagination { display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1rem; border-top: 1px solid var(--border); }
-.pagination a { color: var(--accent); font-weight: 700; }
+.pagination a { display: inline-flex; min-height: 44px; align-items: center; color: var(--accent); font-weight: 700; }
 .pagination span { color: var(--muted); }
 @media (max-width: 900px) { .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } .receiptGrid { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .page { gap: 1.35rem; } .summary { gap: 0.55rem; } .summary > div { padding: 0.85rem; } .filters button { width: 100%; } .receiptGrid { padding: 0.65rem; } .receipt { padding: 1rem; } .sectionToggle { padding: 0.65rem 0.75rem; } .sectionDescription { display: none; } .resultsHeader { align-items: flex-start; } }

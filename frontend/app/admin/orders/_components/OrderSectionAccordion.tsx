@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import styles from "../order-dashboard.module.css";
 
 export function OrderSectionAccordion({
@@ -19,14 +19,16 @@ export function OrderSectionAccordion({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const id = useId();
 
   return (
-    <section className={`${styles.orderSection} ${styles[`${tone}Section`]}`}>
-      <h2 className={styles.sectionHeading}>
+    <section className={`${styles.orderSection} ${styles[`${tone}Section`]}`} aria-labelledby={`${id}-title`}>
+      <h2 id={`${id}-title`} className={styles.sectionHeading}>
         <button
           type="button"
           className={styles.sectionToggle}
           aria-expanded={open}
+          aria-controls={`${id}-body`}
           onClick={() => setOpen((previous) => !previous)}
         >
           <span className={styles.sectionChevron} aria-hidden="true">{open ? "−" : "+"}</span>
@@ -35,7 +37,7 @@ export function OrderSectionAccordion({
           <strong className={styles.sectionCount}>{count}건</strong>
         </button>
       </h2>
-      {open && <div className={styles.sectionBody}>{children}</div>}
+      <div id={`${id}-body`} className={styles.sectionBody} hidden={!open}>{children}</div>
     </section>
   );
 }

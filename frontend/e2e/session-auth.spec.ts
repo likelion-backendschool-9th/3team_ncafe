@@ -1,7 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
-import { execFileSync } from "node:child_process";
+import { sqlText, testDatabase } from "./fixtures/postgres";
 
 const password = "browser-password123!";
 const email = () => `browser-${randomUUID()}@example.com`;
@@ -30,7 +30,8 @@ test("signup auto-login, backend numeric identity, reload and logout share one H
   const member = await (await context.request.get("/api/v1/my")).json();
   expect(member.email).toBe(address);
   expect(typeof member.id).toBe("number");
-  await expect(page.getByText(`No. ${member.id}`, { exact: true })).toBeVisible();
+  // MemberCard intentionally shows public profile fields, while identity stays numeric in the API.
+  await expect(page.getByText(`No. ${member.id}`, { exact: true })).toHaveCount(0);
   const cookie = (await context.cookies()).find(cookie => cookie.name === "JSESSIONID");
   expect(cookie).toMatchObject({ httpOnly: true, sameSite: "Lax", path: "/" });
   expect((await context.cookies()).some(cookie => cookie.name === "ncafe_mock_session")).toBe(false);
@@ -135,12 +136,8 @@ test("administrator fixture uses real login and lands on admin while customer is
   await expect(page).toHaveURL(/\/forbidden$/);
   await page.goto("/my");
   await logout(page);
-  const container = process.env.E2E_PG_CONTAINER ?? "ncafe-auth-e2e-pg";
-  const args = ["exec", container, "psql", "-U", "ncafe_test", "-d", "ncafe_auth_e2e", "-Atc"];
-  // Mutate only the named, dedicated test database; public signup never accepts administrator privileges.
-  expect(execFileSync("docker", [...args, "select current_database() || ':' || current_user"], { encoding: "utf8" }).trim())
-    .toBe("ncafe_auth_e2e:ncafe_test");
-  execFileSync("docker", [...args, `update users set role = 'admin' where email = '${address}'`]);
+  // Public signup never accepts administrator privileges; the helper checks DB/user before writing.
+  testDatabase(`update users set role = 'admin' where email = ${sqlText(address)}`);
   await page.goto("/login");
   await page.getByLabel("이메일", { exact: true }).fill(address);
   await page.getByLabel("비밀번호", { exact: true }).fill(password);

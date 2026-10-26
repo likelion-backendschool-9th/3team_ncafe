@@ -2,6 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ApiRequestError, BackendSession, type BackendCookie } from "./app/_lib/api/backend-session";
 
 export async function proxy(request: NextRequest) {
+  // Order Actions authorize with a cookie-writing session guard before submitting input. Let Next's
+  // Action handler encode their redirects; an HTTP Proxy redirect breaks fetch Actions.
+  if (request.method === "POST" && (request.nextUrl.pathname === "/admin/orders"
+    || request.nextUrl.pathname.startsWith("/admin/orders/"))) {
+    const response = NextResponse.next();
+    response.headers.set("Cache-Control", "no-store");
+    return response;
+  }
   const pending: BackendCookie[] = [];
   const sessionId = request.cookies.get("JSESSIONID")?.value;
   const login = new URL("/login", request.url);
