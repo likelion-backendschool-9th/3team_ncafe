@@ -1,6 +1,7 @@
 package com.newcafe.backend.repository;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyChar;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -75,5 +76,27 @@ class MenuSpecificationsTest {
                 .toPredicate(root, mock(CriteriaQuery.class), builder);
 
         verify(builder, times(2)).like(any(), eq("%50\\%\\_off%"), eq('\\'));
+    }
+
+    @Test
+    void publicS1AlwaysExcludesArchivedMenus() {
+        MenuSpecifications.publicSearch(null, null, null)
+                .toPredicate(root, mock(CriteriaQuery.class), builder);
+
+        verify(builder).isNull(root.get("archivedAt"));
+        verify(builder, never()).like(any(), any(String.class), anyChar());
+        verify(builder, never()).equal(eq(categoryIdPath), any(Object.class));
+        verify(builder, never()).equal(eq(availablePath), any(Object.class));
+    }
+
+    @Test
+    void publicS2CombinesNameAndCategoryFilters() {
+        MenuSpecifications.publicSearch("라떼", 10L, null)
+                .toPredicate(root, mock(CriteriaQuery.class), builder);
+
+        verify(builder).isNull(root.get("archivedAt"));
+        verify(builder, times(2)).like(any(), eq("%라떼%"), eq('\\'));
+        verify(builder).equal(categoryIdPath, 10L);
+        verify(builder, never()).equal(eq(availablePath), any(Object.class));
     }
 }

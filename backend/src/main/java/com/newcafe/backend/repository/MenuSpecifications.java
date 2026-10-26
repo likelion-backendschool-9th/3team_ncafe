@@ -18,6 +18,14 @@ public final class MenuSpecifications {
     }
 
     public static Specification<Menu> adminSearch(String q, Long categoryId, Boolean available) {
+        return visibleMenus(q, categoryId, available);
+    }
+
+    public static Specification<Menu> publicSearch(String q, Long categoryId, Boolean available) {
+        return visibleMenus(q, categoryId, available);
+    }
+
+    private static Specification<Menu> visibleMenus(String q, Long categoryId, Boolean available) {
         return (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(builder.isNull(root.get("archivedAt")));
