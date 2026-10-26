@@ -16,7 +16,11 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import org.hibernate.annotations.Check;
+
 @Entity
+@Check(constraints = "quantity > 0 and unit_price >= 0 and line_total = quantity * unit_price "
+        + "and (temperature is null or temperature in ('hot','iced'))")
 @Table(name = "order_items")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -63,10 +67,24 @@ public class OrderItem {
     }
 
     public static OrderItem snapshot(Menu menu, String temperature, int quantity, int unitPrice, int lineTotal) {
+        if (menu == null || menu.isArchived() || !menu.isAvailable() || quantity < 1 || quantity > 20
+                || unitPrice < 0 || lineTotal != Math.multiplyExact(quantity, unitPrice)) {
+            throw new IllegalArgumentException("주문 품목 정보를 확인해 주세요.");
+        }
+        boolean validTemperature = temperature == null
+                ? !menu.isSupportsHot() && !menu.isSupportsIced()
+                : ("hot".equals(temperature) && menu.isSupportsHot())
+                    || ("iced".equals(temperature) && menu.isSupportsIced());
+        if (!validTemperature) {
+            throw new IllegalArgumentException("메뉴 온도 옵션을 확인해 주세요.");
+        }
         return new OrderItem(menu, temperature, quantity, unitPrice, lineTotal);
     }
 
     void attachTo(Order order) {
+        if (this.order != null) {
+            throw new IllegalArgumentException("이미 주문에 포함된 품목입니다.");
+        }
         this.order = order;
     }
 }

@@ -65,7 +65,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | `/admin/users`, `/admin/users/[id]` | `admin/UsersController` | `GET /admin/users`, `GET`·`PUT /admin/users/{id}` | 2.1~2.3 | 공유 |
 | `/admin/categories` | **`admin/CategoriesController`** | `GET`·`POST /admin/categories`, `PUT`·`DELETE /admin/categories/{id}`, `PUT /admin/categories/order` | 13.x | |
 | `/admin/menus`, `/new`, `/[id]`, `/[id]/edit` | **`admin/MenusController`** | `GET /admin/menus`(`q`,`categoryId`,`status`,`sort`,`page`,`size`), `POST`, `GET`·`PUT`·`DELETE /admin/menus/{id}` | 3.1~3.5 | 공유(4개 화면) |
-| `/admin/orders`, `/admin/orders/[id]` | `admin/OrdersController` | `GET /admin/orders`, `GET /admin/orders/{id}`, `PUT /admin/orders/status`, 취소(계약 미정) | 5.x/12.x | 공유 |
+| `/admin/orders`, `/admin/orders/[id]` | **`admin/OrdersController`** | `GET /admin/orders`(`q`,`status`,`group`,`sort`,`page`,`size`), `GET /admin/orders/{id}`, `PUT /admin/orders/status`(접수 취소 포함) | 5.x/12.x | 공유 |
 | `/admin/songs` | `admin/SongsController` | 선곡 API 8종(백엔드 청사진 `admin/SongsController` 행) | 10.x | |
 | `/forbidden` | 없음 | — | — | 예외(프론트 전용) |
 
@@ -371,7 +371,7 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | 사이트 도메인, OG 이미지, 백엔드 주소 환경변수 이름 | 팀 |
 | 메뉴 `nameEn` 유지, 카테고리 단일·복수 (공개 메뉴 필터는 `categoryId`로 정함) | 백엔드 협의 |
 | `/checkout` 주문 대상 조회, `/my/songs` 현재 곡, 관리자 메뉴 카테고리 목록의 컨트롤러 | 백엔드 협의 |
-| 관리자 주문 취소 API 계약, 고객 취소 화면 유지 여부(Q2) | 백엔드·팀 |
+| 고객 취소 화면 유지 여부(Q2). 관리자 취소는 `PUT /admin/orders/status`의 `nextStatus=canceled`로 확정(2026-10-26) | 백엔드·팀 |
 | `/api/music-box/version` 대체(`revision`·`serverNow`) | 백엔드 협의 |
 | GLOSSARY에 없는 용어: 고객·회원·방문자, 인덱스, 주문·뮤직박스 상태 라벨 | GLOSSARY 관리자 |
 
@@ -427,7 +427,7 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | `/cart` ↔ my/CartItems | 화면 전체가 클라이언트, "주문하기"가 `router.push`(`CartView.tsx:22`), Context+localStorage | 서버 장바구니, 체크는 로컬 상태, `iced` | 담기, Auth |
 | `/checkout` ↔ my/Orders | 화면 전체가 클라이언트, `cart` CSS import, "주문 / 결제"·"결제하기" 용어 | `POST /orders`(`cartItemIds`·수령 방식·결제수단·요청사항) | `/cart`, 조회 방식 결정 |
 | `/my/orders*` ↔ my/Orders | metadata 없음 | API 연결, 고객 취소 결정 | `/checkout` |
-| `/admin/orders*` ↔ admin/Orders | metadata 없음, page 226줄, 상태 select가 `aria-label`만 | API 연결, `status_version`, 취소를 `received`만으로 | `/checkout`, 취소 계약 |
+| `/admin/orders*` ↔ **admin/Orders** | metadata 없음, page 226줄, 상태 select가 `aria-label`만 | 백엔드 API 구현(2026-10-26). 인증·API 연결, 숫자 ID·`temperature`·`statusVersion`·`allowedStatuses`, 취소 사유 제거·`received`만 취소. [계약](admin/orders/2026-10-26-backend-order-management.md) | Auth, `/checkout`, 회원 FK 통합 |
 | `/musicbox` ↔ Songs | metadata·canonical 없음, `<main>`이 page에 있음, 공유 컴포넌트가 이 폴더에 있음 | 공개 API, 신청 API, 변경 감지 방식 | Auth, 백엔드 Songs |
 | `/my/songs` ↔ my/Songs | metadata 없음, `musicbox` 컴포넌트 6건 import | 조회·삭제 API, 현재 곡 결정 | `/musicbox` |
 | `/admin/songs` ↔ admin/Songs | metadata 없음, page 203줄, `musicbox` 컴포넌트 3건 import | 선곡 API 8종 | `/musicbox` |
