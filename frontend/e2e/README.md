@@ -42,14 +42,14 @@ npm run test:e2e
 
 완료 후 직접 실행한 서버들을 종료하고 `docker stop ncafe-auth-e2e-pg`로 전용 DB를 제거한다. 일반 프론트 실행은 중계 서버 없이 실제 백엔드의 `API_ORIGIN`을 사용한다.
 
-## 관리자 카테고리 E2E
+## 관리자 카테고리·메뉴 E2E
 
-`admin-categories.spec.ts`는 위와 같은 전용 DB·백엔드를 쓰고, 중계 서버 없이 실행할 수 있다. 관리자 계정은 `fixtures/admin.ts`가 가입 → 전용 DB에서만 역할 변경 → 로그인으로 만든다. 카테고리 이름에 실행마다 다른 접미사를 붙이므로 같은 DB에서 반복 실행해도 된다.
+`admin-categories.spec.ts`와 `admin-menus.spec.ts`는 위와 같은 전용 DB·백엔드를 쓰고, 중계 서버 없이 실행할 수 있다. 관리자 계정은 `fixtures/admin.ts`가 가입 → 전용 DB에서만 역할 변경 → 로그인으로 만든다. 카테고리 이름에 실행마다 다른 접미사를 붙이므로 같은 DB에서 반복 실행해도 된다.
 
 ```sh
 cd frontend
 API_ORIGIN=http://localhost:18080 npm run dev -- --hostname localhost --port 13000
-npm run test:e2e -- admin-categories
+npm run test:e2e -- admin-categories admin-menus
 ```
 
 백엔드가 꺼진 화면(C4)은 브라우저에서 직접 확인한다.

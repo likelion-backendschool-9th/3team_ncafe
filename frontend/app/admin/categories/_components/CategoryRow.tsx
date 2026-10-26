@@ -2,7 +2,7 @@
 
 import { useActionState, useRef, useState, type KeyboardEvent } from "react";
 import { renameCategory, type CategoryFormState } from "../_actions";
-import type { CategoryResponse } from "../_lib/category";
+import type { CategoryResponse } from "@/app/admin/_lib/categories/category";
 import { DeleteCategoryDialog } from "./DeleteCategoryDialog";
 import styles from "../categories.module.css";
 

@@ -1,6 +1,6 @@
 import { useState, useTransition } from "react";
 import { reorderCategories } from "../_actions";
-import type { CategoryResponse } from "../_lib/category";
+import type { CategoryResponse } from "@/app/admin/_lib/categories/category";
 
 // 기타 카테고리는 항상 맨 아래에 둔다. 백엔드도 기타가 마지막이 아닌 순서는 거절한다.
 function withFallbackLast(categories: CategoryResponse[]) {

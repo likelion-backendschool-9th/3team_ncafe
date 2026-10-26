@@ -3,104 +3,92 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import type { MenuFormState } from "../_actions";
+import { MENU_DESCRIPTION_MAX_LENGTH, MENU_IMAGE_URL_MAX_LENGTH, MENU_NAME_MAX_LENGTH, MENU_PRICE_MAX, MENU_PRICE_MIN, MENU_SLUG_MAX_LENGTH } from "../_lib/menu";
 import styles from "../menus.module.css";
 
 type MenuAction = (state: MenuFormState, data: FormData) => Promise<MenuFormState>;
+type CategoryOption = { id: number; name: string };
 
-export function MenuForm({ action, initialState, cancelHref, submitLabel, categoryOptions, singleCategory = false }: {
+// 오류가 있으면 입력란과 오류 문구를 연결한다.
+function describedBy(error: string | undefined, id: string, hint?: string) {
+  return [error ? `${id}-error` : "", hint ?? ""].filter(Boolean).join(" ") || undefined;
+}
+
+export function MenuForm({ action, initialState, cancelHref, submitLabel, categoryOptions, slugReadOnly = false }: {
   action: MenuAction;
   initialState: MenuFormState;
   cancelHref: string;
   submitLabel: string;
-  categoryOptions: string[];
-  singleCategory?: boolean;
+  categoryOptions: CategoryOption[];
+  slugReadOnly?: boolean;
 }) {
-  const [state, formAction, pending] = useActionState(action, initialState);
-  const selectedCategories = state.values.categories ? state.values.categories.split(",") : [];
-  const legacyCategories = selectedCategories.filter((category) => !categoryOptions.includes(category));
-  const allCategoryOptions = [...categoryOptions, ...legacyCategories];
+  // 액션 뒤 React가 폼을 리셋하면 select는 처음 마운트한 값으로 돌아간다.
+  // 결과마다 입력 영역을 다시 마운트해 서버가 돌려준 값을 기본값으로 다시 잡는다.
+  const [state, formAction, pending] = useActionState(
+    async (previous: MenuFormState & { attempt: number }, data: FormData) => ({ ...(await action(previous, data)), attempt: previous.attempt + 1 }),
+    { ...initialState, attempt: 0 },
+  );
+  const { values, errors } = state;
 
   return (
     <form action={formAction} className={styles.menuForm}>
       {state.message && <p className="form-error" role="alert">{state.message}</p>}
-      <div className={styles.formFields}>
+      <div key={state.attempt} className={styles.formFields}>
         <div className={styles.formField}>
-          <label htmlFor="name">메뉴명 (한글)</label>
-          <input id="name" name="name" type="text" maxLength={80} required defaultValue={state.values.name} aria-invalid={!!state.errors.name} aria-describedby={state.errors.name ? "name-error" : undefined} />
-          {state.errors.name && <span id="name-error" className={styles.fieldError}>{state.errors.name}</span>}
+          <label htmlFor="slug">slug</label>
+          <input id="slug" name="slug" type="text" maxLength={MENU_SLUG_MAX_LENGTH} required={!slugReadOnly} readOnly={slugReadOnly} defaultValue={values.slug} placeholder="americano" aria-invalid={!!errors.slug} aria-describedby={describedBy(errors.slug, "slug", "slug-hint")} />
+          <span id="slug-hint" className={styles.fieldHint}>{slugReadOnly ? "slug는 등록 후 바꿀 수 없습니다." : "메뉴 주소에 쓰입니다. 소문자·숫자·하이픈만 사용할 수 있습니다."}</span>
+          {errors.slug && <span id="slug-error" className={styles.fieldError}>{errors.slug}</span>}
         </div>
         <div className={styles.formField}>
-          <label htmlFor="nameEn">메뉴명 (영어)</label>
-          <input id="nameEn" name="nameEn" type="text" maxLength={80} required defaultValue={state.values.nameEn} aria-invalid={!!state.errors.nameEn} aria-describedby={state.errors.nameEn ? "nameEn-error" : undefined} />
-          {state.errors.nameEn && <span id="nameEn-error" className={styles.fieldError}>{state.errors.nameEn}</span>}
+          <label htmlFor="name">메뉴명</label>
+          <input id="name" name="name" type="text" maxLength={MENU_NAME_MAX_LENGTH} required defaultValue={values.name} aria-invalid={!!errors.name} aria-describedby={describedBy(errors.name, "name")} />
+          {errors.name && <span id="name-error" className={styles.fieldError}>{errors.name}</span>}
         </div>
         <div className={styles.formField}>
           <label htmlFor="imageUrl">이미지 주소</label>
-          <input id="imageUrl" name="imageUrl" type="text" inputMode="url" maxLength={2048} defaultValue={state.values.imageUrl} placeholder="https://... 또는 /images/menus/..." aria-invalid={!!state.errors.imageUrl} aria-describedby={state.errors.imageUrl ? "imageUrl-error imageUrl-hint" : "imageUrl-hint"} />
+          <input id="imageUrl" name="imageUrl" type="text" inputMode="url" maxLength={MENU_IMAGE_URL_MAX_LENGTH} defaultValue={values.imageUrl} placeholder="https://... 또는 /images/menus/..." aria-invalid={!!errors.imageUrl} aria-describedby={describedBy(errors.imageUrl, "imageUrl", "imageUrl-hint")} />
           <span id="imageUrl-hint" className={styles.fieldHint}>비워두면 기본 이미지가 표시됩니다.</span>
+          {errors.imageUrl && <span id="imageUrl-error" className={styles.fieldError}>{errors.imageUrl}</span>}
         </div>
         <div className={styles.formField}>
-          <label htmlFor="imageFile">이미지 파일 업로드 (선택)</label>
-          <input id="imageFile" name="imageFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" aria-invalid={!!state.errors.imageUrl} aria-describedby={state.errors.imageUrl ? "imageUrl-error imageFile-hint" : "imageFile-hint"} />
-          <span id="imageFile-hint" className={styles.fieldHint}>파일을 선택하면 위 이미지 주소 대신 이 파일이 사용됩니다. (PNG/JPEG/WEBP/SVG, 최대 2MB)</span>
-          {state.errors.imageUrl && <span id="imageUrl-error" className={styles.fieldError}>{state.errors.imageUrl}</span>}
-        </div>
-        <div className={styles.formField}>
-          <label htmlFor="categories">카테고리</label>
-          <select
-            id="categories"
-            name="categories"
-            multiple={!singleCategory}
-            required
-            size={singleCategory ? undefined : Math.min(6, Math.max(3, allCategoryOptions.length))}
-            defaultValue={singleCategory ? (selectedCategories[0] ?? "") : selectedCategories}
-            aria-invalid={!!state.errors.categories}
-            aria-describedby={state.errors.categories ? "categories-error categories-hint" : "categories-hint"}
-          >
-            {allCategoryOptions.map((category) => (
-              <option key={category} value={category}>
-                {category}{legacyCategories.includes(category) ? " (기존 분류)" : ""}
-              </option>
-            ))}
+          <label htmlFor="categoryId">카테고리</label>
+          <select id="categoryId" name="categoryId" required defaultValue={values.categoryId} aria-invalid={!!errors.categoryId} aria-describedby={describedBy(errors.categoryId, "categoryId", "categoryId-hint")}>
+            <option value="" disabled>카테고리 선택</option>
+            {categoryOptions.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
           </select>
-          <span id="categories-hint" className={styles.fieldHint}>
-            {allCategoryOptions.length === 0
-              ? "등록된 카테고리가 없습니다. 카테고리 관리에서 먼저 추가해 주세요."
-              : singleCategory
-                ? "카테고리 하나를 선택해 주세요."
-                : "Ctrl(또는 Cmd) 키를 누른 채 클릭하면 여러 카테고리를 선택할 수 있습니다."}
-          </span>
-          {state.errors.categories && <span id="categories-error" className={styles.fieldError}>{state.errors.categories}</span>}
+          <span id="categoryId-hint" className={styles.fieldHint}>카테고리 관리에서 추가·삭제할 수 있습니다.</span>
+          {errors.categoryId && <span id="categoryId-error" className={styles.fieldError}>{errors.categoryId}</span>}
         </div>
         <div className={styles.formField}>
           <label htmlFor="description">설명</label>
-          <textarea id="description" name="description" maxLength={500} required rows={4} defaultValue={state.values.description} aria-invalid={!!state.errors.description} aria-describedby={state.errors.description ? "description-error" : undefined} />
-          {state.errors.description && <span id="description-error" className={styles.fieldError}>{state.errors.description}</span>}
+          <textarea id="description" name="description" maxLength={MENU_DESCRIPTION_MAX_LENGTH} required rows={4} defaultValue={values.description} aria-invalid={!!errors.description} aria-describedby={describedBy(errors.description, "description")} />
+          {errors.description && <span id="description-error" className={styles.fieldError}>{errors.description}</span>}
         </div>
         <div className={styles.formField}>
           <label htmlFor="price">가격 (원)</label>
-          <input id="price" name="price" type="number" min={1} step={1} required defaultValue={state.values.price} aria-invalid={!!state.errors.price} aria-describedby={state.errors.price ? "price-error" : undefined} />
-          {state.errors.price && <span id="price-error" className={styles.fieldError}>{state.errors.price}</span>}
+          <input id="price" name="price" type="number" min={MENU_PRICE_MIN} max={MENU_PRICE_MAX} step={1} required defaultValue={values.price} aria-invalid={!!errors.price} aria-describedby={describedBy(errors.price, "price")} />
+          {errors.price && <span id="price-error" className={styles.fieldError}>{errors.price}</span>}
         </div>
         <div className={styles.formField}>
           <label htmlFor="available">판매 상태</label>
-          <select id="available" name="available" defaultValue={state.values.available} aria-invalid={!!state.errors.available} aria-describedby={state.errors.available ? "available-error" : undefined}>
+          <select id="available" name="available" defaultValue={values.available} aria-invalid={!!errors.available} aria-describedby={describedBy(errors.available, "available")}>
             <option value="true">판매 중</option>
             <option value="false">판매 중지</option>
           </select>
-          {state.errors.available && <span id="available-error" className={styles.fieldError}>{state.errors.available}</span>}
+          {errors.available && <span id="available-error" className={styles.fieldError}>{errors.available}</span>}
         </div>
         <div className={styles.formField}>
           <span id="temperature-label">온도</span>
-          <div className={styles.checkboxFields} role="group" aria-labelledby="temperature-label" aria-describedby={state.errors.tempHot ? "temperature-error" : undefined}>
-            <label><input name="tempHot" type="checkbox" defaultChecked={state.values.tempHot === "true"} /> 핫</label>
-            <label><input name="tempIce" type="checkbox" defaultChecked={state.values.tempIce === "true"} /> 아이스</label>
+          <div className={styles.checkboxFields} role="group" aria-labelledby="temperature-label" aria-describedby="temperature-hint">
+            <label><input name="supportsHot" type="checkbox" defaultChecked={values.supportsHot === "true"} /> 핫</label>
+            <label><input name="supportsIced" type="checkbox" defaultChecked={values.supportsIced === "true"} /> 아이스</label>
           </div>
-          {state.errors.tempHot && <span id="temperature-error" className={styles.fieldError}>{state.errors.tempHot}</span>}
+          <span id="temperature-hint" className={styles.fieldHint}>둘 다 끄면 온도 구분 없는 메뉴입니다.</span>
         </div>
         <div className={styles.checkboxFields}>
-          <label><input name="isNew" type="checkbox" defaultChecked={state.values.isNew === "true"} /> 첫 개시</label>
-          <label><input name="recommended" type="checkbox" defaultChecked={state.values.recommended === "true"} /> 추천 메뉴</label>
+          <label><input name="isNew" type="checkbox" defaultChecked={values.isNew === "true"} /> 첫 개시</label>
+          <label><input name="recommended" type="checkbox" defaultChecked={values.recommended === "true"} /> 추천 메뉴</label>
         </div>
       </div>
       <div className={styles.formActions}>

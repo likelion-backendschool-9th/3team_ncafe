@@ -1,50 +1,27 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState } from "@/app/_components/ui/EmptyState";
-import { mockCategoryRepository } from "@/app/_lib/mock/categories";
-import { mockMenuRepository } from "@/app/_lib/mock/menus";
 import { requireRole } from "@/app/_lib/session/session";
+import { getCategories } from "@/app/admin/_lib/categories/api";
 import { MenuFilterSelect } from "./_components/MenuFilterSelect";
+import { MenuPagination } from "./_components/MenuPagination";
 import { MenuTable } from "./_components/MenuTable";
+import { getMenus } from "./_lib/api";
+import { MENU_SORTS, sortLabels, statusLabels } from "./_lib/menu";
+import { parseMenuId, parseMenuSearchParams, type MenuSearchParams } from "./_lib/searchParams";
 import styles from "./menus.module.css";
 
-type MenuSearchParams = Promise<{
-  q?: string | string[];
-  category?: string | string[];
-  status?: string | string[];
-  sort?: string | string[];
-  created?: string | string[];
-  deleted?: string | string[];
-  missing?: string | string[];
-}>;
+export const metadata: Metadata = { title: "메뉴 관리 | 삼다방" };
 
-function single(value: string | string[] | undefined): string {
-  return typeof value === "string" ? value : "";
-}
+const single = (value: MenuSearchParams[string]) => (typeof value === "string" ? value : "");
 
-export default async function AdminMenusPage({ searchParams }: { searchParams: MenuSearchParams }) {
+export default async function AdminMenusPage({ searchParams }: { searchParams: Promise<MenuSearchParams> }) {
   await requireRole("admin", "/admin/menus");
-  const { q, category, status, sort, created, deleted, missing } = await searchParams;
-  const query = single(q).trim().slice(0, 100);
-  const allMenus = await mockMenuRepository.list();
-  const categories = (await mockCategoryRepository.list()).map((item) => item.name).sort((a, b) => a.localeCompare(b, "ko"));
-  const selectedCategory = categories.includes(single(category)) ? single(category) : "";
-  const selectedStatus = ["available", "unavailable"].includes(single(status)) ? single(status) : "";
-  const selectedSort = ["newest", "oldest", "name", "price-low", "price-high"].includes(single(sort)) ? single(sort) : "newest";
-  const needle = query.toLocaleLowerCase("ko");
-  const visibleMenus = allMenus
-    .filter((menu) => {
-      const matchesQuery = !query || menu.name.toLocaleLowerCase("ko").includes(needle) || menu.nameEn.toLocaleLowerCase("en").includes(needle);
-      const matchesStatus = !selectedStatus || menu.available === (selectedStatus === "available");
-      return matchesQuery && (!selectedCategory || menu.categories.includes(selectedCategory)) && matchesStatus;
-    })
-    .sort((a, b) => {
-      if (selectedSort === "oldest") return a.createdAt.localeCompare(b.createdAt);
-      if (selectedSort === "name") return a.name.localeCompare(b.name, "ko");
-      if (selectedSort === "price-low") return a.price - b.price;
-      if (selectedSort === "price-high") return b.price - a.price;
-      return b.createdAt.localeCompare(a.createdAt);
-    });
-  const createdId = single(created);
+  const raw = await searchParams;
+  const query = parseMenuSearchParams(raw);
+  const [result, categories] = await Promise.all([getMenus(query), getCategories()]);
+  const filtered = query.q !== "" || query.categoryId !== null || query.status !== "" || query.page > 1;
+  const createdId = parseMenuId(single(raw.created));
 
   return (
     <div className={styles.page}>
@@ -61,30 +38,30 @@ export default async function AdminMenusPage({ searchParams }: { searchParams: M
         <Link className="button" href="/admin/menus/new">메뉴 등록</Link>
       </div>
 
-      {createdId && allMenus.some((menu) => menu.id === createdId) && (
+      {createdId && (
         <p className={styles.notice} role="status">메뉴가 등록되었습니다. <Link href={`/admin/menus/${createdId}`}>상세 보기</Link></p>
       )}
-      {single(deleted) === "1" && <p className={styles.notice} role="status">메뉴를 삭제했습니다.</p>}
-      {single(missing) === "1" && <p className={styles.notice} role="status">이미 삭제되었거나 존재하지 않는 메뉴입니다.</p>}
+      {single(raw.deleted) === "1" && <p className={styles.notice} role="status">메뉴를 삭제했습니다.</p>}
+      {single(raw.missing) === "1" && <p className={styles.notice} role="status">이미 삭제되었거나 존재하지 않는 메뉴입니다.</p>}
 
       <section className={styles.section} aria-labelledby="menu-filter-title">
         <div className={styles.sectionHeading}><h2 id="menu-filter-title">메뉴 찾기</h2></div>
         <form className={styles.filters} method="get" role="search">
           <div className={styles.searchField}>
             <label htmlFor="menu-query">메뉴명</label>
-            <input id="menu-query" name="q" type="search" defaultValue={query} placeholder="한글 또는 영어 메뉴명" />
+            <input id="menu-query" name="q" type="search" defaultValue={query.q} placeholder="메뉴명 또는 slug" />
           </div>
           <div className={styles.filterField}>
             <label htmlFor="menu-category">카테고리</label>
-            <MenuFilterSelect key={`category-${selectedCategory}`} id="menu-category" name="category" defaultValue={selectedCategory} options={[{ value: "", label: "전체" }, ...categories.map((item) => ({ value: item, label: item }))]} />
+            <MenuFilterSelect key={`category-${query.categoryId}`} id="menu-category" name="categoryId" defaultValue={query.categoryId === null ? "" : String(query.categoryId)} options={[{ value: "", label: "전체" }, ...categories.map((item) => ({ value: String(item.id), label: item.name }))]} />
           </div>
           <div className={styles.filterField}>
             <label htmlFor="menu-status">상태</label>
-            <MenuFilterSelect key={`status-${selectedStatus}`} id="menu-status" name="status" defaultValue={selectedStatus} options={[{ value: "", label: "전체" }, { value: "available", label: "판매 중" }, { value: "unavailable", label: "판매 중지" }]} />
+            <MenuFilterSelect key={`status-${query.status}`} id="menu-status" name="status" defaultValue={query.status} options={[{ value: "", label: "전체" }, ...Object.entries(statusLabels).map(([value, label]) => ({ value, label }))]} />
           </div>
           <div className={styles.filterField}>
             <label htmlFor="menu-sort">정렬</label>
-            <MenuFilterSelect key={`sort-${selectedSort}`} id="menu-sort" name="sort" defaultValue={selectedSort} options={[{ value: "newest", label: "최신순" }, { value: "oldest", label: "오래된순" }, { value: "name", label: "메뉴명순" }, { value: "price-low", label: "가격 낮은순" }, { value: "price-high", label: "가격 높은순" }]} />
+            <MenuFilterSelect key={`sort-${query.sort}`} id="menu-sort" name="sort" defaultValue={query.sort} options={MENU_SORTS.map((value) => ({ value, label: sortLabels[value] }))} />
           </div>
           <button className="button" type="submit">검색</button>
         </form>
@@ -93,15 +70,19 @@ export default async function AdminMenusPage({ searchParams }: { searchParams: M
       <section className={styles.section} aria-labelledby="menu-results-title">
         <div className={styles.sectionHeading}>
           <h2 id="menu-results-title">등록된 메뉴</h2>
-          <span className={styles.count}>{visibleMenus.length}개</span>
+          <span className={styles.count}>{result.totalElements}개</span>
         </div>
         <div className={styles.results}>
-          <MenuTable menus={visibleMenus} createdId={createdId} />
-          {visibleMenus.length === 0 && (
+          {result.items.length > 0 ? (
+            <>
+              <MenuTable menus={result.items} createdId={createdId ?? undefined} />
+              <MenuPagination query={query} page={result.page} totalPages={result.totalPages} />
+            </>
+          ) : (
             <EmptyState
-              title={allMenus.length === 0 ? "등록된 메뉴가 없습니다" : "조건에 맞는 메뉴가 없습니다"}
-              description={allMenus.length === 0 ? "메뉴 등록 버튼에서 새 메뉴를 추가해 주세요." : "검색어와 필터 조건을 바꿔 다시 검색해 주세요."}
-              action={allMenus.length > 0 ? <Link className="button" href="/admin/menus">전체 메뉴 보기</Link> : <Link className="button" href="/admin/menus/new">메뉴 등록</Link>}
+              title={filtered ? "조건에 맞는 메뉴가 없습니다" : "등록된 메뉴가 없습니다"}
+              description={filtered ? "검색어와 필터 조건을 바꿔 다시 검색해 주세요." : "메뉴 등록 버튼에서 새 메뉴를 추가해 주세요."}
+              action={filtered ? <Link className="button" href="/admin/menus">전체 메뉴 보기</Link> : <Link className="button" href="/admin/menus/new">메뉴 등록</Link>}
             />
           )}
         </div>

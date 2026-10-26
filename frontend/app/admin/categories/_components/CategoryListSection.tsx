@@ -1,5 +1,5 @@
 import { EmptyState } from "@/app/_components/ui/EmptyState";
-import type { CategoryResponse } from "../_lib/category";
+import type { CategoryResponse } from "@/app/admin/_lib/categories/category";
 import { CategoryList } from "./CategoryList";
 import styles from "../categories.module.css";
 

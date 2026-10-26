@@ -2,7 +2,7 @@
 
 import type { DragEvent } from "react";
 import { useCategoryOrder } from "../_hooks/useCategoryOrder";
-import type { CategoryResponse } from "../_lib/category";
+import type { CategoryResponse } from "@/app/admin/_lib/categories/category";
 import { CategoryRow } from "./CategoryRow";
 import styles from "../categories.module.css";
 

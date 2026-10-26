@@ -155,6 +155,8 @@ S21 이미 삭제됨
 
 ### PR 2 — 메뉴 (`feature/admin-menu-frontend`, PR 1 머지 후 `develop`에서 분기)
 
+상세: [관리자 메뉴 화면 계획](./2026-10-27-frontend-admin-menus.md) (10-27 작성)
+
 4. 메뉴 목록 — S1, S2, S8~S11
    - 파일: `app/admin/menus/_lib/api.ts`(조회, 요청 시 `page - 1`·응답 시 `page + 1` — `admin/users/_lib/api.ts`와 같은 방식), `page.tsx`, `error.tsx`, `_components/MenuTable.tsx`, 페이지 이동 링크
 5. 등록·수정 폼 — S12~S16, S18

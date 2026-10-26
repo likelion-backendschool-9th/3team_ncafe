@@ -124,7 +124,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | `/admin/users` | `q`, `status`, `role`, `sort`=`name`\|`email`, `page`. GET 폼 | `UserFilters`(`key={query}`), `UserStatusForm` | 회원 관리 |
 | `/admin/users/[id]` | params `id`, 목록 쿼리 유지 | `UserStatusForm` | 회원 상세 |
 | `/admin/categories` | 없음 | `CategoryList`, `CategoryRow`, `CreateCategoryForm`, `DeleteCategoryDialog` | 카테고리 관리 |
-| `/admin/menus` | `q`, `category`→`categoryId`로 변경 예정, `status`, `sort`=`newest`\|`oldest`\|`name`\|`price-low`\|`price-high`, flash `created`·`deleted`·`missing`. `page` 추가 예정 | `MenuFilterSelect`, `DeleteMenuButton` | 메뉴 관리 |
+| `/admin/menus` | `q`(메뉴명·slug), `categoryId`, `status`, `sort`=`newest`\|`oldest`\|`name`\|`price-low`\|`price-high`, `page`(1부터, 20개), flash `created`·`deleted`·`missing` | `MenuFilterSelect`, `MenuPagination`, `DeleteMenuButton` | 메뉴 관리 |
 | `/admin/menus/new`, `/[id]/edit` | params `id`(수정) | `MenuForm` | 메뉴 등록 · 메뉴 수정 |
 | `/admin/menus/[id]` | params `id`, flash `updated`·`deleteError` | `DeleteMenuButton` | 메뉴명 |
 | `/admin/orders` | `q`, `status`, `sort`=`newest`\|`oldest`, `view`=`list`\|`grid`, `activePage`·`completedPage`·`canceledPage`, flash | `OrderSectionAccordion`, `StatusChangeForm` | 주문 관리 |
@@ -406,7 +406,6 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | `MenuCard`를 `(public)`만 쓰는데 `app/_components`에 있음 | `app/_components/MenuCard.tsx` |
 | 다른 라우트의 `_components`를 import(10건) | `(public)/page.tsx`→`musicbox`, `my/songs`→`musicbox` 6건, `admin/songs`→`musicbox` 3건 |
 | 장바구니 Context가 루트 layout 전체를 감쌈 | `app/layout.tsx`, `_lib/cart/CartContext.tsx` |
-| "기본 카테고리" 문구 | `admin/categories/_components/CategoryRow.tsx:31` |
 
 ### 8-2. 쌍별 작업
 
@@ -419,8 +418,8 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | `/profile/update` ↔ my/Users | — | 화면 신규 | `/my` |
 | `/admin/users*` ↔ admin/Users | title 직접 표기 | API 연결 | Auth |
 | `/admin/users/new` ↔ admin/Users | — | 화면 신규 | `/admin/users` |
-| `/admin/categories` ↔ **admin/Categories** | metadata 없음, "기본 카테고리" 문구 | **바로 연결 가능.** Long id, `PUT /order`, `isFallback`·`displayOrder`·`menuCount` | Auth(임시 선연결 가능) |
-| `/admin/menus*` ↔ **admin/Menus** | metadata 없음, URL `category`≠`categoryId`, 페이지 이동 없음 | **바로 연결 가능.** `categoryId`·`page`, `slug` 입력, 단일 카테고리, `supportsHot`/`Iced`, 이미지 업로드 계약 결정 | `/admin/categories`, `nameEn` 결정 |
+| `/admin/categories` ↔ **admin/Categories** | metadata·"기타 카테고리" 문구 완료 | API 연결 완료(#86·#87, 기타 맨 밑 고정). 백엔드 꺼짐 화면은 `proxy.ts` 공통 작업으로 남음 | — |
+| `/admin/menus*` ↔ **admin/Menus** | 목록·등록 metadata, `categoryId`·`page` 완료. 상세·수정 `generateMetadata` 없음 | API 연결 완료([계획](admin/menus/2026-10-27-frontend-admin-menus.md)). 이미지 파일 업로드는 저장소 결정 후 | — |
 | `/menus` ↔ Menus | metadata·canonical 없음, `<main>`이 page에 있음 | 공개 메뉴 API | 백엔드 공개 Menus |
 | `/menus/[slug]` ↔ Menus | `generateMetadata` 없음, 대화상자 이동이 `router.push`(`OrderPanel.tsx:195,203`) | slug 조회, 담기 API | `/menus`, `/cart` API |
 | `/` ↔ Home | `<main>`이 page에 있음, `musicbox` 컴포넌트 import | index API | 공개 Menus·Songs |

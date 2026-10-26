@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
-import { adminApi, loginAsAdmin, signupCustomer } from "./fixtures/admin";
+import { adminApi, createMenu, loginAsAdmin, signupCustomer } from "./fixtures/admin";
 
 // 전용 DB를 여러 번 돌려도 이름이 겹치지 않게 실행마다 접미사를 붙인다.
 const unique = (name: string) => `${name}-${randomUUID().slice(0, 8)}`;
@@ -11,12 +11,7 @@ type Category = { id: number; name: string };
 const createCategory = (page: Page, name: string) => adminApi<Category>(page, "POST", "/api/v1/admin/categories", { name });
 
 async function createMenus(page: Page, categoryId: number, count: number) {
-  for (let index = 0; index < count; index += 1) {
-    await adminApi(page, "POST", "/api/v1/admin/menus", {
-      categoryId, slug: `e2e-${randomUUID()}`, name: unique("메뉴"), description: "e2e 메뉴", imageUrl: "/images/menus/placeholder.svg",
-      price: 4500, available: true, isNew: false, recommended: false, supportsHot: true, supportsIced: false,
-    });
-  }
+  for (let index = 0; index < count; index += 1) await createMenu(page, categoryId);
 }
 
 // 스트리밍 중에는 숨겨진 페이지 사본이 잠시 DOM에 함께 있으므로 보이는 행만 고른다.
