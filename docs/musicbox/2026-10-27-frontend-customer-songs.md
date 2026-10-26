@@ -147,7 +147,7 @@ S16 다른 곡
 
 S17 정리
 - Given 단계 1~6을 마쳤다.
-- Then `grep -r "mock/music-box\|api/music-box\|finishPlaying\|reportDuration" frontend/app`의 결과가 0건이다.
+- Then `grep -r "mock/music-box\|api/music-box\|finishPlaying\|reportDuration" frontend/app`의 결과가 0건이다. (고침 10-27: `/admin` 대시보드(범위 밖 쌍)가 아직 목 저장소로 신청곡 수를 세서 `admin/page.tsx` 한 곳은 남고, `_lib/mock/music-box.ts`도 남긴다)
 - Then `npm run typecheck`가 통과한다.
 - Q1이 B이면 관리자 화면이 쓰는 부분은 남긴다.
 
@@ -210,6 +210,9 @@ S17 정리
    - 확인: `npm run test:e2e -- musicbox`
 
 ## 테스트
+
+- 결과 (10-27): `e2e/musicbox.spec.ts` 3개 통과. S3은 백엔드를 끈 뒤 브라우저에서 `error.tsx`가 보이는 것을 확인했다. S6·S13·S15·S16은 실행하지 않았다.
+- 전용 DB 위치: 이 Mac의 docker 기본 context는 WSL(`remote-db`)이다. 컨테이너는 WSL의 `127.0.0.1:15432`에 뜨므로, `ssh -p 2222 -N -L 127.0.0.1:15432:127.0.0.1:15432 <WSL 계정>`으로 터널을 연 뒤 백엔드를 띄운다.
 
 - e2e는 `frontend/e2e/README.md`의 전용 컨테이너 DB(`ncafe_auth_e2e`, 포트 15432)만 쓴다. `backend/.env`의 DB에는 연결하지 않는다.
 - 곡 준비는 `fixtures/admin.ts`의 `adminApi`로 한다: 고객 가입 → 신청 → 관리자가 플레이리스트에 담기(길이 포함) → 자동 재생.
