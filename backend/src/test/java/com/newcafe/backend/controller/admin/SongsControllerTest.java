@@ -9,11 +9,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.newcafe.backend.common.error.ApiExceptionHandler;
+import com.newcafe.backend.entity.song.MusicBoxState;
 import com.newcafe.backend.entity.song.Song;
 import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
 import com.newcafe.backend.service.admin.SongsService;
+import com.newcafe.backend.service.support.MusicBoxSettler;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,7 +36,9 @@ class SongsControllerTest {
     void setUp() {
         songRepository = mock(SongRepository.class);
         MusicBoxStateRepository musicBoxStateRepository = mock(MusicBoxStateRepository.class);
-        SongsService songsService = new SongsService(songRepository, musicBoxStateRepository);
+        when(musicBoxStateRepository.findForUpdate()).thenReturn(new MusicBoxState());
+        SongsService songsService = new SongsService(songRepository,
+                new MusicBoxSettler(songRepository, musicBoxStateRepository), Clock.systemUTC());
 
         mockMvc = MockMvcBuilders.standaloneSetup(new SongsController(songsService))
                 .setControllerAdvice(new ApiExceptionHandler())

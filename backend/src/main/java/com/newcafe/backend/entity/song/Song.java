@@ -153,11 +153,15 @@ public class Song {
     }
 
     public void markAsPlayed() {
+        markAsPlayed(Instant.now());
+    }
+
+    public void markAsPlayed(Instant at) {
         requireStatus(SongStatus.queued, "플레이리스트에 있는 곡만 재생완료로 옮길 수 있습니다.");
 
         this.status = SongStatus.played;
         this.playlistOrder = null;
-        this.playedAt = Instant.now();
+        this.playedAt = at;
     }
 
     // 재생 중인 곡이 끝나는 시각. 영상 길이를 모르면 null이다. 광고·버퍼링 여유로 1초를 더한다.
