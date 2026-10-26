@@ -3,9 +3,9 @@
 ## 한눈에
 
 - 끝나면: 메뉴 상세의 담기와 `/cart`의 조회·수량 변경·삭제가 `localStorage` 대신 백엔드 장바구니 API(#81)를 쓴다. 다른 기기·새로고침에서도 장바구니가 유지되고, `CartContext`를 걷어낸다.
-- 결정 필요: `/checkout`이 주문 대상 항목을 받는 방법 (아래 "결정 필요")
+- 결정: `/checkout`은 `?cartItemIds=`로 주문 대상을 받는다 (아래 A, 10-26 결정)
 - 규모: 7단계
-- 현재 (10-26): 계획 작성
+- 현재 (10-26): 1~7단계 완료. lint·typecheck 통과, 로컬 Docker DB와 테스트 계정으로 F1~F9를 브라우저에서 확인했다.
 - 위치: `docs/my/cart/`의 프론트 계획. 백엔드 계획은 `docs/my/cart/2026-10-25-backend-cart.md`.
 
 ## 기반 (develop에 머지됨)
@@ -35,8 +35,8 @@ F2 비로그인
 - Then 지금처럼 `LoginRequiredDialog`가 열리고 `/login?next=/menus/{slug}`로 간다. API를 부르지 않는다.
 
 F3 실패
-- When 그사이 품절됐거나(`422`), 숨겨졌거나(`404`), 세션이 끝났다(`401`), 관리자 계정이다(`403`).
-- Then 대화상자를 열지 않고 주문서 영역에 `role="alert"`로 서버 메시지를 보여 준다. `401`이면 로그인 대화상자를 연다.
+- When 그사이 품절됐거나(`422`), 숨겨졌거나(`404`), 세션이 끝났다(`401`).
+- Then 대화상자를 열지 않고 주문서 영역에 `role="alert"`로 서버 메시지를 보여 준다. `401`이면 로그인 대화상자를 연다. 관리자 계정은 Server Action 첫 줄의 `requireRole("customer")`가 `/forbidden`으로 보낸다(5-6 규칙).
 
 ## 2. 장바구니 (`/cart`)
 
@@ -88,7 +88,7 @@ FRONTEND.md 5-3(서버/클라이언트 경계 우선, 반복 단위·독립 책�
 - 화면 모양과 CSS(`cart.module.css`, `menus.module.css`)는 바꾸지 않는다. 마크업을 옮기기만 한다.
 - `CheckoutView`(224줄)는 `/checkout` 쌍의 일이라 나누지 않는다. 결정 A면 읽는 부분만 고친다.
 
-## 결정 필요: `/checkout`이 주문 대상을 받는 방법
+## 결정: `/checkout`이 주문 대상을 받는 방법 → A
 
 지금 `/checkout`은 `CartContext`에서 선택된 항목을 읽고, 주문 확정은 아직 목 주문 저장소를 쓴다(주문 API 연결 전). `CartContext`를 걷어내면 다른 방법이 필요하다. FRONTEND.md 6-2에도 "`/checkout` 주문 대상 조회"가 보류로 남아 있다.
 
@@ -107,9 +107,9 @@ A로 하면 `/checkout` 쌍과 겹치는 파일이 `checkout/page.tsx`, `Checkou
    - 커밋: `docs: 회원 장바구니 프론트 연결 계획 추가`
 2. 장바구니 요청기·타입
    - `admin/users/_lib/api.ts`의 `csrfHeaders()`를 `app/_lib/api/csrf.ts`로 올린다(두 번째 사용처, 5-1 "위로 올리는 시점"). `admin/users`는 새 위치를 import한다. 동작은 같다.
-   - `app/(customer)/cart/_lib/types.ts`(백엔드 `CartItemResponse`·`CartItemsResponse`), `app/(customer)/cart/_lib/api.ts`(`server-only`, `apiFetch`로 조회·응답 검증)
+   - `app/(customer)/_lib/cart/types.ts`(백엔드 `CartItemResponse`·`CartItemsResponse`), `app/(customer)/_lib/cart/api.ts`(`server-only`, `apiFetch`로 조회·응답 검증). `/cart`와 `/checkout`이 함께 쓰므로 공통 부모 `(customer)/_lib`에 둔다(5-1)
 3. 담기 — F1~F3
-   - `app/(public)/menus/[slug]/_actions.ts`: `addCartItem(menuId, temperature, quantity)`. 첫 줄 `requireRole("customer", ...)`, 화면 온도 `ice` → API `iced`, `apiFetch` + `csrfHeaders()`, 실패는 `{ ok: false, message }`, 성공하면 `revalidatePath("/cart")`.
+   - `app/(public)/menus/[slug]/_actions.ts`: `addCartItem(menuId, menuSlug, temperature, quantity)`(`menuSlug`는 로그인 후 돌아올 주소). 첫 줄 `requireRole("customer", ...)`, 화면 온도 `ice` → API `iced`, `apiFetch` + `csrfHeaders()`, 실패는 `{ ok: false, message }`, 성공하면 `revalidatePath("/cart")`.
    - `OrderPanel`: `useCart().addItem` 대신 Server Action. 처리 중 버튼 막기, 실패 `role="alert"`. `TemperaturePicker`, `QuantityStepper`로 분리(위 "컴포넌트 분리").
 4. `/cart` — F4~F9
    - 위 "컴포넌트 분리" 표대로 나눈다. `page.tsx`가 조회해 `CartView`에 props로 넘기고, `CartView`는 체크 상태만 `useState`.
@@ -138,7 +138,7 @@ A로 하면 `/checkout` 쌍과 겹치는 파일이 `checkout/page.tsx`, `Checkou
 
 - 온도: 화면 컴포넌트는 지금처럼 `hot`/`ice`를 쓰고, API 경계(`_actions.ts`, `_lib/api.ts`)에서 `iced`로 바꾼다. DB 설계 5장 1번("`ice`를 `iced`로 통일")은 화면 타입까지 바꾸는 일이라 `OrderPanel`·주문 화면을 함께 고칠 때 한다.
 - 요청기: #65가 develop에 넣은 방식(`apiFetch` + `csrfHeaders()`)을 따른다. `apiFetch`는 브라우저의 세션 쿠키를 그대로 백엔드에 보내고, 같은 세션으로 CSRF 토큰을 받아 헤더에 붙인다. 인증용 `BackendSession`(#61)은 고치지 않는다.
-- 관리자: 관리자는 장바구니를 쓰지 않는다(백엔드 `403`). 상세의 담기 버튼은 지금처럼 보이고, 누르면 서버 메시지를 보여 준다.
+- 관리자: 관리자는 장바구니를 쓰지 않는다(백엔드 `403`). 상세의 담기 버튼은 지금처럼 보이고, 누르면 `/forbidden`으로 간다. 한 줄 최대 수량 20은 `app/_lib/cart/constants.ts`에 두고 상세와 `/cart`가 함께 쓴다.
 
 ## 참고
 
