@@ -80,6 +80,73 @@ class CategoriesServiceTest {
     }
 
     @Test
+    void reorderRejectsFallbackBeforeLast() {
+        Category coffee = category(10L, "커피", 1);
+        Category tea = category(11L, "차", 2);
+        Category fallback = fallback(1L, 3);
+        when(categoryRepository.findFallbackForUpdate()).thenReturn(Optional.of(fallback));
+        when(categoryRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(List.of(coffee, tea, fallback));
+
+        CategoryException exception = assertThrows(CategoryException.class,
+                () -> service.reorder(new CategoryOrderRequest(List.of(1L, 11L, 10L))));
+
+        assertEquals(Reason.INVALID_ORDER, exception.getReason());
+        assertEquals("기타 카테고리는 항상 마지막에 있어야 합니다.", exception.getMessage());
+        assertEquals(List.of(1, 2, 3), List.of(coffee.getDisplayOrder(), tea.getDisplayOrder(), fallback.getDisplayOrder()));
+
+        verify(categoryRepository, never()).flush();
+    }
+
+    @Test
+    void initializeMovesExistingFallbackLast() {
+        Category fallback = fallback(1L, 1);
+        Category coffee = category(10L, "커피", 2);
+        when(categoryRepository.findFallback()).thenReturn(Optional.of(fallback));
+        when(categoryRepository.findFallbackForUpdate()).thenReturn(Optional.of(fallback));
+        when(categoryRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(List.of(fallback, coffee));
+
+        service.initializeFallback();
+
+        assertEquals(1, coffee.getDisplayOrder());
+        assertEquals(2, fallback.getDisplayOrder());
+        verify(categoryRepository, never()).save(org.mockito.ArgumentMatchers.any(Category.class));
+    }
+
+    @Test
+    void initializeKeepsOrderWhenFallbackIsAlreadyLast() {
+        Category coffee = category(10L, "커피", 1);
+        Category fallback = fallback(1L, 2);
+        when(categoryRepository.findFallback()).thenReturn(Optional.of(fallback));
+        when(categoryRepository.findFallbackForUpdate()).thenReturn(Optional.of(fallback));
+        when(categoryRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(List.of(coffee, fallback));
+
+        service.initializeFallback();
+
+        assertEquals(1, coffee.getDisplayOrder());
+        assertEquals(2, fallback.getDisplayOrder());
+        verify(categoryRepository, never()).flush();
+    }
+
+    @Test
+    void createPlacesNewCategoryBeforeFallback() {
+        Category coffee = category(10L, "커피", 1);
+        Category fallback = fallback(1L, 2);
+        when(categoryRepository.findFallbackForUpdate()).thenReturn(Optional.of(fallback));
+        when(categoryRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(List.of(coffee, fallback));
+        when(categoryRepository.save(org.mockito.ArgumentMatchers.any(Category.class))).thenAnswer(invocation -> {
+            Category category = invocation.getArgument(0);
+            ReflectionTestUtils.setField(category, "id", 11L);
+            return category;
+        });
+
+        var response = service.create(new CategoryRequest("차"));
+
+        assertEquals(2, response.displayOrder());
+        assertEquals(1, coffee.getDisplayOrder());
+        assertEquals(3, fallback.getDisplayOrder());
+    }
+
+    @Test
     void staleReorderDoesNotWriteOrders() {
         Category fallback = fallback(1L, 1);
         Category coffee = category(10L, "커피", 2);

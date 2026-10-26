@@ -9,6 +9,7 @@ import com.newcafe.backend.entity.category.Category;
 import com.newcafe.backend.repository.CategoryRepository;
 import com.newcafe.backend.repository.MenuRepository;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +31,8 @@ public class CategoriesService {
     @Transactional
     public void initializeFallback() {
         if (categoryRepository.findFallback().isPresent()) {
+            lockFallback();
+            placeFallbackLast(categoryRepository.findAllByOrderByDisplayOrderAsc());
             return;
         }
 
@@ -54,8 +57,12 @@ public class CategoriesService {
             throw new CategoryException(Reason.CONFLICT, "이미 존재하는 카테고리입니다.");
         }
 
-        Category category = Category.create(normalizedName, nextOrder());
-        return toResponse(categoryRepository.save(category));
+        List<Category> categories = new ArrayList<>(categoryRepository.findAllByOrderByDisplayOrderAsc());
+        Category category = categoryRepository.save(Category.create(normalizedName, nextOrder()));
+        categories.add(category);
+        placeFallbackLast(categories);
+
+        return toResponse(category);
     }
 
     @Transactional
@@ -85,6 +92,9 @@ public class CategoriesService {
         current.forEach(category -> byId.put(category.getId(), category));
         if (orderedIds.size() != current.size() || !byId.keySet().containsAll(orderedIds)) {
             throw new CategoryException(Reason.CONFLICT, "카테고리 목록이 변경되었습니다. 새로고침 후 다시 시도해 주세요.");
+        }
+        if (!byId.get(orderedIds.getLast()).isFallback()) {
+            throw new CategoryException(Reason.INVALID_ORDER, "기타 카테고리는 항상 마지막에 있어야 합니다.");
         }
 
         List<Category> reordered = orderedIds.stream().map(byId::get).toList();
@@ -129,6 +139,15 @@ public class CategoriesService {
                 || orderedIds.stream().anyMatch(id -> id == null || id < 1)
                 || new HashSet<>(orderedIds).size() != orderedIds.size()) {
             throw new CategoryException(Reason.INVALID_ORDER, "카테고리 순서에 중복되거나 잘못된 ID가 있습니다.");
+        }
+    }
+
+    // 기타를 뺀 상대 순서는 그대로 두고 기타만 끝으로 옮긴다. 이미 마지막이면 쓰지 않는다.
+    private void placeFallbackLast(List<Category> ordered) {
+        List<Category> fallbackLast = new ArrayList<>(ordered.stream().filter(category -> !category.isFallback()).toList());
+        ordered.stream().filter(Category::isFallback).forEach(fallbackLast::add);
+        if (!fallbackLast.equals(ordered)) {
+            saveOrderWithoutUniqueCollision(fallbackLast);
         }
     }
 

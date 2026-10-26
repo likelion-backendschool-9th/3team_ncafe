@@ -9,6 +9,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -173,6 +174,24 @@ class CategoriesControllerTest {
                         .content("{\"name\":\"   \"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void reorderWithFallbackBeforeLastReturnsInvalidOrder() throws Exception {
+        Category fallback = Category.createFallback(2);
+        ReflectionTestUtils.setField(fallback, "id", 1L);
+        Category coffee = Category.create("커피", 1);
+        ReflectionTestUtils.setField(coffee, "id", 10L);
+
+        when(categoryRepository.findFallbackForUpdate()).thenReturn(Optional.of(fallback));
+        when(categoryRepository.findAllByOrderByDisplayOrderAsc()).thenReturn(List.of(coffee, fallback));
+
+        mockMvc.perform(put("/api/v1/admin/categories/order").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"orderedIds\":[1,10]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_ORDER"))
+                .andExpect(jsonPath("$.message").value("기타 카테고리는 항상 마지막에 있어야 합니다."));
     }
 
     @Test
