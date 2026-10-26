@@ -213,7 +213,7 @@ Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요
 
 | 위치 | 프론트 페이지 → 시스템 이름 (`*Controller.java`, `*Service.java`) |
 | --- | --- |
-| 기본 | `/` → `Home`, `/login`·`/signup` 및 `/my`의 로그아웃 동작 → `Auth`, `/menus`의 카테고리 필터·목록과 `/menus/[slug]` → `Menus`(조회), `/musicbox` → `Songs`(공개 목록·현재 곡·곡 신청) |
+| 기본 | `/` → `Home`, `/login`·`/signup` 및 `/my`의 로그아웃 동작 → `Auth`, `/menus`의 카테고리 필터·목록과 `/menus/[slug]` → `Menus`(조회), `/musicbox` → `Songs`(공개 목록·현재 곡·곡 신청). `/`의 뮤직박스 칸과 `/my/songs`의 현재 곡은 `Songs`의 공개 조회(`GET /musicbox/songs`, `GET /songs/now`)를 보조로 쓴다 |
 | `my/` | `/my`·`/profile/update` → `Users`(`profile/update`는 WBS 화면, 추가 예정), `/menus/[slug]`의 담기 동작·`/cart` → `CartItems`, `/checkout`·`/my/orders`·`/my/orders/[id]` → `Orders`, `/my/songs` → `Songs` |
 | `admin/` | `/admin/users`·`/admin/users/[id]`·`/admin/users/new` → `Users`(`users/new`는 DB 설계 확장, 추가 예정), `/admin/categories` → `Categories`, `/admin/menus`·`/admin/menus/[id]`·`/admin/menus/new`·`/admin/menus/[id]/edit` → `Menus`, `/admin/orders`·`/admin/orders/[id]` → `Orders`, `/admin/songs` → `Songs` |
 
@@ -348,7 +348,7 @@ WBS 5.3의 `/api/v1/admin/orders/focus`와 12.3의 `/api/v1/admin/orders/status`
 ### 곡 신청과 내 신청곡 (WBS 11.x)
 
 - [ ] `SongsController`의 공개 목록·현재 곡 조회·회원 신청과 `my/SongsController`의 내 신청 조회·삭제 API를 만든다. 신청자 권한을 검증한다.
-- [ ] `frontend/app/(public)/musicbox`, `frontend/app/(customer)/my/songs`와 홈의 목 호출을 API로 바꾼다. 신청 직후 공개 목록과 내 신청 내역을 확인한다.
+- [x] `frontend/app/(public)/musicbox`, `frontend/app/(customer)/my/songs`와 홈의 목 호출을 API로 바꾼다. 신청 직후 공개 목록과 내 신청 내역을 확인한다.
 
 ### 관리자 선곡·재생 (WBS 10.x)
 
