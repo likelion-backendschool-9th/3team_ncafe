@@ -149,7 +149,7 @@ S21 이미 삭제됨
    - 파일: `admin/users/_lib/api.ts`의 `csrfHeaders()`를 `app/_lib/api/client.ts`로 올리고, `admin/users/_actions.ts`의 import를 바꾼다. 두 번째 사용처가 생기면 공통 부모로 올리는 FRONTEND.md 5-1 규칙을 따른다.
    - 커밋: `refactor: CSRF 헤더 헬퍼를 공통 API 클라이언트로 이동`
    - 확인: `cd frontend && npm run typecheck && npm run lint`
-3. 카테고리 화면 — S2, S3~S7
+3. 카테고리 화면 — S2, S3~S7. 상세는 [카테고리 화면 계획](../categories/2026-10-26-frontend-admin-categories.md)
    - 파일: `app/admin/categories/_lib/api.ts`(조회, 응답 검증), `_actions.ts`(변경, `csrfHeaders()` 사용), `page.tsx`, `loading.tsx`, `error.tsx`, `_components/CategoryList.tsx`(▲▼·드래그 모두 전체 ID 배열로 `reorder` 호출), `CategoryRow.tsx`, `DeleteCategoryDialog.tsx`, `frontend/e2e/admin-categories.spec.ts`
    - 확인: 같은 명령 + `npm run test:e2e -- admin-categories`
 
