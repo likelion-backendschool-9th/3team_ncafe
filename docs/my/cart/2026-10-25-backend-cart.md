@@ -5,10 +5,10 @@
 - 끝나면: 로그인한 고객이 `/api/v1/menus/{id}/cart/items`로 메뉴를 담고, `/api/v1/cart/items`로 장바구니를 조회·수량 변경·삭제할 수 있다. 장바구니는 기기와 상관없이 회원별로 서버에 남고, 단위·MockMvc·접근 정책 테스트가 통과한다.
 - 결정 필요: 없음 (아래 가정으로 진행하고 PR에 적는다)
 - 규모: 6단계
-- 현재 (10-25): 1~5단계 완료. #61·#69를 합친 로컬 브랜치에서 단위 테스트 232개와 PostgreSQL 통합 테스트 59개(장바구니 3개 포함)가 통과했다. 프론트 연결(6단계)은 별도 PR.
+- 현재 (10-26): 1~5단계 완료. #61·#69가 머지된 `develop` 위로 옮겼다. 프론트 연결(6단계)은 별도 PR.
 - 위치: `docs/my/cart/`의 백엔드 계획.
 
-## 선행 PR (머지된다고 가정)
+## 선행 PR (10-26 머지됨)
 
 | PR | 담당 | 이 계획이 쓰는 것 |
 | --- | --- | --- |
@@ -143,7 +143,7 @@ S17 다른 메서드
    - `CartItemRepository`: #69 메서드는 그대로 두고 `findAllByUserIdOrderByIdAsc`(`menu` EntityGraph), `findByIdAndUserId`, `findByUserIdAndMenu_IdAndTemperature`, 온도 `null`용 `findByUserIdAndMenu_IdAndTemperatureIsNull`을 추가한다.
    - `UserRepository`: 회원 행 잠금 조회 `findByIdForUpdate`(`PESSIMISTIC_WRITE`) 추가.
    - `dto/cartitems/`: `CartItemRequest`, `CartItemQuantityRequest`(Bean Validation 1~20), `CartItemResponse`, `CartItemsResponse`.
-   - `common/error/CartItemException`(`NOT_FOUND`, `INVALID_INPUT`, `MENU_UNAVAILABLE`)과 `ApiExceptionHandler` 매핑.
+   - `common/error/CartItemException`(`NOT_FOUND`, `INVALID_INPUT`, `MENU_UNAVAILABLE`)과 장바구니 전용 `CartItemsExceptionHandler`(`@RestControllerAdvice(assignableTypes = CartItemsController.class)`, #80 `AdminOrdersExceptionHandler`와 같은 방식). 공용 `ApiExceptionHandler`는 고치지 않는다.
    - 확인: `./gradlew compileJava`
 3. 담기 — S1~S5
    - `service/my/CartItemsService` (`@Service("myCartItemsService")`). 모든 메서드가 `Long userId`를 받는다.
@@ -171,9 +171,8 @@ S17 다른 메서드
 ## 브랜치·커밋
 
 - 백엔드: `feature/cart-api` (1~5단계), 프론트: `feature/cart-frontend` (6단계). PR 대상은 `develop`, 머지는 사람이 한다.
-- 열린 PR들은 같은 날 함께 머지할 예정이다. 그래서 #61·#69를 로컬 임시 통합 브랜치(`origin/develop` + #61 + #69)에 합쳐 그 위에서 개발·테스트한다. 다른 사람 브랜치는 수정하지 않고, 통합 브랜치는 푸시하지 않는다.
-- PR을 올릴 때는 `origin/develop` 기준 `feature/cart-api`에 내 커밋만 옮긴다(cherry-pick). 이 PR은 #61·#69 없이는 컴파일되지 않으므로 PR 본문에 #61·#69 다음에 머지해야 한다고 적는다.
-- #69와 겹치는 `CartItem`, `CartItemRepository`, `ApiExceptionHandler`는 기존 내용을 바꾸지 않고 추가만 한다. 착수 전에 주문 담당에게 알린다.
+- #61·#69가 머지되기 전에는 두 PR을 합친 로컬 임시 브랜치에서 개발·테스트했고, 10-26 머지 후 `origin/develop` 기준 `feature/cart-api`로 내 커밋만 옮겼다(cherry-pick).
+- #61·#69 파일(`SecurityConfig`, `UserRepository`, `ApiAccessPolicyTest`, `CartItem`, `CartItemRepository`)은 기존 내용을 바꾸지 않고 추가만 한다. 인증 담당·주문 담당에게 리뷰를 요청한다.
 
 ## 가정
 
