@@ -16,19 +16,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController("mySongsController")
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/my/songs")
 @RequiredArgsConstructor
 public class SongsController {
 
     private final SongsService songsService;
     private final CurrentUserContext currentUserContext;
 
-    @GetMapping("/my/songs")
+    @GetMapping
     public List<SongResponse> list() {
         return songsService.listMine(currentUserContext.requireCurrentUser().id());
     }
 
-    @DeleteMapping("/my/songs/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         songsService.delete(currentUserContext.requireCurrentUser().id(), id);
         return ResponseEntity.noContent().build();
