@@ -9,10 +9,31 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import com.newcafe.backend.common.error.OrderException;
+import com.newcafe.backend.common.security.AuthenticationRequiredException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
+
+    @ExceptionHandler(OrderException.class)
+    public ResponseEntity<ErrorResponse> handleOrderException(OrderException exception) {
+        HttpStatus status = switch (exception.getReason()) {
+            case NOT_FOUND, CART_ITEM_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case CONFLICT -> HttpStatus.CONFLICT;
+            case INVALID_INPUT -> HttpStatus.BAD_REQUEST;
+            case MENU_UNAVAILABLE -> HttpStatus.UNPROCESSABLE_ENTITY;
+        };
+        return ResponseEntity.status(status)
+                .body(new ErrorResponse(exception.getReason().name(), exception.getMessage()));
+    }
+
+    @ExceptionHandler(AuthenticationRequiredException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationRequired(AuthenticationRequiredException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse("UNAUTHENTICATED", exception.getMessage()));
+    }
+    
     @ExceptionHandler(SignupException.class)
     public ResponseEntity<ErrorResponse> handleSignupException(SignupException exception) {
         HttpStatus status = switch (exception.getReason()) {
