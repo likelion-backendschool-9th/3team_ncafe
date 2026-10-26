@@ -23,6 +23,7 @@
 - 잠그기 전 확인 값은 `entity/song/SongTiming`(JPQL 생성자 조회), 끝나는 시각 계산은 `Song.endsAt(startedAt, durationSeconds)` 하나로 모았다.
 - 입력 길이 상수와 공백 제거는 `entity/song/SongFields`(`MenuFields` 방식), 고정 시각 테스트용 `Clock`은 `config/ClockConfiguration`에 둔다.
 - 응답은 PR #78의 `SongResponse`를 그대로 쓴다. 계획의 `updatedAt` 필드는 PR #78 파일을 고치지 않으려고 넣지 않았다.
+- 신청곡 접수(R3)는 `my/SongsController`가 아니라 공개 `SongsController`·`service/SongsService`에 둔다 (10-26 결정). 경로가 `/my`가 아닌 `/musicbox/songs`이고, 같은 경로의 공개 목록과 한 Controller에 모은다. `my/`는 `/my/songs` 조회·삭제만 맡는다.
 - 공개 응답의 `playlistOrder`는 별도 처리 없이 엔티티가 보장한다. `play(at)`·`finish(at)`과 PR #78의 `cancel`·`returnToInbox`·`markAsPlayed`가 `queued`가 아니게 될 때 순서를 비운다.
 
 실제 DB 없이는 확인하지 못한 것:
@@ -241,7 +242,7 @@ S21 변경 감지 (R3·R7)
 
 | 요구사항 | 경로 | Controller | 권한 | 성공 응답 |
 | --- | --- | --- | --- | --- |
-| R3 | `POST /api/v1/musicbox/songs` | `my/SongsController` | 회원 | `201`, 신청곡 |
+| R3 | `POST /api/v1/musicbox/songs` | `SongsController` | 회원 | `201`, 신청곡 |
 | R4 | `GET /api/v1/my/songs` | `my/SongsController` | 회원 | `200`, 신청곡 배열 |
 | R5 | `DELETE /api/v1/my/songs/{id}` | `my/SongsController` | 회원 | `204` |
 | R6 | `GET /api/v1/musicbox/songs` | `SongsController` | 누구나 | `200`, `{playlist, inbox, played}` |
@@ -389,7 +390,7 @@ cha, #69, 이 PR이 모두 핸들러를 추가한다.
 ## 참고
 
 - 백엔드 청사진 (2026-10-25 확인):
-  - 공개 곡 목록·현재 곡은 `SongsController`, 곡 신청·내 곡은 `my/SongsController`가 담당하고 DTO는 `dto/songs/`에 둔다.
+  - 공개 곡 목록·현재 곡은 `SongsController`, 곡 신청·내 곡은 `my/SongsController`가 담당하고 DTO는 `dto/songs/`에 둔다. 곡 신청은 10-26에 `SongsController`로 옮겼다 (「구현 결과」).
   - WBS 경로: `GET /api/v1/musicbox/songs`, `GET /api/v1/songs/now`, `POST /api/v1/musicbox/songs`, `GET /api/v1/my/songs`, `DELETE /api/v1/my/songs/{id}`
   - 같은 클래스명은 Bean 이름으로 구별한다.
   - 부분 인덱스는 `ddl-auto`로 생성된다고 가정하지 않는다. 별도 `sql/` 폴더나 마이그레이션 도구는 쓰지 않는다.

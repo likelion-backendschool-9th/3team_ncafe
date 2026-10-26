@@ -1,5 +1,6 @@
 package com.newcafe.backend.service;
 
+import com.newcafe.backend.dto.songs.CreateSongRequest;
 import com.newcafe.backend.dto.songs.MusicBoxSongsResponse;
 import com.newcafe.backend.dto.songs.NowPlayingResponse;
 import com.newcafe.backend.dto.songs.SongResponse;
@@ -19,7 +20,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-// 누구나 보는 뮤직박스 신청곡 목록과 현재 곡.
+// 뮤직박스 신청곡 접수와 누구나 보는 신청곡 목록·현재 곡.
+// 상태를 바꿀 때는 뮤직박스 상태 행을 잠그고, 시간이 지난 곡을 먼저 정리한 뒤 바꾸고, revision을 한 번 올린다.
 // 조회 중에도 시간이 지난 곡을 정리할 수 있어 읽기 전용 트랜잭션을 쓰지 않는다.
 @Service("publicSongsService")
 @RequiredArgsConstructor
@@ -28,6 +30,19 @@ public class SongsService {
     private final SongRepository songRepository;
     private final MusicBoxStateRepository musicBoxStateRepository;
     private final Clock clock;
+
+    @Transactional
+    public SongResponse create(Long userId, String requesterName, CreateSongRequest request) {
+        Instant now = clock.instant();
+        MusicBoxState state = lockState();
+        settle(now);
+
+        Song song = songRepository.save(
+                new Song(userId, requesterName, request.songTitle(), request.artist(), request.story()));
+
+        state.touch(now);
+        return SongResponse.from(song);
+    }
 
     @Transactional
     public MusicBoxSongsResponse list() {

@@ -50,6 +50,19 @@ class SongsServiceTest {
     }
 
     @Test
+    void s8CreateSavesPendingSongForMemberAndTouchesOnce() {
+        when(songRepository.save(any(Song.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        SongResponse response = service("03:04:00").create(7L, "민지",
+                new CreateSongRequest(" 밤편지 ", "아이유", "오늘 첫 출근했어요"));
+
+        assertEquals("밤편지", response.songTitle());
+        assertEquals("민지", response.requesterName());
+        assertEquals("pending", response.status());
+        assertEquals(6L, state.getRevision());
+    }
+
+    @Test
     void s7DoesNotLockWhenPlayingSongHasNotEnded() {
         Song current = playing(20L, 200);
         playingNow(current);
@@ -152,12 +165,11 @@ class SongsServiceTest {
     void s21RevisionChangesAfterMemberRequestsSong() {
         Clock clock = clock("03:01:00");
         when(songRepository.save(any(Song.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        var mySongsService = new com.newcafe.backend.service.my.SongsService(songRepository,
-                musicBoxStateRepository, clock);
+        SongsService service = new SongsService(songRepository, musicBoxStateRepository, clock);
 
-        mySongsService.create(7L, "민지", new CreateSongRequest("밤편지", "아이유", "사연"));
+        service.create(7L, "민지", new CreateSongRequest("밤편지", "아이유", "사연"));
 
-        assertEquals(6L, new SongsService(songRepository, musicBoxStateRepository, clock).now().revision());
+        assertEquals(6L, service.now().revision());
     }
 
     private SongsService service(String time) {

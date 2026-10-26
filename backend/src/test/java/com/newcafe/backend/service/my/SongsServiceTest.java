@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 
 import com.newcafe.backend.common.error.SongException;
 import com.newcafe.backend.common.error.SongException.Reason;
-import com.newcafe.backend.dto.songs.CreateSongRequest;
 import com.newcafe.backend.dto.songs.SongResponse;
 import com.newcafe.backend.entity.song.MusicBoxState;
 import com.newcafe.backend.entity.song.Song;
@@ -45,19 +44,6 @@ class SongsServiceTest {
         state = new MusicBoxState();
         when(musicBoxStateRepository.findForUpdate()).thenReturn(state);
         service = new SongsService(songRepository, musicBoxStateRepository, Clock.fixed(NOW, ZoneOffset.UTC));
-    }
-
-    @Test
-    void s8CreateSavesPendingSongForMemberAndTouchesOnce() {
-        when(songRepository.save(any(Song.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        SongResponse response = service.create(7L, "민지",
-                new CreateSongRequest(" 밤편지 ", "아이유", "오늘 첫 출근했어요"));
-
-        assertEquals("밤편지", response.songTitle());
-        assertEquals("민지", response.requesterName());
-        assertEquals("pending", response.status());
-        assertEquals(1L, state.getRevision());
     }
 
     @Test
