@@ -20,6 +20,7 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
 
+import org.hibernate.query.criteria.HibernateCriteriaBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -77,5 +78,42 @@ class UserSpecificationsTest {
                 .toPredicate(root, mock(CriteriaQuery.class), builder);
 
         verify(builder, times(2)).like(any(), eq("%50\\%\\_off%"), eq('\\'));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void ordersByNicknameWithCodePointCollation() {
+        HibernateCriteriaBuilder hibernate = mock(HibernateCriteriaBuilder.class);
+        CriteriaQuery<User> query = mock(CriteriaQuery.class);
+        when(query.getResultType()).thenReturn(User.class);
+
+        UserSpecifications.adminOrder("name").toPredicate(root, query, hibernate);
+
+        verify(hibernate).collate((Expression<String>) (Expression<?>) namePath, "\"C\"");
+        verify(query).orderBy(any(), any());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void ordersByEmailWhenRequested() {
+        HibernateCriteriaBuilder hibernate = mock(HibernateCriteriaBuilder.class);
+        CriteriaQuery<User> query = mock(CriteriaQuery.class);
+        when(query.getResultType()).thenReturn(User.class);
+
+        UserSpecifications.adminOrder("email").toPredicate(root, query, hibernate);
+
+        verify(hibernate).collate((Expression<String>) (Expression<?>) emailPath, "\"C\"");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void countQueryIsNotOrdered() {
+        HibernateCriteriaBuilder hibernate = mock(HibernateCriteriaBuilder.class);
+        CriteriaQuery<Long> query = mock(CriteriaQuery.class);
+        when(query.getResultType()).thenReturn(Long.class);
+
+        UserSpecifications.adminOrder("name").toPredicate(root, query, hibernate);
+
+        verify(query, never()).orderBy(any(), any());
     }
 }

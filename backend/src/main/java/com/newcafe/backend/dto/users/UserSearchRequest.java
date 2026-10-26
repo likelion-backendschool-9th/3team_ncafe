@@ -12,10 +12,10 @@ public record UserSearchRequest(
         @Size(max = UserSearchRequest.SEARCH_MAX_LENGTH, message = "검색어는 100자 이하로 입력해 주세요.")
         String q,
 
-        @Pattern(regexp = UserStatus.PATTERN, message = "상태는 active 또는 suspended만 사용할 수 있습니다.")
+        @Pattern(regexp = UserValues.STATUS_PATTERN, message = "상태는 active 또는 suspended만 사용할 수 있습니다.")
         String status,
 
-        @Pattern(regexp = UserRole.PATTERN, message = "권한은 customer 또는 admin만 사용할 수 있습니다.")
+        @Pattern(regexp = UserValues.ROLE_PATTERN, message = "권한은 customer 또는 admin만 사용할 수 있습니다.")
         String role,
 
         @Pattern(regexp = "name|email", message = "지원하지 않는 정렬입니다.")
@@ -44,10 +44,10 @@ public record UserSearchRequest(
     }
 
     public UserStatus statusFilter() {
-        return status == null ? null : UserStatus.from(status);
+        return status == null ? null : UserValues.status(status);
     }
 
     public UserRole roleFilter() {
-        return role == null ? null : UserRole.from(role);
+        return role == null ? null : UserValues.role(role);
     }
 }

@@ -18,7 +18,6 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,10 +29,13 @@ public class UsersService {
 
     @Transactional(readOnly = true)
     public UserPageResponse list(UserSearchRequest request) {
-        PageRequest pageRequest = PageRequest.of(request.page(), request.size(), toSort(request.sort()));
+        // 정렬은 한글 정렬 규칙 때문에 Specification(adminOrder)에서 지정하므로 PageRequest에는 넣지 않는다.
+        PageRequest pageRequest = PageRequest.of(request.page(), request.size());
 
         return UserPageResponse.from(userRepository.findAll(
-                UserSpecifications.adminSearch(request.q(), request.statusFilter(), request.roleFilter()), pageRequest));
+                UserSpecifications.adminSearch(request.q(), request.statusFilter(), request.roleFilter())
+                        .and(UserSpecifications.adminOrder(request.sort())),
+                pageRequest));
     }
 
     @Transactional(readOnly = true)
@@ -60,13 +62,6 @@ public class UsersService {
         user.changeStatus(request.toStatus());
 
         return UserResponse.from(user);
-    }
-
-    private Sort toSort(String sort) {
-        return switch (sort) {
-            case "email" -> Sort.by(Sort.Order.asc("email"), Sort.Order.asc("id"));
-            default -> Sort.by(Sort.Order.asc("name"), Sort.Order.asc("id"));
-        };
     }
 
     private User findUser(Long id) {

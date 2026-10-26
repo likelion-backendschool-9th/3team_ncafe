@@ -14,8 +14,8 @@ public record UserResponse(
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
-                user.getRole().value(),
-                user.getStatus().value()
+                user.getRole().getValue(),
+                user.getStatus().getValue()
         );
     }
 }
