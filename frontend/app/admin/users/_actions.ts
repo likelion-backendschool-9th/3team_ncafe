@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { apiFetch, ApiRequestError } from "@/app/_lib/api/client";
 import { requireRole } from "@/app/_lib/session/session";
+import { csrfHeaders } from "./_lib/api";
 import { isUserStatus, type UserResponse } from "./_lib/user";
 
 export type UserStatusState = { error?: string; success?: string };
@@ -15,7 +16,11 @@ export async function changeUserStatus(id: number, _prev: UserStatusState, formD
   }
 
   try {
-    await apiFetch<UserResponse>(`/api/v1/admin/users/${id}`, { method: "PUT", body: JSON.stringify({ status }) });
+    await apiFetch<UserResponse>(`/api/v1/admin/users/${id}`, {
+      method: "PUT",
+      headers: await csrfHeaders(),
+      body: JSON.stringify({ status }),
+    });
   } catch (error) {
     if (error instanceof ApiRequestError) {
       return { error: error.status === 404 ? "회원을 찾을 수 없습니다. 목록을 새로고침해 주세요." : error.error.message };
