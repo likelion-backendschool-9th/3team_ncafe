@@ -22,13 +22,18 @@ export function MenuForm({ action, initialState, cancelHref, submitLabel, catego
   categoryOptions: CategoryOption[];
   slugReadOnly?: boolean;
 }) {
-  const [state, formAction, pending] = useActionState(action, initialState);
+  // 액션 뒤 React가 폼을 리셋하면 select는 처음 마운트한 값으로 돌아간다.
+  // 결과마다 입력 영역을 다시 마운트해 서버가 돌려준 값을 기본값으로 다시 잡는다.
+  const [state, formAction, pending] = useActionState(
+    async (previous: MenuFormState & { attempt: number }, data: FormData) => ({ ...(await action(previous, data)), attempt: previous.attempt + 1 }),
+    { ...initialState, attempt: 0 },
+  );
   const { values, errors } = state;
 
   return (
     <form action={formAction} className={styles.menuForm}>
       {state.message && <p className="form-error" role="alert">{state.message}</p>}
-      <div className={styles.formFields}>
+      <div key={state.attempt} className={styles.formFields}>
         <div className={styles.formField}>
           <label htmlFor="slug">slug</label>
           <input id="slug" name="slug" type="text" maxLength={MENU_SLUG_MAX_LENGTH} required={!slugReadOnly} readOnly={slugReadOnly} defaultValue={values.slug} placeholder="americano" aria-invalid={!!errors.slug} aria-describedby={describedBy(errors.slug, "slug", "slug-hint")} />

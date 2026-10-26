@@ -19,7 +19,7 @@ M1 정상 (S1)
 M2 검색·필터 (S8)
 - Given `아메리카노(커피, 판매 중)`, `카페라떼(커피, 판매 중지)`, `모나카(다과)`가 있다.
 - When 메뉴명 `라떼`, 카테고리 `커피`, 상태 `판매 중지`로 검색한다.
-- Then 주소가 `?q=라떼&categoryId=<커피 id>&status=unavailable`이고 `카페라떼` 한 줄만 보인다.
+- Then 주소가 `?q=라떼&categoryId=<커피 id>&status=unavailable`로 시작하고 `카페라떼` 한 줄만 보인다. (고침 10-27: GET 폼이라 기본 정렬 `sort=newest`도 붙는다)
 
 M3 slug 검색
 - When 메뉴명 칸에 `americano`로 검색한다.
