@@ -13,6 +13,7 @@ import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,8 +37,9 @@ public class SongsController {
     }
 
     @PutMapping("/{id}/cancel")
-    public void cancel(@PathVariable Long id) {
+    public ResponseEntity<Void> cancel(@PathVariable Long id) {
         songsService.cancelRequest(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/playlist")
@@ -47,8 +49,9 @@ public class SongsController {
     }
 
     @PutMapping("/playlist/{id}/order")
-    public void reorder(@PathVariable Long id, @Valid @RequestBody PlaylistOrderRequest request) {
+    public ResponseEntity<Void> reorder(@PathVariable Long id, @Valid @RequestBody PlaylistOrderRequest request) {
         songsService.moveInPlaylist(id, request.direction());
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/playlist/{id}")
@@ -58,27 +61,32 @@ public class SongsController {
     }
 
     @PostMapping("/playlist/{id}/play")
-    public void playNow(@PathVariable Long id) {
+    public ResponseEntity<Void> playNow(@PathVariable Long id) {
         songsService.playNow(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/current/finish")
-    public void finishCurrent(@Valid @RequestBody CurrentSongRequest request) {
+    public ResponseEntity<Void> finishCurrent(@Valid @RequestBody CurrentSongRequest request) {
         songsService.finishCurrent(request.id());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/current/cancel")
-    public void cancelCurrent(@Valid @RequestBody CurrentSongRequest request) {
+    public ResponseEntity<Void> cancelCurrent(@Valid @RequestBody CurrentSongRequest request) {
         songsService.cancelCurrent(request.id());
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/return-to-inbox")
-    public void returnToInbox(@PathVariable Long id) {
+    public ResponseEntity<Void> returnToInbox(@PathVariable Long id) {
         songsService.returnToInbox(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/move-to-played")
-    public void moveToPlayed(@PathVariable Long id) {
+    public ResponseEntity<Void> moveToPlayed(@PathVariable Long id) {
         songsService.moveToPlayed(id);
+        return ResponseEntity.noContent().build();
     }
 }
