@@ -21,11 +21,13 @@ import com.newcafe.backend.common.security.LoginSuccessHandler;
 import com.newcafe.backend.common.security.Passwords;
 import com.newcafe.backend.common.security.SecurityErrorHandler;
 import com.newcafe.backend.common.security.SessionCookieLogoutHandler;
+import com.newcafe.backend.common.security.SessionCurrentUserContext;
 import com.newcafe.backend.common.security.SessionMemberService;
 import com.newcafe.backend.common.security.SessionUserDetails;
 import com.newcafe.backend.config.PasswordConfig;
 import com.newcafe.backend.config.SecurityConfig;
 import com.newcafe.backend.controller.my.CartItemsController;
+import com.newcafe.backend.controller.my.OrdersController;
 import com.newcafe.backend.controller.my.UsersController;
 import com.newcafe.backend.dto.auth.MemberResponse;
 import com.newcafe.backend.dto.auth.SignupRequest;
@@ -45,6 +47,7 @@ import com.newcafe.backend.service.AuthService;
 import com.newcafe.backend.service.HomeService;
 import com.newcafe.backend.service.MenusService;
 import com.newcafe.backend.service.my.CartItemsService;
+import com.newcafe.backend.service.my.OrdersService;
 import com.newcafe.backend.service.my.UsersService;
 
 import java.util.List;
@@ -73,11 +76,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @WebMvcTest({AuthController.class, UsersController.class, MenusController.class, HomeController.class,
-        CartItemsController.class,
+        CartItemsController.class, OrdersController.class,
         ApiAccessPolicyTest.ProbeController.class})
 @Import({SecurityConfig.class, PasswordConfig.class, Passwords.class, DatabaseUserDetailsService.class,
         LoginSuccessHandler.class, SecurityErrorHandler.class, SessionMemberService.class,
-        SessionCookieLogoutHandler.class, ApiLogoutSuccessHandler.class, ApiAccessPolicyTest.ProbeController.class})
+        SessionCookieLogoutHandler.class, ApiLogoutSuccessHandler.class, SessionCurrentUserContext.class,
+        ApiAccessPolicyTest.ProbeController.class})
 class ApiAccessPolicyTest {
 
     @Autowired
@@ -103,6 +107,9 @@ class ApiAccessPolicyTest {
 
     @MockitoBean
     private CartItemsService cartItemsService;
+
+    @MockitoBean
+    private OrdersService ordersService;
 
     @BeforeEach
     void resetProbe() {
@@ -204,7 +211,9 @@ class ApiAccessPolicyTest {
                 Arguments.of("POST", "/api/v1/index/menus"),
                 Arguments.of("GET", "/api/v1/guest/menus"),
                 Arguments.of("PATCH", "/api/v1/cart/items/11"),
-                Arguments.of("POST", "/api/v1/cart/items"));
+                Arguments.of("POST", "/api/v1/cart/items"),
+                Arguments.of("PUT", "/api/v1/orders/7"),
+                Arguments.of("DELETE", "/api/v1/orders/7"));
     }
 
     static Stream<Arguments> cartRequests() {
@@ -254,6 +263,47 @@ class ApiAccessPolicyTest {
 
     private static CartItemResponse cartLine() {
         return new CartItemResponse(11L, 1L, "coffee", "커피", "/images/menus/coffee.jpg", 3500, "iced", 1, 3500, true);
+    }
+
+    static Stream<Arguments> orderRequests() {
+        return Stream.of(
+                Arguments.of("POST", "/api/v1/orders", """
+                        {"cartItemIds":[11],"orderType":"takeout","paymentMethod":"card",
+                         "request":"","expectedTotalAmount":3500}
+                        """),
+                Arguments.of("GET", "/api/v1/orders", null),
+                Arguments.of("GET", "/api/v1/orders/7", null));
+    }
+
+    @ParameterizedTest
+    @MethodSource("orderRequests")
+    void orderRoutesAreForSignedInCustomersOnly(String method, String path, String body) throws Exception {
+        mockMvc.perform(orderRequest(method, path, body).with(csrf()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"));
+        mockMvc.perform(orderRequest(method, path, body).with(csrf()).with(user(principal(UserRole.ADMIN))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+        verifyNoInteractions(ordersService);
+
+        // 여기서는 고객 요청이 Controller까지 닿는지만 확인한다. 주문 생성·조회 규칙은 OrdersService 테스트가 본다.
+        mockMvc.perform(orderRequest(method, path, body).with(csrf()).with(user(principal(UserRole.CUSTOMER))))
+                .andExpect(status().is2xxSuccessful());
+    }
+
+    @Test
+    void orderCreationRequiresCsrf() throws Exception {
+        var body = orderRequests().findFirst().orElseThrow().get()[2].toString();
+        mockMvc.perform(orderRequest("POST", "/api/v1/orders", body).with(user(principal(UserRole.CUSTOMER))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("CSRF_INVALID"));
+        verifyNoInteractions(ordersService);
+    }
+
+    private static MockHttpServletRequestBuilder orderRequest(String method, String path, String body) {
+        MockHttpServletRequestBuilder builder = request(HttpMethod.valueOf(method), path);
+        return body == null ? builder : builder.header("Idempotency-Key", "order-key-1")
+                .contentType(MediaType.APPLICATION_JSON).content(body);
     }
 
     @ParameterizedTest
