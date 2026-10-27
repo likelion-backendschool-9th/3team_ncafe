@@ -99,3 +99,6 @@
   .item { align-items: start; }
   .item > strong { font-size: 0.9rem; }
 }
+
+.cancelReason { margin: .8rem 0; padding: .85rem; border-left: 4px solid var(--red); background: #f7e4df; color: #5e2124; }
+.cancelReason p { margin: .35rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }

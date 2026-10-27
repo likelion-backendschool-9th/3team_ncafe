@@ -32,3 +32,9 @@
 .fieldError { margin: 0; color: #9b2924; font-size: 0.82rem; font-weight: 700; }
 .dialogActions { display: flex; justify-content: flex-end; gap: 0.6rem; padding-top: 0.25rem; }
 .dialogActions .button { min-width: 96px; }
+
+.textarea { width: 100%; min-height: 7rem; box-sizing: border-box; padding: .65rem; resize: vertical; border: 1px solid var(--border); border-radius: 2px; background: #fff8ec; color: var(--text); font: inherit; }
+.textarea:focus-visible { outline: 3px solid #207a72; outline-offset: 2px; }
+.textarea[aria-invalid="true"] { border-color: #9b2924; }
+.textarea:disabled { opacity: .65; }
+.fieldHint { margin: 0; color: var(--muted); font-size: .8rem; }

@@ -9,6 +9,7 @@ type Props = { action: OrderAction; orderCode: string; status: OrderStatus; allo
 export function StatusChangeForm({ action, orderCode, status, allowedStatuses }: Props) {
   const [state, formAction, pending] = useActionState(action, {});
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   const select = useRef<HTMLSelectElement>(null);
   const id = useId();
   const progress: OrderStatus[] = ["received", "preparing", "ready", "completed"];
@@ -35,9 +36,12 @@ export function StatusChangeForm({ action, orderCode, status, allowedStatuses }:
       {state.error && state.value !== "canceled" && <p id={`${id}-error`} className={controls.fieldError} role="alert">{state.error}</p>}
     </form>
     {allowedStatuses.includes("canceled") && <>
-      <button className={controls.button} type="button" disabled={pending} onClick={() => setCancelOpen(true)}>주문 취소</button>
+      <button className={controls.button} type="button" disabled={pending}
+        onClick={() => { setCancelReason(""); setCancelOpen(true); }}>주문 취소</button>
       <ConfirmCancelDialog open={cancelOpen} orderCode={orderCode} pending={pending} action={formAction}
-        error={state.value === "canceled" ? state.error : undefined} onClose={() => setCancelOpen(false)} />
+        reason={cancelReason} onReasonChange={setCancelReason}
+        error={state.value === "canceled" ? state.error : undefined}
+        onClose={() => { setCancelOpen(false); setCancelReason(""); }} />
     </>}
   </div>;
 }

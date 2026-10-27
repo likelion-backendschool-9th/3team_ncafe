@@ -59,6 +59,8 @@ export function parseCustomerOrder(value: unknown): CustomerOrderResponse {
   if (!isOneOf(order.status, statuses) || !isOneOf(order.orderType, orderTypes)
     || !isOneOf(order.paymentMethod, paymentMethods) || !Array.isArray(order.items)) invalidResponse();
   if (order.request !== null && typeof order.request !== "string") invalidResponse();
+  if (order.cancelReason !== null && (typeof order.cancelReason !== "string" || !order.cancelReason.trim()
+    || order.cancelReason.length > 200 || order.status !== "canceled")) invalidResponse();
   const createdAt = text(order.createdAt);
   if (!Number.isFinite(Date.parse(createdAt))) invalidResponse();
   return {
@@ -68,6 +70,7 @@ export function parseCustomerOrder(value: unknown): CustomerOrderResponse {
     orderType: order.orderType,
     paymentMethod: order.paymentMethod,
     request: order.request,
+    cancelReason: order.cancelReason as string | null,
     totalAmount: nonNegativeInteger(order.totalAmount),
     items: order.items.map(parseItem),
   };

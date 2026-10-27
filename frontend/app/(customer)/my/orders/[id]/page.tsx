@@ -9,6 +9,7 @@ import { requireRole } from "@/app/_lib/session/session";
 import { getCustomerOrder } from "../_lib/api";
 import { optionLabel, orderCode, orderDate, won } from "../_format";
 import styles from "../orders.module.css";
+import { OrderCancelReason } from "../_components/OrderCancelReason";
 
 function one(value: string | string[] | undefined): string {
   return typeof value === "string" ? value : "";
@@ -65,6 +66,7 @@ export default async function CustomerOrderDetailPage({ params, searchParams }: 
               </li>
             ))}
           </ul>
+          {order.status === "canceled" && <OrderCancelReason reason={order.cancelReason} />}
           <div className={styles.total}><span>총 주문 금액</span><strong>{won.format(order.totalAmount)}원</strong></div>
         </section>
 

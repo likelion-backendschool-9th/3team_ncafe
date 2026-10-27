@@ -136,31 +136,98 @@ test("adjacent updates, reverse updates and a second tab detect stale versions w
   expect(await (await context.request.get(`/api/v1/admin/orders/${id}`)).json()).toMatchObject({ status: "received", statusVersion: 2 });
 });
 
-test("cancel confirmation has no reason, traps focus, supports Escape and cannot be reversed", async ({ page, context, orders }) => {
-  const id = orders.receivedId;
-  await page.goto(`/admin/orders/${id}`);
-  const cancel = page.getByRole("button", { name: "주문 취소", exact: true });
-  await cancel.click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("textbox")).toHaveCount(0);
-  await expect(dialog.getByRole("button", { name: "닫기", exact: true })).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(dialog.getByRole("button", { name: "주문 취소 확인", exact: true })).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(dialog.getByRole("button", { name: "닫기", exact: true })).toBeFocused();
-  await page.keyboard.press("Escape");
-  await expect(dialog).not.toBeVisible();
-  await expect(cancel).toBeFocused();
-  await cancel.click();
-  await dialog.getByRole("button", { name: "닫기", exact: true }).click();
-  await expect(cancel).toBeFocused();
-  await cancel.click();
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Enter");
-  await expect(page.getByRole("status")).toContainText("변경했습니다");
-  await expect(page.getByRole("combobox", { name: `주문 #${id} 상태 변경`, exact: true })).toHaveCount(0);
-  expect(await (await context.request.get(`/api/v1/admin/orders/${id}`)).json()).toMatchObject({ status: "canceled", statusVersion: 1, allowedStatuses: [] });
+test("real customer order cancellation requires a reason, preserves drafts and is visible to its owner", async ({ page, context, browser, baseURL, orders }, info) => {
+  const customer = await browser.newContext({ baseURL });
+  try {
+    await login(customer.request, orders.customerEmail);
+    expect((await customer.request.post(`/api/v1/menus/${orders.menuId}/cart/items`, {
+      headers: await csrf(customer.request), data: { temperature: "iced", quantity: 2 },
+    })).ok()).toBe(true);
+    const cart = await (await customer.request.get("/api/v1/cart/items")).json();
+    const input = { cartItemIds: cart.items.map((item: { id: number }) => item.id), orderType: "takeout", paymentMethod: "card", request: null, expectedTotalAmount: 18000 };
+    const key = randomUUID();
+    const creationHeaders = { ...await csrf(customer.request), "Idempotency-Key": key };
+    const create = () => customer.request.post("/api/v1/orders", { headers: creationHeaders, data: input });
+    const createdResponse = await create();
+    expect(createdResponse.status()).toBe(201);
+    const created = await createdResponse.json();
+    expect(created.cancelReason).toBeNull();
+    expect((await (await create()).json()).id).toBe(created.id);
+    const id = created.id;
+    await page.goto(`/admin/orders?q=${id}`);
+    const row = page.getByRole("row").filter({ has: page.getByRole("link", { name: `#${id}`, exact: true }) });
+    const cancel = row.getByRole("button", { name: "주문 취소", exact: true });
+    await cancel.click();
+    const dialog = page.getByRole("dialog");
+    const reason = dialog.getByRole("textbox", { name: "취소 사유 (필수)", exact: true });
+    await expect(reason).toBeFocused();
+    await expect(reason).toHaveAttribute("maxlength", "200");
+    await page.keyboard.press("Tab");
+    await expect(dialog.getByRole("button", { name: "닫기", exact: true })).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(dialog.getByRole("button", { name: "주문 취소 확인", exact: true })).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(reason).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(dialog.getByRole("button", { name: "주문 취소 확인", exact: true })).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(reason).toBeFocused();
+    await reason.fill("닫기 전 임시 사유");
+    await page.keyboard.press("Escape");
+    await expect(cancel).toBeFocused();
+    await cancel.click();
+    await expect(reason).toHaveValue("");
+    await reason.fill(" \n ");
+    await dialog.getByRole("button", { name: "주문 취소 확인", exact: true }).click();
+    await expect(dialog.getByRole("alert")).toContainText("입력해 주세요");
+    await expect(reason).toBeFocused();
+    const text = "재료가 소진되었습니다.\n<script>window.__cancelInjected = 1</script>".padEnd(196, "가");
+    await reason.fill(text);
+    for (const mode of ["write-failed", "csrf-invalid"]) {
+      await fault(context.request, mode);
+      await dialog.getByRole("button", { name: "주문 취소 확인", exact: true }).click();
+      await expect(dialog.getByRole("alert")).toContainText(mode === "csrf-invalid" ? "세션을 확인하지 못했습니다" : "상태를 새로고침");
+      await expect(reason).toHaveValue(text);
+      await expect(reason).toBeFocused();
+      expect((await (await context.request.get(`/api/v1/admin/orders/${id}`)).json()).statusVersion).toBe(0);
+      await fault(context.request, "off");
+    }
+    await reason.fill(`  ${text}  `);
+    let release = () => {};
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    await page.route(url => url.pathname === "/admin/orders", async route => {
+      if (route.request().method() === "POST") await gate;
+      await route.continue();
+    });
+    await dialog.getByRole("button", { name: "주문 취소 확인", exact: true }).click();
+    try {
+      await expect(reason).toBeDisabled();
+      await expect(dialog.getByRole("button", { name: "닫기", exact: true })).toBeDisabled();
+      await page.keyboard.press("Escape");
+      await expect(dialog).toBeVisible();
+    } finally { release(); }
+    await expect(page.getByRole("status")).toContainText("변경했습니다");
+    const stored = await (await context.request.get(`/api/v1/admin/orders/${id}`)).json();
+    expect(stored).toMatchObject({ status: "canceled", statusVersion: 1, cancelReason: text, allowedStatuses: [] });
+    expect(await (await customer.request.get(`/api/v1/orders/${id}`)).json()).toMatchObject({ cancelReason: text });
+    expect((await (await create()).json()).cancelReason).toBe(text);
+    await page.goto(`/admin/orders/${id}`);
+    await expect(page.getByRole("heading", { name: "주문 취소 사유", exact: true })).toBeVisible();
+    await expect(page.getByRole("main")).toContainText(text);
+    const memberPage = await customer.newPage();
+    await memberPage.goto("/my/orders");
+    await expect(memberPage.getByRole("main")).toContainText(text);
+    await memberPage.goto(`/my/orders/${id}`);
+    await expect(memberPage.getByRole("main")).toContainText(text);
+    await expect(memberPage.getByRole("button", { name: "주문 취소", exact: true })).toHaveCount(0);
+    expect(await memberPage.evaluate(() => "__cancelInjected" in window)).toBe(false);
+    await memberPage.reload();
+    await expect(memberPage.getByRole("main")).toContainText(text);
+    expect((await new AxeBuilder({ page: memberPage }).include("main").analyze()).violations.filter(v => ["serious", "critical"].includes(v.impact ?? ""))).toEqual([]);
+    await memberPage.setViewportSize({ width: 390, height: 844 });
+    expect(await memberPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await memberPage.screenshot({ path: info.outputPath("member-cancel-reason.png"), fullPage: true });
+  } finally { await customer.close(); }
 });
 
 test("last active page normalizes after completion and completed section opens", async ({ page, orders }) => {
@@ -184,6 +251,7 @@ test("403/401, invalid IDs, missing/invalid CSRF and session expiration preserve
     await expect(page.getByRole("main")).toContainText("찾을 수 없");
   }
   await page.goto(`/admin/orders/${id}`);
+  await expect(page.getByRole("combobox", { name: `주문 #${id} 상태 변경`, exact: true })).toBeVisible();
   await context.clearCookies();
   await selectStatus(page, id, "preparing");
   await expect(page).toHaveURL(/\/login\?next=/);
@@ -280,4 +348,69 @@ test("mobile/table/grid/dialog axe and existing member/menu API consumers remain
     await expect.poll(() => page.evaluate(() => localStorage.getItem("ncafe_mock_cart"))).toContain(`"menuId":"${orders.menuId}"`);
   }
   expect((await context.request.get("/api/v1/menus")).ok()).toBe(true);
+});
+
+
+test("two administrator sessions cannot overwrite the first cancellation reason", async ({ page, context, browser, baseURL, orders }) => {
+  const second = await browser.newContext({ baseURL });
+  try {
+    await login(second.request, `${orders.prefix}-admin@example.com`);
+    const otherPage = await second.newPage();
+    const id = orders.receivedId;
+    for (const view of [page, otherPage]) {
+      await view.goto(`/admin/orders/${id}`);
+      await view.getByRole("button", { name: "주문 취소", exact: true }).click();
+    }
+    await page.getByRole("dialog").getByRole("textbox").fill("먼저 저장한 사유");
+    await otherPage.getByRole("dialog").getByRole("textbox").fill("나중에 덮어쓸 사유");
+    await page.getByRole("dialog").getByRole("button", { name: "주문 취소 확인", exact: true }).click();
+    await expect(page.getByRole("status")).toContainText("변경했습니다");
+    await otherPage.getByRole("dialog").getByRole("button", { name: "주문 취소 확인", exact: true }).click();
+    await expect(otherPage.getByRole("main").getByRole("alert")).toContainText("이미 변경됐습니다");
+    await expect(otherPage.getByRole("main")).toContainText("먼저 저장한 사유");
+    await expect(otherPage.getByRole("main")).not.toContainText("나중에 덮어쓸 사유");
+    expect(await (await context.request.get(`/api/v1/admin/orders/${id}`)).json()).toMatchObject({ statusVersion: 1, cancelReason: "먼저 저장한 사유" });
+  } finally { await second.close(); }
+});
+
+test("invalid API reasons and foreign ownership cannot change or expose a cancellation; legacy null is visible", async ({ page, context, browser, baseURL, orders }) => {
+  const id = orders.receivedId;
+  for (const cancelReason of [undefined, null, "", " \n\t", "\u00a0\ufeff", "가".repeat(201), "😀".repeat(101)]) {
+    const response = await context.request.put("/api/v1/admin/orders/status", {
+      headers: await csrf(context.request), data: { id, expectedStatus: "received", statusVersion: 0, nextStatus: "canceled", cancelReason },
+    });
+    expect(response.status()).toBe(400);
+  }
+  expect((await context.request.put("/api/v1/admin/orders/status", {
+    headers: await csrf(context.request), data: { id, expectedStatus: "received", statusVersion: 0, nextStatus: "preparing", cancelReason: "잘못된 사유" },
+  })).status()).toBe(400);
+  expect(await (await context.request.get(`/api/v1/admin/orders/${id}`)).json()).toMatchObject({ status: "received", statusVersion: 0, cancelReason: null });
+  const owner = await browser.newContext({ baseURL });
+  const stranger = await browser.newContext({ baseURL });
+  let strangerId: number | undefined;
+  try {
+    await login(owner.request, orders.customerEmail);
+    expect((await owner.request.put("/api/v1/admin/orders/status", {
+      headers: await csrf(owner.request), data: { id, expectedStatus: "received", statusVersion: 0, nextStatus: "canceled", cancelReason: "회원이 보내는 사유" },
+    })).status()).toBe(403);
+    const ownerPage = await owner.newPage();
+    await ownerPage.goto(`/my/orders/${orders.ids[36]}`);
+    await expect(ownerPage.getByRole("main")).toContainText("등록된 취소 사유가 없습니다.");
+    await page.goto(`/admin/orders/${orders.ids[36]}`);
+    await expect(page.getByRole("main")).toContainText("등록된 취소 사유가 없습니다.");
+    const address = `${orders.prefix}-stranger@example.com`;
+    const signup = await stranger.request.post("/api/v1/auth/signup", { headers: await csrf(stranger.request), data: { name: "다른 회원", email: address, password, passwordConfirm: password } });
+    expect(signup.status()).toBe(201);
+    strangerId = (await signup.json()).id;
+    await login(stranger.request, address);
+    expect((await stranger.request.get(`/api/v1/orders/${id}`)).status()).toBe(404);
+    const mine = await (await stranger.request.get("/api/v1/orders")).json();
+    expect(mine.items).toEqual([]);
+    const strangerPage = await stranger.newPage();
+    await strangerPage.goto(`/my/orders/${orders.ids[36]}`);
+    await expect(strangerPage.getByRole("heading", { name: "페이지를 찾을 수 없습니다", exact: true })).toBeVisible();
+  } finally {
+    await owner.close(); await stranger.close();
+    if (strangerId) testDatabase(`delete from users where id=${strangerId}`);
+  }
 });
