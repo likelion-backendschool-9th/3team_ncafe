@@ -231,7 +231,7 @@ S18 시간 경과 반영 (R2·R6)
 
 S19 정상
 - Given S4와 같다.
-- When 12:01:00에 `GET /api/v1/songs/now`를 호출한다.
+- When 12:01:00에 `GET /api/v1/musicbox/songs/now`를 호출한다.
 - Then `current.id=20`, `startedAt=12:00:00`, `durationSeconds=200`이다.
 - Then `endsAt=12:03:21`, `serverNow=12:01:00`, `revision=5`다.
 
@@ -252,8 +252,9 @@ S21 변경 감지 (R3·R7)
 | R4 | `GET /api/v1/my/songs` | `my/SongsController` | 고객 | `200`, 신청곡 배열 |
 | R5 | `DELETE /api/v1/my/songs/{id}` | `my/SongsController` | 고객 | `204` |
 | R6 | `GET /api/v1/musicbox/songs` | `SongsController` | 누구나 | `200`, `{playlist, inbox, played}` |
-| R7 | `GET /api/v1/songs/now` | `SongsController` | 누구나 | `200`, `{current, serverNow, revision}` |
+| R7 | `GET /api/v1/musicbox/songs/now` | `SongsController` | 누구나 | `200`, `{current, serverNow, revision}` |
 
+- 현재 곡 경로는 처음 `GET /api/v1/songs/now`였다. 공개 API를 `/api/v1/musicbox/songs` 아래에 모으려고 옮겼다 (고침 10-27).
 - 신청곡 응답 필드:
   - 기본: `id`, `requesterName`, `songTitle`, `artist`, `story`, `status`
   - 재생 정보: `youtubeVideoId`, `playlistOrder`, `durationSeconds`
@@ -267,7 +268,7 @@ S21 변경 감지 (R3·R7)
   - 관리자 계정으로 고객 전용 요청 `403`
   - 없음·남의 곡 `404`
   - 재생 중 삭제 `409`
-- 프론트는 지금 `GET /api/music-box/version`의 문자열 버전을 몇 초마다 확인한다. 연결할 때 `GET /api/v1/songs/now`의 `revision`으로 바꾼다 (프론트 계획).
+- 프론트는 지금 `GET /api/music-box/version`의 문자열 버전을 몇 초마다 확인한다. 연결할 때 `GET /api/v1/musicbox/songs/now`의 `revision`으로 바꾼다 (프론트 계획).
 - `SecurityConfig`에 위 권한을 선언했다 (10-27). 누구나는 `permitAll`, 고객은 `hasRole("CUSTOMER")`이다. 등록하지 않은 경로는 `denyAll`이다.
   - 쓰기 요청(`POST`·`DELETE`)은 CSRF 토큰이 필요하다. 장바구니와 같다.
 
@@ -398,7 +399,7 @@ cha, #69, 이 PR이 모두 핸들러를 추가한다.
 
 - 백엔드 청사진 (2026-10-25 확인):
   - 공개 곡 목록·현재 곡은 `SongsController`, 곡 신청·내 곡은 `my/SongsController`가 담당하고 DTO는 `dto/songs/`에 둔다. 곡 신청은 10-26에 `SongsController`로 옮겼다 (「구현 결과」).
-  - WBS 경로: `GET /api/v1/musicbox/songs`, `GET /api/v1/songs/now`, `POST /api/v1/musicbox/songs`, `GET /api/v1/my/songs`, `DELETE /api/v1/my/songs/{id}`
+  - WBS 경로: `GET /api/v1/musicbox/songs`, `GET /api/v1/musicbox/songs/now`, `POST /api/v1/musicbox/songs`, `GET /api/v1/my/songs`, `DELETE /api/v1/my/songs/{id}`
   - 같은 클래스명은 Bean 이름으로 구별한다.
   - 부분 인덱스는 `ddl-auto`로 생성된다고 가정하지 않는다. 별도 `sql/` 폴더나 마이그레이션 도구는 쓰지 않는다.
 - DB 설계 뮤직박스 절과 4절: 상태 5종, `playing` 최대 1건, `revision`, 단일 행 잠금 (2026-10-25 확인)
