@@ -73,17 +73,11 @@
 
 - `OrderTest`: 25개 상태 이동 조합, 같은 상태로 돌아온 후의 버전 충돌, 스냅샷·합계·품목 재사용 방지, 잘못된 온도·수량.
 - `OrdersControllerTest`: 관리자 조회·변경, 미인증·일반 회원 차단, 페이지 응답, 검증·누락·상태 충돌·DB 낙관적 잠금 오류 매핑.
-- `OrdersPostgresTest`: 실제 PostgreSQL에서 스키마 생성, ID·고객명·품목명 검색, 와일드카드 이스케이프, 중복 없는 페이지·필터, 메뉴 변경·숨김 후 스냅샷, 버전 증가, 두 동시 트랜잭션 중 한 건만 성공.
+- `AdminOrdersIntegrationTest`: 실제 PostgreSQL에서 스키마 생성, ID·고객명·품목명 검색, 와일드카드 이스케이프, 중복 없는 페이지·필터, 메뉴 변경·숨김 후 스냅샷, 버전 증가, 두 동시 트랜잭션 중 한 건만 성공.
 
 기본 실행: `cd backend && ./gradlew test`.
 
-DB 테스트는 `ORDER_TEST_DB_URL`이 없으면 건너뛴다. 지정하면 임의 이름의 `orders_test_<UUID>` 스키마를 만들고 테스트 후 제거한다. 해당 DB 계정에 스키마 생성 권한이 필요하다. 테스트용 DB에서 아래처럼 실행한다.
-
-```bash
-ORDER_TEST_DB_URL=jdbc:postgresql://localhost:5432/ncafe_test \
-ORDER_TEST_DB_USERNAME=postgres ORDER_TEST_DB_PASSWORD=... \
-./gradlew test --rerun-tasks
-```
+DB 테스트는 `@Tag("integration")` 통합 테스트라 `./gradlew test`에서는 빠진다. Testcontainers로 임시 PostgreSQL 컨테이너를 띄우므로 Docker가 있는 환경에서 `./gradlew integrationTest`로 실행한다.
 
 2026-10-26 재검토: 별도 임시 PostgreSQL 16에서 이 브랜치의 전체 테스트 105개 통과. A·D 코드를 복사해 구성한 임시 통합 환경에서는 기존 테스트와 주문 생성 서비스 → 실제 관리자 로그인/CSRF → 관리자 변경 API → 고객 조회 서비스 흐름을 포함해 244개 통과했다. 실제 프론트·고객 주문 HTTP 인증·회원 FK·Git 머지 결과는 미검증이다. 상세 근거와 남은 조건은 [통합 검토](2026-10-26-integration-review.md)에 기록했다.
 

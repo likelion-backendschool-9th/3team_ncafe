@@ -1,4 +1,4 @@
-package com.newcafe.backend.repository;
+package com.newcafe.backend;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -9,60 +9,40 @@ import com.newcafe.backend.entity.menu.Menu;
 import com.newcafe.backend.entity.menu.MenuDetails;
 import com.newcafe.backend.entity.order.Order;
 import com.newcafe.backend.entity.order.OrderItem;
+import com.newcafe.backend.repository.CategoryRepository;
+import com.newcafe.backend.repository.MenuRepository;
+import com.newcafe.backend.repository.OrderRepository;
 import com.newcafe.backend.service.admin.OrdersService;
 
-import java.sql.DriverManager;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@EnabledIfEnvironmentVariable(named = "ORDER_TEST_DB_URL", matches = "jdbc:postgresql:.*")
+// 관리자 주문 검색 쿼리(LIKE·서브쿼리)와 낙관적 잠금을 실제 PostgreSQL로 확인한다.
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, properties = {
+        "spring.config.import=",
+        "spring.sql.init.mode=never",
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.jpa.properties.hibernate.query.fail_on_pagination_over_collection_fetch=true"
+})
+@Import(BackendDatabaseIntegrationTest.DatabaseConfiguration.class)
 @DirtiesContext
-class OrdersPostgresTest {
-    private static final String SCHEMA = "orders_test_" + UUID.randomUUID().toString().replace("-", "");
-
-    @DynamicPropertySource
-    static void database(DynamicPropertyRegistry registry) throws Exception {
-        try (var connection = DriverManager.getConnection(url(), username(), password());
-             var statement = connection.createStatement()) {
-            statement.execute("create schema " + SCHEMA);
-        }
-        registry.add("spring.datasource.url", OrdersPostgresTest::url);
-        registry.add("spring.datasource.username", OrdersPostgresTest::username);
-        registry.add("spring.datasource.password", OrdersPostgresTest::password);
-        registry.add("spring.jpa.properties.hibernate.default_schema", () -> SCHEMA);
-        registry.add("spring.datasource.hikari.connection-init-sql", () -> "set search_path to " + SCHEMA);
-        registry.add("spring.jpa.properties.hibernate.query.fail_on_pagination_over_collection_fetch", () -> true);
-    }
-
-    private static String url() { return System.getenv("ORDER_TEST_DB_URL"); }
-    private static String username() { return System.getenv().getOrDefault("ORDER_TEST_DB_USERNAME", "postgres"); }
-    private static String password() { return System.getenv().getOrDefault("ORDER_TEST_DB_PASSWORD", ""); }
-
-    @AfterAll
-    static void cleanup() throws Exception {
-        try (var connection = DriverManager.getConnection(url(), username(), password());
-             var statement = connection.createStatement()) {
-            statement.execute("drop schema if exists " + SCHEMA + " cascade");
-        }
-    }
+@Tag("integration")
+class AdminOrdersIntegrationTest {
 
     @Autowired OrdersService service;
     @Autowired OrderRepository orders;
@@ -73,7 +53,6 @@ class OrdersPostgresTest {
 
     @BeforeEach
     void clearFixtures() {
-        // 연결은 이 클래스가 생성한 UUID 스키마만 사용한다.
         jdbc.execute("truncate table order_items, orders, menus, categories restart identity cascade");
     }
 
