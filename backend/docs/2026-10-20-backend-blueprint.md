@@ -245,7 +245,7 @@ Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요
 | `my/` Controller | 담당 API | WBS |
 | --- | --- | --- |
 | `UsersController` | `GET /api/v1/my`, `PUT /api/v1/users/{id}` | 1.5, 1.4 |
-| `CartItemsController` | `POST /api/v1/menus/{id}/cart/items`, `GET /api/v1/cart/items`, `PUT/DELETE /api/v1/cart/items/{id}` | 14.1~14.4 |
+| `CartItemsController` | `POST /api/v1/cart/items`(본문 `menuId`), `GET /api/v1/cart/items`, `PUT/DELETE /api/v1/cart/items/{id}` | 14.1~14.4 |
 | `OrdersController` | `POST /api/v1/orders`(실제 결제 없이 주문 접수), `GET /api/v1/orders`, `GET /api/v1/orders/{id}` | 6.1, 6.3~6.4 |
 | `SongsController` | `GET /api/v1/my/songs`, `DELETE /api/v1/my/songs/{id}` | 11.4~11.5 |
 

@@ -69,11 +69,11 @@ class CartItemsControllerTest {
 
     @Test
     void s1NewLineReturnsCreatedForSignedInMember() throws Exception {
-        when(cartItemsService.add(eq(MEMBER_ID), eq(1L), any(CartItemRequest.class)))
+        when(cartItemsService.add(eq(MEMBER_ID), any(CartItemRequest.class)))
                 .thenReturn(new CartItemsService.Added(line(11L, "iced", 2), true));
 
-        mockMvc.perform(post("/api/v1/menus/1/cart/items").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"temperature\":\"iced\",\"quantity\":2}"))
+        mockMvc.perform(post("/api/v1/cart/items").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"menuId\":1,\"temperature\":\"iced\",\"quantity\":2}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(11))
                 .andExpect(jsonPath("$.menuId").value(1))
@@ -83,43 +83,44 @@ class CartItemsControllerTest {
                 .andExpect(jsonPath("$.lineTotal").value(7000))
                 .andExpect(jsonPath("$.orderable").value(true));
 
-        verify(cartItemsService).add(MEMBER_ID, 1L, new CartItemRequest("iced", 2));
+        verify(cartItemsService).add(MEMBER_ID, new CartItemRequest(1L, "iced", 2));
     }
 
     @Test
     void s2MergedLineReturnsOk() throws Exception {
-        when(cartItemsService.add(eq(MEMBER_ID), eq(1L), any(CartItemRequest.class)))
+        when(cartItemsService.add(eq(MEMBER_ID), any(CartItemRequest.class)))
                 .thenReturn(new CartItemsService.Added(line(11L, "iced", 20), false));
 
-        mockMvc.perform(post("/api/v1/menus/1/cart/items").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"temperature\":\"iced\",\"quantity\":19}"))
+        mockMvc.perform(post("/api/v1/cart/items").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"menuId\":1,\"temperature\":\"iced\",\"quantity\":19}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.quantity").value(20));
     }
 
     @Test
     void s3NullTemperatureIsAccepted() throws Exception {
-        when(cartItemsService.add(eq(MEMBER_ID), eq(8L), any(CartItemRequest.class)))
+        when(cartItemsService.add(MEMBER_ID, new CartItemRequest(8L, null, 1)))
                 .thenReturn(new CartItemsService.Added(line(12L, null, 1), true));
 
-        mockMvc.perform(post("/api/v1/menus/8/cart/items").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"temperature\":null,\"quantity\":1}"))
+        mockMvc.perform(post("/api/v1/cart/items").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"menuId\":8,\"temperature\":null,\"quantity\":1}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.temperature").doesNotExist());
     }
 
     static Stream<String> invalidAddBodies() {
         return Stream.of(
-                "{\"temperature\":\"iced\",\"quantity\":0}",
-                "{\"temperature\":\"iced\",\"quantity\":21}",
-                "{\"temperature\":\"iced\"}",
-                "{\"temperature\":\"warm\",\"quantity\":1}");
+                "{\"menuId\":1,\"temperature\":\"iced\",\"quantity\":0}",
+                "{\"menuId\":1,\"temperature\":\"iced\",\"quantity\":21}",
+                "{\"menuId\":1,\"temperature\":\"iced\"}",
+                "{\"menuId\":1,\"temperature\":\"warm\",\"quantity\":1}",
+                "{\"temperature\":\"iced\",\"quantity\":1}");
     }
 
     @ParameterizedTest
     @MethodSource("invalidAddBodies")
     void s4InvalidBodyReturnsBadRequestWithoutCallingService(String body) throws Exception {
-        mockMvc.perform(post("/api/v1/menus/1/cart/items").contentType(MediaType.APPLICATION_JSON).content(body))
+        mockMvc.perform(post("/api/v1/cart/items").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
 
@@ -128,28 +129,28 @@ class CartItemsControllerTest {
 
     @Test
     void s4TemperatureMismatchFromServiceReturnsBadRequest() throws Exception {
-        when(cartItemsService.add(eq(MEMBER_ID), eq(8L), any(CartItemRequest.class)))
+        when(cartItemsService.add(MEMBER_ID, new CartItemRequest(8L, "hot", 1)))
                 .thenThrow(new CartItemException(Reason.INVALID_INPUT, "이 메뉴에서 선택할 수 없는 온도입니다."));
 
-        mockMvc.perform(post("/api/v1/menus/8/cart/items").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"temperature\":\"hot\",\"quantity\":1}"))
+        mockMvc.perform(post("/api/v1/cart/items").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"menuId\":8,\"temperature\":\"hot\",\"quantity\":1}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
     }
 
     @Test
     void s5MissingMenuIsNotFoundAndSoldOutIsUnprocessable() throws Exception {
-        when(cartItemsService.add(eq(MEMBER_ID), eq(999L), any(CartItemRequest.class)))
+        when(cartItemsService.add(MEMBER_ID, new CartItemRequest(999L, "iced", 1)))
                 .thenThrow(new CartItemException(Reason.NOT_FOUND, "메뉴를 찾을 수 없습니다."));
-        when(cartItemsService.add(eq(MEMBER_ID), eq(2L), any(CartItemRequest.class)))
+        when(cartItemsService.add(MEMBER_ID, new CartItemRequest(2L, "iced", 1)))
                 .thenThrow(new CartItemException(Reason.MENU_UNAVAILABLE, "판매 중지된 메뉴는 담을 수 없습니다."));
 
-        mockMvc.perform(post("/api/v1/menus/999/cart/items").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"temperature\":\"iced\",\"quantity\":1}"))
+        mockMvc.perform(post("/api/v1/cart/items").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"menuId\":999,\"temperature\":\"iced\",\"quantity\":1}"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
-        mockMvc.perform(post("/api/v1/menus/2/cart/items").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"temperature\":\"iced\",\"quantity\":1}"))
+        mockMvc.perform(post("/api/v1/cart/items").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"menuId\":2,\"temperature\":\"iced\",\"quantity\":1}"))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.code").value("MENU_UNAVAILABLE"));
     }

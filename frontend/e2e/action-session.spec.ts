@@ -12,7 +12,7 @@ test("고객: 장바구니 수량 변경 중 세션이 끝나면 로그인으로
   const menu = await createMenu(admin, category.id, { supportsHot: false, supportsIced: false });
 
   await signupCustomer(page);
-  await adminApi(page, "POST", `/api/v1/menus/${menu.id}/cart/items`, { temperature: null, quantity: 1 });
+  await adminApi(page, "POST", "/api/v1/cart/items", { menuId: menu.id, temperature: null, quantity: 1 });
   await page.goto("/cart");
   await expect(page.getByText(menu.name, { exact: true })).toBeVisible();
 

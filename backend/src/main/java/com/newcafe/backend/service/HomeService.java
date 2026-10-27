@@ -16,12 +16,16 @@ import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class HomeService {
+
+    // 홈 추천 메뉴 칸에 보여 주는 메뉴 수
+    static final int RECOMMENDED_MENU_SIZE = 16;
 
     // 홈 뮤직박스 칸에 메모로 붙이는 다음 차례 신청곡 수
     static final int NEXT_UP_SIZE = 3;
@@ -34,7 +38,7 @@ public class HomeService {
 
     @Transactional(readOnly = true)
     public List<MenuResponse> recommendedMenus() {
-        return menuRepository.findTop16ByAvailableTrueAndRecommendedTrueAndArchivedAtIsNullOrderByCreatedAtDescIdDesc()
+        return menuRepository.findRecommended(Limit.of(RECOMMENDED_MENU_SIZE))
                 .stream()
                 .map(MenuResponse::from)
                 .toList();

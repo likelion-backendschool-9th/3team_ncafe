@@ -2,13 +2,14 @@ package com.newcafe.backend.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.newcafe.backend.entity.menu.Menu;
 
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.repository.query.parser.PartTree;
@@ -30,13 +31,11 @@ class MenuRepositoryTest {
     }
 
     @Test
-    void s10HomeLookupTakesNewestSixteenAvailableRecommendedMenus() {
-        PartTree tree = new PartTree(
-                "findTop16ByAvailableTrueAndRecommendedTrueAndArchivedAtIsNullOrderByCreatedAtDescIdDesc", Menu.class);
+    void s10HomeLookupTakesNewestAvailableRecommendedMenus() throws Exception {
+        String query = MenuRepository.class.getMethod("findRecommended", Limit.class).getAnnotation(Query.class).value();
 
-        assertEquals(16, tree.getMaxResults());
-        assertEquals(List.of("available", "recommended", "archivedAt"), properties(tree));
-        assertEquals(Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id")), tree.getSort());
+        assertTrue(query.contains("menu.available = true and menu.recommended = true and menu.archivedAt is null"));
+        assertTrue(query.contains("order by menu.createdAt desc, menu.id desc"));
     }
 
     private static List<String> properties(PartTree tree) {

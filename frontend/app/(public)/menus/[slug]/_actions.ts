@@ -24,11 +24,11 @@ export async function addCartItem(
   }
 
   try {
-    await apiFetch(`/api/v1/menus/${menuId}/cart/items`, {
+    await apiFetch("/api/v1/cart/items", {
       method: "POST",
       headers: await csrfHeaders(),
       // 화면은 hot/ice, 백엔드는 hot/iced를 쓴다.
-      body: JSON.stringify({ temperature: temperature === "ice" ? "iced" : temperature, quantity }),
+      body: JSON.stringify({ menuId, temperature: temperature === "ice" ? "iced" : temperature, quantity }),
     });
   } catch (error) {
     if (error instanceof ApiRequestError) {

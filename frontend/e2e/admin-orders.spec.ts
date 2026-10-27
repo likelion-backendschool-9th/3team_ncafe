@@ -140,8 +140,8 @@ test("real customer order cancellation requires a reason, preserves drafts and i
   const customer = await browser.newContext({ baseURL });
   try {
     await login(customer.request, orders.customerEmail);
-    expect((await customer.request.post(`/api/v1/menus/${orders.menuId}/cart/items`, {
-      headers: await csrf(customer.request), data: { temperature: "iced", quantity: 2 },
+    expect((await customer.request.post("/api/v1/cart/items", {
+      headers: await csrf(customer.request), data: { menuId: orders.menuId, temperature: "iced", quantity: 2 },
     })).ok()).toBe(true);
     const cart = await (await customer.request.get("/api/v1/cart/items")).json();
     const input = { cartItemIds: cart.items.map((item: { id: number }) => item.id), orderType: "takeout", paymentMethod: "card", request: null, expectedTotalAmount: 18000 };

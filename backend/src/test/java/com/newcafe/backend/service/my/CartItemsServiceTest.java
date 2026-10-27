@@ -63,7 +63,7 @@ class CartItemsServiceTest {
         when(cartItemRepository.findByUserIdAndMenu_IdAndTemperature(MEMBER_ID, 1L, "iced")).thenReturn(Optional.empty());
         when(cartItemRepository.save(any(CartItem.class))).thenAnswer(invocation -> withId(invocation.getArgument(0), 11L));
 
-        CartItemsService.Added added = service.add(MEMBER_ID, 1L, new CartItemRequest("iced", 2));
+        CartItemsService.Added added = service.add(MEMBER_ID, new CartItemRequest(1L, "iced", 2));
 
         assertTrue(added.created());
         assertEquals(11L, added.item().id());
@@ -85,7 +85,7 @@ class CartItemsServiceTest {
         when(menuRepository.findByIdAndArchivedAtIsNull(1L)).thenReturn(Optional.of(coffee));
         when(cartItemRepository.findByUserIdAndMenu_IdAndTemperature(MEMBER_ID, 1L, "iced")).thenReturn(Optional.of(existing));
 
-        CartItemsService.Added added = service.add(MEMBER_ID, 1L, new CartItemRequest("iced", 19));
+        CartItemsService.Added added = service.add(MEMBER_ID, new CartItemRequest(1L, "iced", 19));
 
         assertFalse(added.created());
         assertEquals(11L, added.item().id());
@@ -101,7 +101,7 @@ class CartItemsServiceTest {
         when(cartItemRepository.findByUserIdAndMenu_IdAndTemperatureIsNull(MEMBER_ID, 8L)).thenReturn(Optional.empty());
         when(cartItemRepository.save(any(CartItem.class))).thenAnswer(invocation -> withId(invocation.getArgument(0), 12L));
 
-        CartItemsService.Added added = service.add(MEMBER_ID, 8L, new CartItemRequest(null, 1));
+        CartItemsService.Added added = service.add(MEMBER_ID, new CartItemRequest(8L, null, 1));
 
         assertTrue(added.created());
         assertNull(added.item().temperature());
@@ -117,9 +117,9 @@ class CartItemsServiceTest {
         when(menuRepository.findByIdAndArchivedAtIsNull(8L)).thenReturn(Optional.of(monaka));
         when(menuRepository.findByIdAndArchivedAtIsNull(9L)).thenReturn(Optional.of(hotOnly));
 
-        assertReason(Reason.INVALID_INPUT, () -> service.add(MEMBER_ID, 1L, new CartItemRequest(null, 1)));
-        assertReason(Reason.INVALID_INPUT, () -> service.add(MEMBER_ID, 8L, new CartItemRequest("hot", 1)));
-        assertReason(Reason.INVALID_INPUT, () -> service.add(MEMBER_ID, 9L, new CartItemRequest("iced", 1)));
+        assertReason(Reason.INVALID_INPUT, () -> service.add(MEMBER_ID, new CartItemRequest(1L, null, 1)));
+        assertReason(Reason.INVALID_INPUT, () -> service.add(MEMBER_ID, new CartItemRequest(8L, "hot", 1)));
+        assertReason(Reason.INVALID_INPUT, () -> service.add(MEMBER_ID, new CartItemRequest(9L, "iced", 1)));
         verify(cartItemRepository, never()).save(any());
     }
 
@@ -130,8 +130,8 @@ class CartItemsServiceTest {
         when(menuRepository.findByIdAndArchivedAtIsNull(999L)).thenReturn(Optional.empty());
         when(menuRepository.findByIdAndArchivedAtIsNull(2L)).thenReturn(Optional.of(soldOut));
 
-        assertReason(Reason.NOT_FOUND, () -> service.add(MEMBER_ID, 999L, new CartItemRequest("iced", 1)));
-        assertReason(Reason.MENU_UNAVAILABLE, () -> service.add(MEMBER_ID, 2L, new CartItemRequest("iced", 1)));
+        assertReason(Reason.NOT_FOUND, () -> service.add(MEMBER_ID, new CartItemRequest(999L, "iced", 1)));
+        assertReason(Reason.MENU_UNAVAILABLE, () -> service.add(MEMBER_ID, new CartItemRequest(2L, "iced", 1)));
         verify(cartItemRepository, never()).save(any());
     }
 

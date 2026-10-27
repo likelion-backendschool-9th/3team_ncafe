@@ -53,6 +53,7 @@ import tools.jackson.databind.json.JsonMapper;
 class CartItemsIntegrationTest {
 
     private static final String PASSWORD = "비밀번호123!";
+    private static final String CART_ITEMS = "/api/v1/cart/items";
     // 카테고리 표시 순서는 겹칠 수 없어 다른 테스트와 겹치지 않는 큰 값부터 쓴다.
     private static final AtomicInteger NEXT_DISPLAY_ORDER = new AtomicInteger(1000);
 
@@ -84,24 +85,24 @@ class CartItemsIntegrationTest {
         Menu soldOut = menu("생칡즙", 6000, false, false, true);
 
         try (Browser owner = signIn(createMember()); Browser other = signIn(createMember())) {
-            JsonNode coffeeLine = assertJson(owner.send("POST", addPath(coffee), add("iced", 2)), 201);
+            JsonNode coffeeLine = assertJson(owner.send("POST", CART_ITEMS, add(coffee.getId(), "iced", 2)), 201);
             assertEquals(coffee.getId(), coffeeLine.get("menuId").asLong());
             assertEquals(7000, coffeeLine.get("lineTotal").asInt());
             long coffeeLineId = coffeeLine.get("id").asLong();
 
-            JsonNode merged = assertJson(owner.send("POST", addPath(coffee), add("iced", 19)), 200);
+            JsonNode merged = assertJson(owner.send("POST", CART_ITEMS, add(coffee.getId(), "iced", 19)), 200);
             assertEquals(coffeeLineId, merged.get("id").asLong());
             assertEquals(20, merged.get("quantity").asInt());
 
-            long monakaLineId = assertJson(owner.send("POST", addPath(monaka), add(null, 1)), 201).get("id").asLong();
-            JsonNode mergedNull = assertJson(owner.send("POST", addPath(monaka), add(null, 1)), 200);
+            long monakaLineId = assertJson(owner.send("POST", CART_ITEMS, add(monaka.getId(), null, 1)), 201).get("id").asLong();
+            JsonNode mergedNull = assertJson(owner.send("POST", CART_ITEMS, add(monaka.getId(), null, 1)), 200);
             assertEquals(monakaLineId, mergedNull.get("id").asLong());
             assertEquals(2, mergedNull.get("quantity").asInt());
 
-            assertError(owner.send("POST", addPath(soldOut), add("iced", 1)), 422, "MENU_UNAVAILABLE");
-            assertError(owner.send("POST", addPath(coffee), add(null, 1)), 400, "INVALID_INPUT");
-            assertError(owner.send("POST", "/api/v1/menus/999999/cart/items", add("iced", 1)), 404, "NOT_FOUND");
-            assertError(owner.send("POST", addPath(coffee), add("iced", 21)), 400, "VALIDATION_ERROR");
+            assertError(owner.send("POST", CART_ITEMS, add(soldOut.getId(), "iced", 1)), 422, "MENU_UNAVAILABLE");
+            assertError(owner.send("POST", CART_ITEMS, add(coffee.getId(), null, 1)), 400, "INVALID_INPUT");
+            assertError(owner.send("POST", CART_ITEMS, add(999999L, "iced", 1)), 404, "NOT_FOUND");
+            assertError(owner.send("POST", CART_ITEMS, add(coffee.getId(), "iced", 21)), 400, "VALIDATION_ERROR");
 
             HttpResponse<String> listResponse = owner.send("GET", "/api/v1/cart/items", null);
             assertNoStore(listResponse);
@@ -139,7 +140,7 @@ class CartItemsIntegrationTest {
         try (Browser owner = signIn(email)) {
             List<CompletableFuture<HttpResponse<String>>> requests = new ArrayList<>();
             for (int i = 0; i < 8; i++) {
-                requests.add(owner.sendAsync("POST", addPath(monaka), add(null, 1)));
+                requests.add(owner.sendAsync("POST", CART_ITEMS, add(monaka.getId(), null, 1)));
             }
             for (CompletableFuture<HttpResponse<String>> request : requests) {
                 assertTrue(List.of(200, 201).contains(request.join().statusCode()));
@@ -162,11 +163,11 @@ class CartItemsIntegrationTest {
         jdbcTemplate.update("update users set role = 'admin' where email = ?", adminEmail);
 
         try (Browser anonymous = browser(); Browser admin = signIn(adminEmail); Browser customer = signIn(createMember())) {
-            assertError(anonymous.send("POST", addPath(coffee), add("iced", 1)), 401, "UNAUTHENTICATED");
+            assertError(anonymous.send("POST", CART_ITEMS, add(coffee.getId(), "iced", 1)), 401, "UNAUTHENTICATED");
             assertError(anonymous.send("GET", "/api/v1/cart/items", null), 401, "UNAUTHENTICATED");
-            assertError(admin.send("POST", addPath(coffee), add("iced", 1)), 403, "FORBIDDEN");
+            assertError(admin.send("POST", CART_ITEMS, add(coffee.getId(), "iced", 1)), 403, "FORBIDDEN");
             assertError(admin.send("GET", "/api/v1/cart/items", null), 403, "FORBIDDEN");
-            assertError(customer.sendWithoutCsrf("POST", addPath(coffee), add("iced", 1)), 403, "CSRF_INVALID");
+            assertError(customer.sendWithoutCsrf("POST", CART_ITEMS, add(coffee.getId(), "iced", 1)), 403, "CSRF_INVALID");
             assertEquals(200, customer.sendWithoutCsrf("GET", "/api/v1/cart/items", null).statusCode());
         }
     }
@@ -215,15 +216,12 @@ class CartItemsIntegrationTest {
         return HttpRequest.newBuilder(URI.create("http://localhost:" + port + path)).timeout(Duration.ofSeconds(15));
     }
 
-    private String add(String temperature, int quantity) {
+    private String add(Long menuId, String temperature, int quantity) {
         Map<String, Object> body = new HashMap<>();
+        body.put("menuId", menuId);
         body.put("temperature", temperature);
         body.put("quantity", quantity);
         return jsonMapper.writeValueAsString(body);
-    }
-
-    private static String addPath(Menu menu) {
-        return "/api/v1/menus/" + menu.getId() + "/cart/items";
     }
 
     private static String linePath(long id) {
