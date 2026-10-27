@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -66,6 +67,23 @@ class SongsControllerTest {
                         .content("{\"songId\":99,\"youtubeVideoId\":\"abc123\"}"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    // 결과를 돌려주지 않는 변경은 204로 응답한다. 200에 빈 본문이면 프론트 apiFetch가 JSON을 읽다 실패한다.
+    @Test
+    void changesWithoutResultReturnNoContent() throws Exception {
+        when(songRepository.findById(1L)).thenReturn(Optional.of(newSong(1L)));
+        mockMvc.perform(put("/api/v1/admin/songs/1/cancel"))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+
+        // 이미 끝난 곡에 늦게 온 요청도 같은 204다.
+        when(songRepository.findById(2L)).thenReturn(Optional.empty());
+        for (String path : List.of("/api/v1/admin/songs/current/finish", "/api/v1/admin/songs/current/cancel")) {
+            mockMvc.perform(post(path).contentType(MediaType.APPLICATION_JSON).content("{\"id\":2}"))
+                    .andExpect(status().isNoContent())
+                    .andExpect(content().string(""));
+        }
     }
 
     @Test
