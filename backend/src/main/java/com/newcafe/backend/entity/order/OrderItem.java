@@ -10,7 +10,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -21,7 +20,6 @@ import org.hibernate.annotations.Check;
 @Entity
 @Check(constraints = "quantity > 0 and unit_price >= 0 and line_total = quantity * unit_price "
         + "and (temperature is null or temperature in ('hot','iced'))")
-@Table(name = "order_items")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrderItem {
@@ -31,29 +29,29 @@ public class OrderItem {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "order_id", nullable = false)
+    @JoinColumn(nullable = false)
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "menu_id", nullable = false)
+    @JoinColumn(nullable = false)
     private Menu menu;
 
-    @Column(name = "menu_name", nullable = false, length = 80)
+    @Column(nullable = false, length = 80)
     private String menuName;
 
-    @Column(name = "image_url", nullable = false, length = 2048)
+    @Column(nullable = false, length = 2048)
     private String imageUrl;
 
     @Column(length = 10)
     private String temperature;
 
-    @Column(name = "unit_price", nullable = false)
+    @Column(nullable = false)
     private int unitPrice;
 
     @Column(nullable = false)
     private int quantity;
 
-    @Column(name = "line_total", nullable = false)
+    @Column(nullable = false)
     private int lineTotal;
 
     private OrderItem(Menu menu, String temperature, int quantity, int unitPrice, int lineTotal) {
