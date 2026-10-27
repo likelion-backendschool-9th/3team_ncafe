@@ -27,6 +27,9 @@
 .table { width: 100%; min-width: 800px; border-collapse: collapse; text-align: left; }
 .table caption { padding: 0.6rem 1rem; background: var(--member-panel); text-align: left; }
 .table th, .table td { padding: 1rem 0.8rem; border-bottom: 1px solid #d6c2a2; white-space: nowrap; }
+/* 긴 이메일이 표를 넓히지 않도록 칸이 좁아지면 줄을 바꾼다. 너무 좁아지지 않게 최소 폭은 둔다. */
+.table td.email { min-width: 12rem; white-space: normal; overflow-wrap: anywhere; }
+.table td.email > span { display: inline-block; max-width: 100%; }
 .table th { background: #efe0c4; color: var(--muted); font-size: 0.8rem; font-weight: 700; }
 .table th:first-child, .table td:first-child { padding-left: 1.1rem; }
 .table th:last-child, .table td:last-child { width: 1%; padding-right: 1.1rem; text-align: left; }
