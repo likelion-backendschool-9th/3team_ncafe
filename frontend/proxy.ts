@@ -2,10 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ApiRequestError, BackendSession, type BackendCookie } from "./app/_lib/api/backend-session";
 
 export async function proxy(request: NextRequest) {
-  // Order Actions authorize with a cookie-writing session guard before submitting input. Let Next's
-  // Action handler encode their redirects; an HTTP Proxy redirect breaks fetch Actions.
-  if (request.method === "POST" && (request.nextUrl.pathname === "/admin/orders"
-    || request.nextUrl.pathname.startsWith("/admin/orders/"))) {
+  // Server Action은 화면 경로로 가는 POST다. 여기서 HTTP redirect를 돌려주면 Next가 Action 응답으로 해석하지 못해
+  // 화면이 멈춘다. 그대로 넘기고, 각 Action의 권한 확인(requireRole 등)이 Next 방식으로 로그인·forbidden에 보내게 한다.
+  if (request.method === "POST" && request.headers.has("next-action")) {
     const response = NextResponse.next();
     response.headers.set("Cache-Control", "no-store");
     return response;

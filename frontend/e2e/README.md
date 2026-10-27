@@ -67,3 +67,11 @@ npm run test:e2e -- admin-categories admin-menus
 ```
 
 백엔드가 꺼진 화면(C4)은 브라우저에서 직접 확인한다.
+
+## 세션 만료 Server Action E2E
+
+`action-session.spec.ts`는 화면을 연 뒤 쿠키를 지우고 Server Action을 보냈을 때 로그인 화면으로 가는지 확인한다(고객 장바구니 수량 변경, 관리자 카테고리 추가). `proxy.ts`가 Action POST에 HTTP redirect를 돌려주면 화면이 멈추므로, 이 동작이 다시 생기지 않는지 지킨다(#94). 위 카테고리·메뉴 E2E와 같은 환경에서 중계 서버 없이 실행할 수 있다.
+
+```sh
+npm run test:e2e -- action-session
+```
