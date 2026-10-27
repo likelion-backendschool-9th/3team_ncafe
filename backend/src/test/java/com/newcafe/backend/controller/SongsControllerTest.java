@@ -20,8 +20,10 @@ import com.newcafe.backend.entity.song.SongStatus;
 import com.newcafe.backend.entity.song.SongTiming;
 import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
+import com.newcafe.backend.repository.UserRepository;
 import com.newcafe.backend.service.SongsService;
 import com.newcafe.backend.service.support.MusicBoxSettler;
+import com.newcafe.backend.entity.user.TestUsers;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -62,7 +64,9 @@ class SongsControllerTest {
             ReflectionTestUtils.setField(song, "id", 1L);
             return song;
         });
-        songsService = new SongsService(songRepository, musicBoxStateRepository,
+        UserRepository userRepository = mock(UserRepository.class);
+        when(userRepository.getReferenceById(any())).thenAnswer(invocation -> TestUsers.withId(invocation.getArgument(0)));
+        songsService = new SongsService(songRepository, userRepository, musicBoxStateRepository,
                 new MusicBoxSettler(songRepository, musicBoxStateRepository),
                 Clock.fixed(Instant.parse("2026-10-26T03:01:00Z"), ZoneOffset.UTC));
     }
@@ -174,7 +178,7 @@ class SongsControllerTest {
     }
 
     private Song song(Long id) {
-        Song song = new Song(7L, "민지", "밤편지", "아이유", "사연");
+        Song song = new Song(TestUsers.withId(7L), "민지", "밤편지", "아이유", "사연");
         ReflectionTestUtils.setField(song, "id", id);
         return song;
     }

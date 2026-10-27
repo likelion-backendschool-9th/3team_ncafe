@@ -64,7 +64,7 @@ R1은 PR #78(cha)이 구현했다. 이 PR은 단계 3에서 부족한 부분만 
 S1 저장 형식
 - Given `Song`, `MusicBoxState` 엔티티와 `PluralTableNamingStrategy`가 있다.
 - When Hibernate 메타데이터를 만든다 (`PluralTableNamingStrategyTest` 방식).
-- Then `music_requests`의 `song_title`은 100자, `artist`는 80자다.
+- Then `music_requests`의 `song_title`은 100자, `artist`는 80자다. (고침 10-27: 테이블 이름을 `songs`로 바꿨다)
 - Then `story`는 `text`, `user_id`와 `status`는 `NOT NULL`이다.
 - Then `youtube_video_id`, `playlist_order`, `duration_seconds`, `started_at`, `played_at`은 `NULL`을 허용한다.
 - Then 시각 컬럼(`created_at`, `updated_at`, `started_at`, `played_at`, `music_box_state.updated_at`)은 `TIMESTAMPTZ`다.
@@ -313,7 +313,7 @@ cha, #69, 이 PR이 모두 핸들러를 추가한다.
 | PR | 현재 회원 처리 | 이 계획의 대응 |
 | --- | --- | --- |
 | #61 `session-auth` (머지됨) | `@AuthenticationPrincipal SessionUserDetails` | Q1 구현체 추가와 `SecurityConfig` 권한 선언 완료 (10-27) |
-| #66 `admin-user-api` | `User` 엔티티만 따로 만듦 | `user_id`는 FK 없이 `Long`. `User`가 develop에 들어오면 FK 추가 |
+| #66 `admin-user-api` | `User` 엔티티만 따로 만듦 | `user_id`는 FK 없이 `Long`. `User`가 develop에 들어오면 FK 추가 (10-27 완료: `Song.user` `@ManyToOne`) |
 | #67 `my-be` | 고정 회원 ID (`CurrentUser`) | 쓰지 않는다. 누가 호출해도 같은 회원이 된다. |
 | #69 `order-api` | `CurrentUserContext`, 없으면 `401` | Q1 A: 같은 파일을 쓴다 |
 
@@ -322,7 +322,7 @@ cha, #69, 이 PR이 모두 핸들러를 추가한다.
 - 관리자 선곡·재생 API (WBS 10.x). cha가 담당한다.
 - 공용 엔티티·Repository·`SongException` (R1). PR #78이 담당한다.
 - 홈 신청곡 요약 `GET /api/v1/index/songs`. 청사진의 `HomeController` 작업에서 다룬다.
-- `user_id` FK. 별도 작업으로 한다.
+- `user_id` FK. 별도 작업으로 한다. (고침 10-27: `feature/songs-user-fk`에서 연결했다)
 - `playing`·`queued` DB 인덱스와 PostgreSQL 통합 테스트 (Q3, S3).
 - 손님 화면의 재생 종료·영상 길이 통지 (Q2). 서버 판단에 필요한 길이는 관리자 쪽에서 확보한다.
 - 프론트 연결과 YouTube Data API 호출. [YouTube 정리](./youtube-data-api.md)는 팀 공용 참고 문서다.
@@ -387,7 +387,7 @@ cha, #69, 이 PR이 모두 핸들러를 추가한다.
 - R2: 길이를 모르는 곡은 관리자가 다음 곡으로 넘기거나 취소할 때까지 `playing`이다.
 - R3: 곡명 1~100자, 가수 1~80자, 사연 1~500자이고 앞뒤 공백을 제거한다. 프론트 `RequestForm.tsx`·`_actions.ts`와 같다.
 - R3: `requesterName`은 신청 당시 회원 이름이다. 회원 이름이 바뀌어도 그대로 둔다.
-- R3: `user_id`는 `User` 엔티티가 develop에 없으므로 FK 없는 `Long NOT NULL`로 둔다.
+- R3: `user_id`는 `User` 엔티티가 develop에 없으므로 FK 없는 `Long NOT NULL`로 둔다. (고침 10-27: `Song.user`를 `@ManyToOne(LAZY)`로 바꿔 `users` FK를 건다. 실제 DB에 회원이 없는 `user_id` 행이 있으면 `ddl-auto: update`의 제약 생성이 WARN만 남기고 실패해 FK가 빠진 채로 뜬다. 전용 DB에서 재현했다. 배포 전에 고아 행 수가 0인지 확인한다)
 - R4: 상태별 정렬(재생 중 → 대기 → 접수 …)은 프론트가 한다.
 - R5: 남의 곡과 없는 곡은 구분하지 않고 `404`를 반환한다. 삭제는 DB 설계대로 행을 지운다.
 - R6: 공개 응답에 신청자 이름과 사연을 넣는다. 지금 공개 화면에 이미 보이는 정보다.
@@ -405,7 +405,7 @@ cha, #69, 이 PR이 모두 핸들러를 추가한다.
 - 카테고리 계획: 구현 기준 1~8. `is_fallback` 부분 인덱스 적용 방법이 아직 결정 필요 상태다 (2026-10-25 확인).
 - 메뉴 계획: `MenuFields`, Bean 이름, 단계별 커밋 형식 (2026-10-25 확인)
 - develop에는 PostgreSQL 통합 테스트가 없다. 테스트는 Mockito·MockMvc·Hibernate 메타데이터(`PluralTableNamingStrategyTest`) 중심이다 (2026-10-25 확인).
-- `PluralTableNamingStrategy`에 `Song`→`music_requests`, `MusicBoxState`→`music_box_state` 매핑이 이미 있다 (2026-10-25 확인).
+- `PluralTableNamingStrategy`에 `Song`→`music_requests`, `MusicBoxState`→`music_box_state` 매핑이 이미 있다 (고침 10-27: `Song` 예외를 지워 기본 규칙대로 `songs`가 된다) (2026-10-25 확인).
 - 프론트 목 저장소 `frontend/app/_lib/mock/music-box.ts`: `END_GRACE_MS=1000`, `settle` (2026-10-25 확인)
 - 프론트 영상 길이 출처 (2026-10-25 확인):
   - 관리자가 플레이리스트에 담을 때 미리보기가 잰 길이를 보낸다 (`AddToPlaylistForm.tsx`).

@@ -3,6 +3,7 @@ package com.newcafe.backend.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -19,7 +20,9 @@ import com.newcafe.backend.entity.song.SongStatus;
 import com.newcafe.backend.entity.song.SongTiming;
 import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
+import com.newcafe.backend.repository.UserRepository;
 import com.newcafe.backend.service.support.MusicBoxSettler;
+import com.newcafe.backend.entity.user.TestUsers;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -38,12 +41,15 @@ class SongsServiceTest {
 
     private SongRepository songRepository;
     private MusicBoxStateRepository musicBoxStateRepository;
+    private UserRepository userRepository;
     private MusicBoxState state;
 
     @BeforeEach
     void setUp() {
         songRepository = mock(SongRepository.class);
         musicBoxStateRepository = mock(MusicBoxStateRepository.class);
+        userRepository = mock(UserRepository.class);
+        when(userRepository.getReferenceById(7L)).thenReturn(TestUsers.withId(7L));
         state = new MusicBoxState();
         ReflectionTestUtils.setField(state, "revision", 5L);
         when(musicBoxStateRepository.findForUpdate()).thenReturn(state);
@@ -61,6 +67,7 @@ class SongsServiceTest {
         assertEquals("민지", response.requesterName());
         assertEquals("pending", response.status());
         assertEquals(6L, state.getRevision());
+        verify(songRepository).save(argThat(song -> song.getUser().getId().equals(7L)));
     }
 
     @Test
@@ -166,7 +173,7 @@ class SongsServiceTest {
     void s21RevisionChangesAfterMemberRequestsSong() {
         Clock clock = clock("03:01:00");
         when(songRepository.save(any(Song.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        SongsService service = new SongsService(songRepository, musicBoxStateRepository,
+        SongsService service = new SongsService(songRepository, userRepository, musicBoxStateRepository,
                 new MusicBoxSettler(songRepository, musicBoxStateRepository), clock);
 
         service.create(7L, "민지", new CreateSongRequest("밤편지", "아이유", "사연"));
@@ -175,7 +182,7 @@ class SongsServiceTest {
     }
 
     private SongsService service(String time) {
-        return new SongsService(songRepository, musicBoxStateRepository,
+        return new SongsService(songRepository, userRepository, musicBoxStateRepository,
                 new MusicBoxSettler(songRepository, musicBoxStateRepository), clock(time));
     }
 
@@ -204,7 +211,7 @@ class SongsServiceTest {
     }
 
     private Song pending(Long id) {
-        Song song = new Song(7L, "민지", "밤편지", "아이유", "사연");
+        Song song = new Song(TestUsers.withId(7L), "민지", "밤편지", "아이유", "사연");
         ReflectionTestUtils.setField(song, "id", id);
         return song;
     }

@@ -2,14 +2,18 @@ package com.newcafe.backend.entity.song;
 
 import com.newcafe.backend.common.error.SongException;
 import com.newcafe.backend.common.error.SongException.Reason;
+import com.newcafe.backend.entity.user.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 
@@ -33,8 +37,10 @@ public class Song {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long userId;
+    // 신청한 회원. 이름은 신청 당시 값으로 requesterName에 따로 남긴다.
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(nullable = false)
+    private User user;
 
     @Column(nullable = false, length = 50)
     private String requesterName;
@@ -71,8 +77,8 @@ public class Song {
     @Column(columnDefinition = "TIMESTAMPTZ")
     private Instant startedAt;
 
-    public Song(Long userId, String requesterName, String songTitle, String artist, String story) {
-        this.userId = userId;
+    public Song(User user, String requesterName, String songTitle, String artist, String story) {
+        this.user = user;
         this.requesterName = requesterName;
         this.songTitle = songTitle;
         this.artist = artist;

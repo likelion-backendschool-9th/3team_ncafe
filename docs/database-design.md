@@ -28,7 +28,7 @@
 
 ### 보조 Mermaid 관계도
 
-다이어그램의 이름은 Java 엔티티명이다. DB 테이블은 각각 `User`→`users`, `Category`→`categories`, `Menu`→`menus`, `CartItem`→`cart_items`, `Order`→`orders`, `OrderItem`→`order_items`, `Song`→`music_requests`, `MusicBoxState`→`music_box_state`로 매핑한다. 속성은 DB 컬럼명으로 적었다.
+다이어그램의 이름은 Java 엔티티명이다. DB 테이블은 각각 `User`→`users`, `Category`→`categories`, `Menu`→`menus`, `CartItem`→`cart_items`, `Order`→`orders`, `OrderItem`→`order_items`, `Song`→`songs`, `MusicBoxState`→`music_box_state`로 매핑한다. 속성은 DB 컬럼명으로 적었다.
 
 ```mermaid
 erDiagram
@@ -173,7 +173,7 @@ erDiagram
 
 | 테이블 | 필수 컬럼 | 제약 및 읽기 방식 |
 | --- | --- | --- |
-| `music_requests` | `id`, `user_id`, `requester_name`, `song_title`, `artist`, `story`, `status`, `created_at`, `updated_at` | 상태는 `pending`, `queued`, `playing`, `played`, `cancelled`. 선곡 전 `youtube_video_id`·`duration_seconds`는 `NULL` 가능. `queued`에서만 `playlist_order`를 사용한다. `playing`에는 `started_at`, `played`에는 `played_at`을 기록한다. 영상 길이는 0초 초과·6시간 이하. |
+| `songs` | `id`, `user_id`, `requester_name`, `song_title`, `artist`, `story`, `status`, `created_at`, `updated_at` | 상태는 `pending`, `queued`, `playing`, `played`, `cancelled`. 선곡 전 `youtube_video_id`·`duration_seconds`는 `NULL` 가능. `queued`에서만 `playlist_order`를 사용한다. `playing`에는 `started_at`, `played`에는 `played_at`을 기록한다. 영상 길이는 0초 초과·6시간 이하. |
 | `music_box_state` | `id=1`, `revision`, `updated_at` | 모든 선곡·재생 전환을 한 행 잠금 아래 처리한다. 화면의 버전 확인 API에는 `revision`을 반환한다. |
 
 신청곡 작성은 로그인한 회원만 가능하며 `user_id`는 필수다. `requester_name`은 신청 당시 이름으로 남긴다. 회원은 본인의 곡 중 `playing`이 아닌 곡을 삭제할 수 있다. 관리자가 `pending`을 취소하면 삭제하지 않고 `cancelled`로 남긴다. `queued` 순서는 서로 겹치지 않게 하고, `playing`은 전체 DB에서 최대 한 건으로 제한한다. 재생 상태를 읽거나 바꿀 때 서버가 `started_at + duration_seconds`를 기준으로 경과한 곡을 정리하고 다음 곡의 시작 시각을 계산한다. 길이를 아직 모르면 재생 종료 통지 또는 관리자 조작을 기다린다. `serverNow`와 종료 예정 시각은 API 응답에서 계산하며 저장하지 않는다.
@@ -185,7 +185,7 @@ erDiagram
 - `menus`: `slug` 유니크, `(category_id, archived_at, available)` 조회 인덱스. 보관 처리된 메뉴의 slug도 재사용하지 않는다.
 - `cart_items`: `(user_id, menu_id, temperature)`의 `NULL` 안전 유니크 인덱스. 장바구니 수정과 주문 확정은 해당 회원의 `users` 행을 잠가 기기 간 변경이 한 순서로 적용되게 한다. 읽을 때마다 서버의 현재 항목을 반환한다.
 - `orders`: `(customer_id, created_at DESC)`, `(status, created_at DESC)` 인덱스. 상태 변경은 예상 상태·버전을 검사한 뒤 현재 상태와 버전을 함께 갱신한다.
-- `music_requests`: `(status, playlist_order)` 조회 인덱스, `queued` 순서 유니크, `playing` 단일 행 보장용 부분 유니크 인덱스. 재생 상태 변경과 `revision` 증가를 한 트랜잭션에서 처리한다.
+- `songs`: `(status, playlist_order)` 조회 인덱스, `queued` 순서 유니크, `playing` 단일 행 보장용 부분 유니크 인덱스. 재생 상태 변경과 `revision` 증가를 한 트랜잭션에서 처리한다.
 
 ## 5. 프론트·API 변경 계약
 

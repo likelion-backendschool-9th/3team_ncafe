@@ -17,6 +17,7 @@ import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
 import com.newcafe.backend.service.my.SongsService;
 import com.newcafe.backend.service.support.MusicBoxSettler;
+import com.newcafe.backend.entity.user.TestUsers;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -48,7 +49,7 @@ class SongsControllerTest {
 
     @Test
     void s12ListReturnsMembersSongs() throws Exception {
-        Song song = new Song(7L, "민지", "밤편지", "아이유", "사연");
+        Song song = new Song(TestUsers.withId(7L), "민지", "밤편지", "아이유", "사연");
         ReflectionTestUtils.setField(song, "id", 3L);
         when(songRepository.findByUserIdOrderByCreatedAtDesc(7L)).thenReturn(List.of(song));
 
@@ -60,7 +61,7 @@ class SongsControllerTest {
 
     @Test
     void s14DeleteReturnsNoContent() throws Exception {
-        Song song = new Song(7L, "민지", "밤편지", "아이유", "사연");
+        Song song = new Song(TestUsers.withId(7L), "민지", "밤편지", "아이유", "사연");
         when(songRepository.findByIdAndUserId(10L, 7L)).thenReturn(Optional.of(song));
 
         mockMvc(member()).perform(delete("/api/v1/my/songs/10"))
@@ -76,7 +77,7 @@ class SongsControllerTest {
 
     @Test
     void s16DeletePlayingSongReturnsConflict() throws Exception {
-        Song song = new Song(7L, "민지", "밤편지", "아이유", "사연");
+        Song song = new Song(TestUsers.withId(7L), "민지", "밤편지", "아이유", "사연");
         song.queue("abcdefghijk", 200);
         song.play(NOW.minusSeconds(10));
         when(songRepository.findFirstByStatus(SongStatus.playing)).thenReturn(Optional.of(song));

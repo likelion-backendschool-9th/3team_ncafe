@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.newcafe.backend.common.error.SongException;
 import com.newcafe.backend.common.error.SongException.Reason;
+import com.newcafe.backend.entity.user.TestUsers;
 
 import java.time.Instant;
 
@@ -48,6 +49,6 @@ class SongTest {
     }
 
     private Song newSong() {
-        return new Song(7L, "민지", "밤편지", "아이유", "오늘 첫 출근했어요");
+        return new Song(TestUsers.withId(7L), "민지", "밤편지", "아이유", "오늘 첫 출근했어요");
     }
 }

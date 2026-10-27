@@ -12,6 +12,7 @@ import com.newcafe.backend.entity.song.Song;
 import com.newcafe.backend.entity.song.SongStatus;
 import com.newcafe.backend.repository.MusicBoxStateRepository;
 import com.newcafe.backend.repository.SongRepository;
+import com.newcafe.backend.entity.user.TestUsers;
 
 import java.time.Instant;
 import java.util.List;
@@ -48,7 +49,7 @@ class MusicBoxSettlerTest {
     @Test
     void lockAndSettleSettlesWithoutTouching() {
         MusicBoxState state = new MusicBoxState();
-        Song current = new Song(7L, "민지", "밤편지", "아이유", "사연");
+        Song current = new Song(TestUsers.withId(7L), "민지", "밤편지", "아이유", "사연");
         current.queue("abcdefghijk", 200);
         current.play(STARTED_AT);
         when(musicBoxStateRepository.findForUpdate()).thenReturn(state);

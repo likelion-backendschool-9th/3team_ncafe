@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.newcafe.backend.entity.user.TestUsers;
+
 import java.time.Instant;
 import java.util.List;
 
@@ -79,7 +81,7 @@ class SongSettlementTest {
     }
 
     private Song queued(Integer durationSeconds) {
-        Song song = new Song(7L, "민지", "밤편지", "아이유", "사연");
+        Song song = new Song(TestUsers.withId(7L), "민지", "밤편지", "아이유", "사연");
         song.queue("abcdefghijk", durationSeconds);
         return song;
     }

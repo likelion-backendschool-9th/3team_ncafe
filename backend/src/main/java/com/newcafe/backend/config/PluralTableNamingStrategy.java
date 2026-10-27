@@ -10,7 +10,6 @@ public class PluralTableNamingStrategy extends ImplicitNamingStrategyJpaComplian
     public Identifier determinePrimaryTableName(ImplicitEntityNameSource source) {
         String entityName = transformEntityName(source.getEntityNaming());
         String tableName = switch (entityName) {
-            case "Song" -> "MusicRequests";
             case "MusicBoxState" -> "MusicBoxState";
             default -> pluralize(entityName);
         };
