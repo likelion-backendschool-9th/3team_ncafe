@@ -145,7 +145,7 @@ class SongsControllerTest {
         when(songRepository.findPlayingTiming()).thenReturn(Optional.of(new SongTiming(STARTED_AT, 200)));
         when(songRepository.findFirstByStatus(SongStatus.playing)).thenReturn(Optional.of(current));
 
-        mockMvc(visitor()).perform(get("/api/v1/songs/now"))
+        mockMvc(visitor()).perform(get("/api/v1/musicbox/songs/now"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.current.id").value(20))
                 .andExpect(jsonPath("$.current.endsAt").exists())
@@ -155,7 +155,7 @@ class SongsControllerTest {
 
     @Test
     void s20NowWithoutPlayingSongReturnsNullCurrent() throws Exception {
-        mockMvc(visitor()).perform(get("/api/v1/songs/now"))
+        mockMvc(visitor()).perform(get("/api/v1/musicbox/songs/now"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.current").isEmpty())
                 .andExpect(jsonPath("$.revision").value(5));
