@@ -215,14 +215,35 @@ class ApiAccessPolicyTest {
                 Arguments.of("GET", "/api/v1/auth/login"),
                 Arguments.of("GET", "/api/v1/auth/logout"),
                 Arguments.of("POST", "/api/v1/auth/csrf"),
-                Arguments.of("POST", "/api/v1/my"),
-                Arguments.of("PUT", "/api/v1/my"),
                 Arguments.of("POST", "/api/v1/menus"),
                 Arguments.of("POST", "/api/v1/menus/categories"),
                 Arguments.of("POST", "/api/v1/menus/americano"),
                 Arguments.of("POST", "/api/v1/index/menus"),
                 Arguments.of("POST", "/api/v1/index/songs"),
-                Arguments.of("GET", "/api/v1/guest/menus"),
+                Arguments.of("GET", "/api/v1/guest/menus"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("unsupportedCustomerRequests")
+    void incorrectMethodsOnCustomerRoutesAreRejectedWithoutReachingControllers(String method, String path)
+            throws Exception {
+        mockMvc.perform(request(HttpMethod.valueOf(method), path).with(csrf()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"));
+        mockMvc.perform(request(HttpMethod.valueOf(method), path).with(csrf())
+                        .with(user(principal(UserRole.ADMIN))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+        mockMvc.perform(request(HttpMethod.valueOf(method), path).with(csrf())
+                        .with(user(principal(UserRole.CUSTOMER))))
+                .andExpect(status().isMethodNotAllowed());
+        verifyNoInteractions(usersService, cartItemsService, ordersService);
+    }
+
+    static Stream<Arguments> unsupportedCustomerRequests() {
+        return Stream.of(
+                Arguments.of("POST", "/api/v1/my"),
+                Arguments.of("PUT", "/api/v1/my"),
                 Arguments.of("PATCH", "/api/v1/cart/items/11"),
                 Arguments.of("POST", "/api/v1/cart/items"),
                 Arguments.of("PUT", "/api/v1/orders/7"),
