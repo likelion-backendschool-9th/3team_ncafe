@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public class AdminOrderException extends RuntimeException {
-    public enum Reason { NOT_FOUND, INVALID_STATUS, STALE_STATUS, UNAUTHORIZED, FORBIDDEN }
+    public enum Reason { NOT_FOUND, INVALID_INPUT, INVALID_STATUS, STALE_STATUS, UNAUTHORIZED, FORBIDDEN }
 
     private final Reason reason;
 

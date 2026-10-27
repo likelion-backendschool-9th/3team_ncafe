@@ -143,11 +143,32 @@ class OrdersControllerTest {
     }
 
     @Test
-    void receivedCanBeCanceledWithoutReason() throws Exception {
+    void cancellationReturnsReasonAndReadReturnsTheSameStoredValue() throws Exception {
         mvc.perform(put("/api/v1/admin/orders/status").with(admin()).contentType(MediaType.APPLICATION_JSON)
-                        .content(BODY.replace("\"nextStatus\":\"preparing\"", "\"nextStatus\":\"canceled\"")))
+                        .content(BODY.replace("\"nextStatus\":\"preparing\"", "\"nextStatus\":\"canceled\",\"cancelReason\":\" 재료 소진 \"")))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("canceled"))
+                .andExpect(jsonPath("$.cancelReason").value("재료 소진"))
                 .andExpect(jsonPath("$.allowedStatuses").isEmpty());
+        mvc.perform(get("/api/v1/admin/orders/1").with(admin()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.cancelReason").value("재료 소진"));
+    }
+
+    static Stream<String> invalidCancellationBodies() {
+        String cancel = BODY.replace("\"nextStatus\":\"preparing\"", "\"nextStatus\":\"canceled\"");
+        return Stream.of(cancel, cancel.replace("}", ",\"cancelReason\":null}"),
+                cancel.replace("}", ",\"cancelReason\":\"\"}"),
+                cancel.replace("}", ",\"cancelReason\":\" \\n\\t \"}"),
+                cancel.replace("}", ",\"cancelReason\":\"" + "가".repeat(201) + "\"}"),
+                BODY.replace("}", ",\"cancelReason\":\"재료 소진\"}"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidCancellationBodies")
+    void invalidReasonReturns400WithoutFlushing(String body) throws Exception {
+        mvc.perform(put("/api/v1/admin/orders/status").with(admin()).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest());
+        verify(repository, never()).flush();
+        assertEquals("received", order.getStatus());
     }
 
     @Test

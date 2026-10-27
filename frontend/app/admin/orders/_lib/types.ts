@@ -10,7 +10,7 @@ export type AdminOrderItem = {
 };
 export type AdminOrderResponse = {
   id: number; customerId: number; customerName: string; orderType: "dine-in" | "takeout";
-  paymentMethod: "card" | "cash"; request: string | null; status: OrderStatus; statusVersion: number;
+  paymentMethod: "card" | "cash"; request: string | null; cancelReason: string | null; status: OrderStatus; statusVersion: number;
   totalAmount: number; items: AdminOrderItem[]; allowedStatuses: OrderStatus[]; createdAt: string; updatedAt: string;
 };
 export type AdminOrderPageResponse = {
@@ -19,7 +19,7 @@ export type AdminOrderPageResponse = {
 export type OrderApiQuery = {
   group: OrderGroup; q?: string; status?: OrderStatus; sort?: OrderSort; page: number; size: number;
 };
-export type ChangeOrderStatusRequest = { id: number; expectedStatus: OrderStatus; statusVersion: number; nextStatus: OrderStatus };
+export type ChangeOrderStatusRequest = { id: number; expectedStatus: OrderStatus; statusVersion: number; nextStatus: OrderStatus; cancelReason?: string };
 export type OrderActionState = { error?: string; value?: OrderStatus };
 export type OrderAction = (previous: OrderActionState, formData: FormData) => Promise<OrderActionState>;
 
@@ -28,6 +28,12 @@ export const statusLabels: Record<OrderStatus, string> = {
 };
 export const groupLabels: Record<OrderGroup, string> = { active: "처리 중", completed: "완료", canceled: "취소" };
 export const MAX_API_INTEGER = 2_147_483_647;
+export const MAX_CANCEL_REASON_LENGTH = 200;
+export function cancellationReasonError(value: unknown): string | undefined {
+  if (typeof value !== "string" || !value.trim()) return "고객에게 전달할 취소 사유를 입력해 주세요.";
+  if (value.length > MAX_CANCEL_REASON_LENGTH) return "취소 사유는 200자 이내로 입력해 주세요.";
+  if (value.includes("\0")) return "취소 사유에 사용할 수 없는 문자가 있습니다.";
+}
 export const isOrderStatus = (value: unknown): value is OrderStatus =>
   typeof value === "string" && (ORDER_STATUSES as readonly string[]).includes(value);
 export const isPositiveId = (value: unknown): value is number =>
@@ -52,6 +58,9 @@ export function parseAdminOrder(value: unknown): AdminOrderResponse {
   const order = record(value);
   if (!isOrderStatus(order.status) || (order.orderType !== "dine-in" && order.orderType !== "takeout")
     || (order.paymentMethod !== "card" && order.paymentMethod !== "cash")) invalid();
+  const cancelReason = order.cancelReason;
+  if (cancelReason !== null && (typeof cancelReason !== "string" || cancellationReasonError(cancelReason)
+    || order.status !== "canceled")) invalid();
   const items = array(order.items).map(value => {
     const item = record(value);
     if (item.temperature !== null && item.temperature !== "hot" && item.temperature !== "iced") invalid();
@@ -70,7 +79,7 @@ export function parseAdminOrder(value: unknown): AdminOrderResponse {
   return {
     id: integer(order.id, 1), customerId: integer(order.customerId, 1), customerName: text(order.customerName),
     orderType: order.orderType as AdminOrderResponse["orderType"], paymentMethod: order.paymentMethod as AdminOrderResponse["paymentMethod"],
-    request: order.request === null ? null : text(order.request), status: order.status as OrderStatus,
+    request: order.request === null ? null : text(order.request), cancelReason: cancelReason as string | null, status: order.status as OrderStatus,
     statusVersion: integer(order.statusVersion, 0, MAX_API_INTEGER), totalAmount, items, allowedStatuses,
     createdAt: instant(order.createdAt), updatedAt: instant(order.updatedAt),
   };

@@ -1,5 +1,7 @@
 # 관리자 주문 관리 백엔드 계획 및 구현
 
+> 2026-10-27 취소 사유 저장·회원 조회 계약은 [후속 문서](2026-10-27-order-cancellation-reason.md)를 따른다. 아래 인증/팀 통합 선행 설명과 최초 테스트 기록은 2026-10-26 당시 기준이다.
+
 ## 범위와 현재 상태
 
 담당 E의 관리자 주문 목록·상세·상태 변경·취소 API를 구현했다. 기준은 [DB 설계](../../database-design.md), [백엔드 청사진](../../../backend/docs/2026-10-20-backend-blueprint.md), [프론트 문서](../../FRONTEND.md)와 `frontend/app/admin/orders/`의 화면 흐름이다. 최초 지시서의 배달·기사 기능은 현재 범위에 포함하지 않는다.
@@ -48,24 +50,24 @@
 - `sort`: `newest`(기본), `oldest`. 생성 시각·ID를 같은 방향으로 정렬한다.
 - `page`: 0부터, 기본 0. `size`: 기본 20, 1~100. 화면의 10개 단위 조회는 `size=10`을 지정한다.
 - 페이지: `{items, page, size, totalElements, totalPages}`. 헤더의 전체·처리 중·완료·취소 건수는 검색어 없이 전체/각 group 조회의 `totalElements`로 얻을 수 있다.
-- 주문: `id`, `customerId`, `customerName`, `orderType`, `paymentMethod`, `request`, `status`, `statusVersion`, `totalAmount`, `items`, `allowedStatuses`, `createdAt`, `updatedAt`.
+- 주문: `id`, `customerId`, `customerName`, `orderType`, `paymentMethod`, `request`, `status`, `statusVersion`, `totalAmount`, `items`, `allowedStatuses`, `createdAt`, `updatedAt`, `cancelReason`(nullable 문자열).
 - 품목: `id`, `menuId`, `menuName`, `imageUrl`, `temperature`, `quantity`, `unitPrice`, `lineTotal`. ID는 숫자, 금액은 원 단위 정수, 시각은 ISO 8601이다.
 - 목록도 품목 스냅샷을 반환해 리스트·그리드 두 보기를 지원한다. 페이지 조회와 해당 주문의 품목 일괄 조회를 분리해 컬렉션 fetch join의 메모리 페이지 처리와 품목 N+1 조회를 피한다.
 
 ## 상태·취소·충돌
 
 - `received ↔ preparing ↔ ready ↔ completed`에서 인접 단계로만 이동한다. 완료 주문은 준비 완료로 되돌릴 수 있다.
-- 취소는 같은 `PUT /status`에 `nextStatus=canceled`를 보낸다. `received`에서만 허용하고 취소 사유는 받거나 저장하지 않는다. 취소 후 다른 상태로 바꿀 수 없다.
+- 취소는 같은 `PUT /status`에 `nextStatus=canceled`를 보낸다. `received`에서만 허용하며 `cancelReason`을 필수로 받는다. 입력은 최대 200 UTF-16 단위이고 양끝 공백 제거·LF 개행 통일 후 저장한다. 기존 취소/null 사유는 유지하며 관리자·본인 회원 GET에 반환한다. 일반 상태 변경은 사유를 보내지 않는다. 취소 후 다른 상태로 바꿀 수 없다.
 - 모든 변경에 현재 `expectedStatus`와 `statusVersion`이 필수다. 상태가 되돌아왔더라도 버전이 다르면 거부한다.
 - JPA `@Version`으로 동시 변경을 감지한다. 명시적 `flush()`로 갱신된 버전을 응답에 넣고 DB 충돌을 확인한다. 충돌한 트랜잭션은 롤백된다.
-- 오류는 `{code, message}`. 검증/형식 오류 `400`, `UNAUTHORIZED` `401`, `FORBIDDEN` `403`, `NOT_FOUND` `404`, `INVALID_STATUS`·`STALE_STATUS` `409`다.
+- 오류는 `{code, message}`. 검증/형식/사유 오류 `400`(`VALIDATION_ERROR`·`INVALID_INPUT`), `UNAUTHORIZED` `401`, `FORBIDDEN` `403`, `NOT_FOUND` `404`, `INVALID_STATUS`·`STALE_STATUS` `409`다.
 
 ## 팀 간 공유 계약과 남은 통합
 
 1. **A(인증):** Controller는 Servlet `getUserPrincipal()`과 `isUserInRole("ADMIN")`을 검사한다. 이 브랜치 단독 실행에서는 인증 구현이 없으므로 정상 요청도 `401`로 차단한다. 인증 담당은 검증된 로그인 정보로 principal과 역할을 연결하거나 이 검사를 팀의 공통 권한 검사로 교체해야 한다. `feature/session-auth`의 `ROLE_ADMIN`과 맞췄으며 A 코드와 조립한 임시 환경에서 실제 로그인·CSRF·관리자 API를 검증했다. 프론트 목 쿠키, 임의 헤더·요청 본문의 역할 값은 신뢰하지 않는다. 최종 머지 결과에서도 로그인·로그아웃·세션/CSRF를 다시 검증해야 한다.
 2. **B(회원):** `develop`에 아직 `User` 엔티티가 없고 D도 scalar ID를 사용하므로 `customer_id`는 `Long` 필드를 유지한다. 회원 엔티티 통합 시 `users` FK 또는 `@ManyToOne`을 추가해야 한다. 현재 DB가 회원 존재·역할·정지 상태를 검증하지는 않는다. `customer_name_snapshot`은 주문 당시 이름으로 유지한다.
 3. **D(주문):** `entity/order/Order`, `OrderItem`, `OrderRepository`를 공유하며 새 주문 테이블을 중복 생성하지 않는다. `feature/order-api`(PR #69)의 `OrderItem.snapshot(menu, temperature, quantity, unitPrice, lineTotal)`, `Order.create(customerId, customerName, orderType, paymentMethod, request, totalAmount, idempotencyKey, requestFingerprint)`, `addItem` 계약을 보존했다. D가 서비스에서 품목 합을 계산하고 `received`·버전 0으로 저장한다. `idempotency_key`·`request_fingerprint`·회원별 키 유니크 제약과 Repository의 멱등성/본인 주문 조회 메서드도 유지한다. 관리자 페이지 DTO는 `AdminOrderPageResponse`, 예외·advice는 `AdminOrderException`·`AdminOrdersExceptionHandler`로 분리해 D의 같은 이름 파일 및 공통 오류 처리와 겹치지 않는다. 소유권·현재 판매 상태·예상 금액·중복 요청 검증과 장바구니 삭제는 D 서비스의 한 트랜잭션에서 처리해야 한다. 이 팩토리만으로 주문 생성 API의 검증이 완성되는 것은 아니다.
-4. **프론트:** 인증·D 연동 이후 목 호출을 교체한다. 문자열 ID→숫자, `option`/`ice`→`temperature`/`iced`, `statusVersion` 전달, 서버 `allowedStatuses` 사용, 취소 사유 폼 제거와 `received`만 취소를 반영한다. 고객·관리자 목록/상세와 `/admin` 캐시를 갱신한다.
+4. **프론트:** 인증·D 연동 이후 목 호출을 교체한다. 문자열 ID→숫자, `option`/`ice`→`temperature`/`iced`, `statusVersion` 전달, 서버 `allowedStatuses` 사용, 사유 필수 입력·회원 조회와 `received`만 취소를 반영한다(2026-10-27 후속 계약). 고객·관리자 목록/상세와 `/admin` 캐시를 갱신한다.
 
 품목은 변경 메서드 없이 불변 스냅샷으로 저장한다. 메뉴 숨김 후에도 당시 이름·이미지·온도·단가·수량·합계가 유지된다. 실제 결제·고객 취소·배달 API는 범위 밖이다.
 

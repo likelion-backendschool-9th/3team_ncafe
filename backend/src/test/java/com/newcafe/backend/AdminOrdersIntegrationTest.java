@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -50,6 +52,7 @@ class AdminOrdersIntegrationTest {
     @Autowired CategoryRepository categories;
     @Autowired PlatformTransactionManager transactions;
     @Autowired JdbcTemplate jdbc;
+    @Autowired com.newcafe.backend.service.my.OrdersService customerOrders;
 
     @BeforeEach
     void clearFixtures() {
@@ -94,7 +97,7 @@ class AdminOrdersIntegrationTest {
     void filtersGroupsAndTreatsSqlWildcardsLiterally() {
         Order canceled = seed("100%_\\손님", "차");
         seed("다른 손님", "차");
-        service.changeStatus(new ChangeOrderStatusRequest(canceled.getId(), "received", 0, "canceled"));
+        service.changeStatus(new ChangeOrderStatusRequest(canceled.getId(), "received", 0, "canceled", "재료 소진"));
         assertEquals(1, service.list(search("%_\\", null, null, null, 0, 20)).totalElements());
         assertEquals(1, service.list(search(null, "received", "active", null, 0, 20)).totalElements());
         assertEquals(1, service.list(search(null, null, "canceled", null, 0, 20)).totalElements());
@@ -120,28 +123,51 @@ class AdminOrdersIntegrationTest {
         assertEquals(0, service.list(search("새 메뉴명", null, null, null, 0, 20)).totalElements());
     }
 
-    @Test
-    void simultaneousAdministratorsHaveExactlyOneWinner() throws Exception {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void simultaneousAdministratorsHaveExactlyOneWinner(boolean bothCancel) throws Exception {
         Long id = seed("손님", "차").getId();
         CyclicBarrier bothRead = new CyclicBarrier(2);
         try (var pool = Executors.newFixedThreadPool(2)) {
             var tasks = List.of("preparing", "canceled").stream().map(next -> pool.submit(() -> {
+                String target = bothCancel ? "canceled" : next;
+                String reason = "canceled".equals(target) ? "사유-" + next : null;
                 try {
                     new TransactionTemplate(transactions).executeWithoutResult(tx -> {
                         orders.findWithItemsById(id).orElseThrow();
                         try { bothRead.await(10, TimeUnit.SECONDS); }
                         catch (Exception error) { throw new IllegalStateException(error); }
-                        service.changeStatus(new ChangeOrderStatusRequest(id, "received", 0, next));
+                        service.changeStatus(new ChangeOrderStatusRequest(id, "received", 0, target, reason));
                     });
-                    return "success";
+                    return "success:" + reason;
                 } catch (OptimisticLockingFailureException conflict) {
                     return "conflict";
                 }
             })).toList();
             List<String> results = List.of(tasks.get(0).get(20, TimeUnit.SECONDS), tasks.get(1).get(20, TimeUnit.SECONDS));
-            assertEquals(1, results.stream().filter("success"::equals).count());
+            assertEquals(1, results.stream().filter(value -> value.startsWith("success:")).count());
             assertEquals(1, results.stream().filter("conflict"::equals).count());
+            if (bothCancel) {
+                String winningReason = results.stream().filter(value -> value.startsWith("success:")).findFirst().orElseThrow().substring(8);
+                assertEquals(winningReason, service.get(id).cancelReason());
+                assertEquals(winningReason, customerOrders.get(1L, id).cancelReason());
+            }
         }
         assertEquals(1, service.get(id).statusVersion());
+    }
+
+    @Test
+    void reasonPersistsAcrossReadsAndOldCanceledRowsRemainNullable() {
+        Long id = seed("손님", "차").getId();
+        service.changeStatus(new ChangeOrderStatusRequest(id, "received", 0, "canceled", " 재료 소진\n다음에 이용해 주세요. "));
+        assertEquals("재료 소진\n다음에 이용해 주세요.", customerOrders.get(1L, id).cancelReason());
+        assertEquals(service.get(id).cancelReason(), customerOrders.list(1L, 0, 20).items().getFirst().cancelReason());
+        assertThrows(com.newcafe.backend.common.error.OrderException.class, () -> customerOrders.get(2L, id));
+        Long legacy = seed("예전 손님", "차").getId();
+        jdbc.update("update orders set status='canceled' where id=?", legacy);
+        assertNull(service.get(legacy).cancelReason());
+        assertNull(customerOrders.get(1L, legacy).cancelReason());
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class,
+                () -> jdbc.update("update orders set cancel_reason='잘못된 사유' where id=?", seed("손님", "차").getId()));
     }
 }
