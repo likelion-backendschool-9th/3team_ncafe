@@ -21,7 +21,7 @@ function integer(value: unknown): number {
 
 // 백엔드가 삭제(숨김)한 메뉴를 빼고 센다.
 export async function getMenuSummary(): Promise<MenuSummaryResponse> {
-  const body = record(await apiFetch<unknown>("/api/v1/admin/menus/summary"));
+  const body = record(await apiFetch<unknown>("/api/v1/admin/index/menus"));
   return {
     totalCount: integer(body.totalCount),
     availableCount: integer(body.availableCount),

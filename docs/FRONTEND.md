@@ -61,7 +61,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | `/my` | **`my/UsersController`** | `GET /my` | 1.5 | 보조 |
 | `/my/orders`, `/my/orders/[id]` | `my/OrdersController` | `GET /orders`, `GET /orders/{id}` | 6.3~6.4 | 공유. 고객 취소는 제공하지 않는다(2026-10-27 확정) |
 | `/my/songs` | **`my/SongsController`** | `GET /my/songs`, `DELETE /my/songs/{id}` | 11.4~11.5 | 보조 |
-| `/admin` | 없음 | 관리자 Menus·Orders·Songs 목록 조합. 메뉴 현황은 `GET /admin/menus/summary` | — | 예외 |
+| `/admin` | **`admin/HomeController`** | `GET /admin/index/menus`(메뉴 현황). 주문·신청곡 건수는 관리자 Orders·Songs 목록 조합 | — | |
 | `/admin/users`, `/admin/users/[id]` | `admin/UsersController` | `GET /admin/users`, `GET`·`PUT /admin/users/{id}` | 2.1~2.3 | 공유 |
 | `/admin/categories` | **`admin/CategoriesController`** | `GET`·`POST /admin/categories`, `PUT`·`DELETE /admin/categories/{id}`, `PUT /admin/categories/order` | 13.x | |
 | `/admin/menus`, `/new`, `/[id]`, `/[id]/edit` | **`admin/MenusController`** | `GET /admin/menus`(`q`,`categoryId`,`status`,`sort`,`page`,`size`), `POST`, `GET`·`PUT`·`DELETE /admin/menus/{id}` | 3.1~3.5 | 공유(4개 화면) |
@@ -92,7 +92,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | 보조 | `/my/songs` | `SongsController`(공개) `GET /musicbox/songs/now`, `GET /musicbox/songs` | 현재 곡 부스, 재생 대기 순번, `revision`(2026-10-27) |
 | 보조 | `/my` | `AuthController` `POST /auth/logout` | 백엔드 청사진: 로그아웃 |
 | 보조 | `/checkout` | `my/CartItemsController` `GET /cart/items` | 주문 대상 항목 조회. `/cart`가 넘긴 `?cartItemIds=`의 줄만 고른다(2026-10-26 결정, 새 엔드포인트 없음) |
-| 없음 | `/admin` | 관리자 목록 API 조합 | 백엔드 청사진: 대시보드 API 없음. 메뉴 현황만 `admin/MenusController` `GET /admin/menus/summary`(2026-10-27) |
+| 없음 | `/admin` | 주문·신청곡 건수용 관리자 목록 API 조합 | 메뉴 현황은 주 컨트롤러 `admin/HomeController` `GET /admin/index/menus`(2026-10-27) |
 | 없음 | `/forbidden`, 결제·리뷰·주문 완료 화면 | — | 프론트 전용, 또는 보류·범위 밖 |
 
 다음 한 곳은 코드상 다른 컨트롤러가 필요하지만 근거가 없어 예외로 인정하지 않는다. 6-2에서 정한다.
