@@ -126,6 +126,37 @@ class MenusControllerTest {
 
     @Test
     @WithSessionUser(role = UserRole.CUSTOMER)
+    void customerCannotReadMenuSummary() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/menus/summary"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+
+        verifyNoInteractions(menuRepository);
+    }
+
+    @Test
+    void summaryCountsVisibleMenusByAvailability() throws Exception {
+        when(menuRepository.countByArchivedAtIsNull()).thenReturn(12L);
+        when(menuRepository.countByAvailableTrueAndArchivedAtIsNull()).thenReturn(9L);
+
+        mockMvc.perform(get("/api/v1/admin/menus/summary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalCount").value(12))
+                .andExpect(jsonPath("$.availableCount").value(9))
+                .andExpect(jsonPath("$.unavailableCount").value(3));
+    }
+
+    @Test
+    void summaryReturnsZeroWhenNoMenus() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/menus/summary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalCount").value(0))
+                .andExpect(jsonPath("$.availableCount").value(0))
+                .andExpect(jsonPath("$.unavailableCount").value(0));
+    }
+
+    @Test
+    @WithSessionUser(role = UserRole.CUSTOMER)
     void customerCannotCreateEvenWithValidCsrf() throws Exception {
         mockMvc.perform(post("/api/v1/admin/menus").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)

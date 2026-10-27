@@ -128,9 +128,11 @@ S19 카테고리 메뉴 수 (R5·카테고리 R3)
 | R3 | `GET /api/v1/admin/menus/{id}` | 없음 | `200`, 메뉴 |
 | R4 | `PUT /api/v1/admin/menus/{id}` | `MenuUpdateRequest` (slug 없음) | `200`, 메뉴 |
 | R5 | `DELETE /api/v1/admin/menus/{id}` | 없음 | `204` |
+| 관리자 인덱스 | `GET /api/v1/admin/menus/summary` | 없음 | `200`, 메뉴 현황 |
 
 - 메뉴 응답: `id`, `slug`, `name`, `description`, `imageUrl`, `price`, `categoryId`, `categoryName`, `available`, `isNew`, `recommended`, `supportsHot`, `supportsIced`, `createdAt`, `updatedAt`.
 - 페이지 응답: `items`, `page`, `size`, `totalElements`, `totalPages`.
+- 메뉴 현황 응답: `totalCount`, `availableCount`, `unavailableCount`. 목록과 같이 삭제(숨김)한 메뉴는 세지 않는다(2026-10-27 추가).
 - 오류: 공통 `{code, message}`. 입력 오류 `400`, 없음·숨김 `404`, slug 중복 `409`.
 
 ## 범위 밖

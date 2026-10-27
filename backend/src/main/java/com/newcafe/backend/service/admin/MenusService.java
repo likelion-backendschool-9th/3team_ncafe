@@ -6,6 +6,7 @@ import com.newcafe.backend.dto.menus.MenuCreateRequest;
 import com.newcafe.backend.dto.menus.MenuPageResponse;
 import com.newcafe.backend.dto.menus.MenuResponse;
 import com.newcafe.backend.dto.menus.MenuSearchRequest;
+import com.newcafe.backend.dto.menus.MenuSummaryResponse;
 import com.newcafe.backend.dto.menus.MenuUpdateRequest;
 import com.newcafe.backend.entity.category.Category;
 import com.newcafe.backend.entity.menu.Menu;
@@ -33,6 +34,15 @@ public class MenusService {
 
         return MenuPageResponse.from(menuRepository.findAll(
                 MenuSpecifications.adminSearch(request.q(), request.categoryId(), request.available()), pageRequest));
+    }
+
+    // 목록과 같이 삭제(숨김)한 메뉴는 세지 않는다.
+    @Transactional(readOnly = true)
+    public MenuSummaryResponse summary() {
+        long total = menuRepository.countByArchivedAtIsNull();
+        long available = menuRepository.countByAvailableTrueAndArchivedAtIsNull();
+
+        return new MenuSummaryResponse(total, available, total - available);
     }
 
     @Transactional(readOnly = true)
