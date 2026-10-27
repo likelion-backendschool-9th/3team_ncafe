@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { requireRole } from "@/app/_lib/session/session";
-import { ApiRequestError } from "@/app/_lib/api/backend-session";
+import { ApiRequestError } from "@/app/_lib/api/client";
 import { getAdminOrder } from "../_lib/api";
 import { orderCode, orderDate } from "../_lib/format";
 import { orderDetailHref, orderListHref, parseOrderFlash, parseOrderId, parseOrderSearchParams, type RawOrderQuery } from "../_lib/searchParams";

@@ -332,7 +332,6 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 - 가입·로그인 액션은 공개 인증 진입점이므로 기존 회원 requireRole 없이 입력 검증·백엔드 인증을 수행한다. 보호된 업무 액션은 첫 단계 권한 검사를 유지한다.
 - 로그인 후 새 CSRF를 받고, 가입만 성공한 경우 로그인 재시도로 안내한다. 비밀번호는 action state·응답·브라우저 저장소에 넣지 않는다.
 - SSR 회원 조회는 no-store이며 React cache는 한 렌더 안의 중복만 제거한다. Proxy는 보호 경로의 상태·역할을 확인하고 만료 쿠키를 반영한다. Server Components에서는 쿠키를 변경하지 않는다.
-- 관리자 주문 업무 요청은 `BackendSession.requestJson`으로 기존 jar·CSRF·오류 쿠키 전달을 재사용한다. `client.ts` 계약은 유지한다.
 - 다른 탭에는 임의 변경 알림만 전송한다. 탭 복귀·뒤로 가기에서 서버 인증을 새로 확인한다.
 
 - 인증 정보는 httpOnly 쿠키에 두고, localStorage에 두지 않는다.

@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createAuthSession } from "@/app/_lib/api/auth";
-import { ApiRequestError } from "@/app/_lib/api/backend-session";
+import { ApiRequestError } from "@/app/_lib/api/client";
+import { requireRole } from "@/app/_lib/session/session";
 import { updateAdminOrderStatus } from "./_lib/api";
 import { orderDetailHref, orderListHref, parseOrderReturnQuery, type OrderQuery } from "./_lib/searchParams";
 import { isOrderStatus, isPositiveId, MAX_API_INTEGER, type OrderActionState, type OrderStatus } from "./_lib/types";
@@ -24,21 +24,6 @@ function refreshOrder(id: number): void {
   for (const path of ["/admin/orders", `/admin/orders/${id}`, "/my/orders", `/my/orders/${id}`, "/admin"]) revalidatePath(path);
 }
 
-async function requireOrderAdministrator(path: string): Promise<void> {
-  let member;
-  try {
-    // Actions can relay expired cookies; the read-only page guard cannot write them.
-    member = await (await createAuthSession()).current();
-  } catch (error) {
-    if (error instanceof ApiRequestError && [401, 403].includes(error.status)) {
-      redirect(`/login?next=${encodeURIComponent(path)}`);
-    }
-    throw error;
-  }
-  if (member.status !== "active") redirect(`/login?next=${encodeURIComponent(path)}`);
-  if (member.role !== "admin") redirect("/forbidden");
-}
-
 async function update(id: number, expectedStatus: OrderStatus, statusVersion: number, query: OrderQuery,
   detail: boolean, formData: FormData): Promise<OrderActionState> {
   const nextStatus = formData.get("nextStatus");
@@ -54,16 +39,16 @@ async function update(id: number, expectedStatus: OrderStatus, statusVersion: nu
   } catch (error) {
     if (!(error instanceof ApiRequestError)) throw error;
     if (error.status === 401) redirect(`/login?next=${encodeURIComponent(path)}`);
-    if (error.status === 403 && error.code !== "CSRF_INVALID") redirect("/forbidden");
+    if (error.status === 403 && error.error.code !== "CSRF_INVALID") redirect("/forbidden");
     if (error.status === 404) {
       refreshOrder(id);
       redirect(resultPath(orderListHref(query), "error", "NOT_FOUND"));
     }
-    if (error.status === 409 && ["STALE_STATUS", "INVALID_STATUS"].includes(error.code)) {
+    if (error.status === 409 && ["STALE_STATUS", "INVALID_STATUS"].includes(error.error.code)) {
       refreshOrder(id);
-      redirect(resultPath(path, "error", error.code));
+      redirect(resultPath(path, "error", error.error.code));
     }
-    return { error: error.code === "CSRF_INVALID" ? "세션을 확인하지 못했습니다. 화면을 새로고침한 뒤 다시 시도해 주세요."
+    return { error: error.error.code === "CSRF_INVALID" ? "세션을 확인하지 못했습니다. 화면을 새로고침한 뒤 다시 시도해 주세요."
       : error.status >= 500 ? "상태를 변경하지 못했습니다. 현재 주문 상태를 새로고침해 확인해 주세요." : error.message, value };
   }
   refreshOrder(id);
@@ -72,12 +57,12 @@ async function update(id: number, expectedStatus: OrderStatus, statusVersion: nu
 
 export async function changeAdminOrderStatus(id: number, expectedStatus: OrderStatus, statusVersion: number,
   query: string, _previous: OrderActionState, formData: FormData): Promise<OrderActionState> {
-  await requireOrderAdministrator(orderListHref(returnQuery(query)));
+  await requireRole("admin", orderListHref(returnQuery(query)));
   return update(id, expectedStatus, statusVersion, returnQuery(query), false, formData);
 }
 
 export async function changeAdminOrderStatusFromDetail(id: number, expectedStatus: OrderStatus, statusVersion: number,
   query: string, _previous: OrderActionState, formData: FormData): Promise<OrderActionState> {
-  await requireOrderAdministrator(returnPath(id, returnQuery(query), true));
+  await requireRole("admin", returnPath(id, returnQuery(query), true));
   return update(id, expectedStatus, statusVersion, returnQuery(query), true, formData);
 }
