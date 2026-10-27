@@ -4,6 +4,7 @@ import com.newcafe.backend.dto.menus.MenuCreateRequest;
 import com.newcafe.backend.dto.menus.MenuPageResponse;
 import com.newcafe.backend.dto.menus.MenuResponse;
 import com.newcafe.backend.dto.menus.MenuSearchRequest;
+import com.newcafe.backend.dto.menus.MenuSummaryResponse;
 import com.newcafe.backend.dto.menus.MenuUpdateRequest;
 import com.newcafe.backend.service.admin.MenusService;
 
@@ -34,6 +35,11 @@ public class MenusController {
     @GetMapping
     public MenuPageResponse list(@Valid @ModelAttribute MenuSearchRequest request) {
         return menusService.list(request);
+    }
+
+    @GetMapping("/summary")
+    public MenuSummaryResponse summary() {
+        return menusService.summary();
     }
 
     @GetMapping("/{id}")

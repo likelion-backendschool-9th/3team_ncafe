@@ -26,6 +26,10 @@ public interface MenuRepository extends JpaRepository<Menu, Long>, JpaSpecificat
 
     long countByCategory_Id(Long categoryId);
 
+    long countByArchivedAtIsNull();
+
+    long countByAvailableTrueAndArchivedAtIsNull();
+
     boolean existsBySlug(String slug);
 
     @EntityGraph(attributePaths = "category")
