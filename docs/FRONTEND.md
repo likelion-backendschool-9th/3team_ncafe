@@ -51,7 +51,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 
 | 페이지 URL | 주 컨트롤러 | 엔드포인트 (`/api/v1` 생략) | WBS | 비고 |
 | --- | --- | --- | --- | --- |
-| `/` | `HomeController` | `GET /index/menus`, `GET /index/songs` | 인덱스 | 보조 |
+| `/` | **`HomeController`** | `GET /index/menus`, `GET /index/songs` | 인덱스 | 보조 |
 | `/login`, `/signup` | **`AuthController`** | `POST /auth/login`, `POST /auth/signup` | 1.1, 1.3 | 공유 |
 | `/menus` | `MenusController`(공개) | `GET /menus`(`q`,`categoryId`,`status`,`sort`,`page`,`size`), `GET /menus/categories` | 4.1 | 공유 |
 | `/menus/[slug]` | `MenusController`(공개) | `GET /menus/{slug}` | 4.2 | 공유, 보조 |
@@ -88,7 +88,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | 종류 | 페이지 | 컨트롤러·엔드포인트 | 근거 |
 | --- | --- | --- | --- |
 | 보조 | `/menus/[slug]` | `my/CartItemsController` `POST /menus/{id}/cart/items` | 백엔드 청사진: 담기 동작 |
-| 보조 | `/` | `SongsController`(공개) `GET /musicbox/songs`, `GET /songs/now` | 홈 뮤직박스 칸의 현재 곡·다음 곡·`revision`. `GET /index/songs`가 없어 공개 조회를 쓴다(2026-10-27) |
+| 보조 | `/` | `SongsController`(공개) `GET /songs/now` | 공용 `MusicBoxRefresher`의 `revision` 폴링. 첫 화면 데이터는 `GET /index/songs`로 받는다(2026-10-27) |
 | 보조 | `/my/songs` | `SongsController`(공개) `GET /songs/now`, `GET /musicbox/songs` | 현재 곡 부스, 재생 대기 순번, `revision`(2026-10-27) |
 | 보조 | `/my` | `AuthController` `POST /auth/logout` | 백엔드 청사진: 로그아웃 |
 | 보조 | `/checkout` | `my/CartItemsController` `GET /cart/items` | 주문 대상 항목 조회. `/cart`가 넘긴 `?cartItemIds=`의 줄만 고른다(2026-10-26 결정, 새 엔드포인트 없음) |
@@ -418,7 +418,7 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | `/admin/menus*` ↔ **admin/Menus** | 목록·등록 metadata, `categoryId`·`page` 완료. 상세·수정 `generateMetadata` 없음 | API 연결 완료([계획](admin/menus/2026-10-27-frontend-admin-menus.md)). 이미지 파일 업로드는 저장소 결정 후 | — |
 | `/menus` ↔ Menus | metadata·canonical 없음, `<main>`이 page에 있음 | 공개 메뉴 API | 백엔드 공개 Menus |
 | `/menus/[slug]` ↔ Menus | 대화상자 이동이 `router.push`(`OrderPanel`) | — | — |
-| `/` ↔ Home | `<main>`이 page에 있음 | index API. 뮤직박스 칸은 공개 Songs 조회로 연결 완료(2-3) | 공개 Menus |
+| `/` ↔ **Home** | `<main>`이 page에 있음 | 추천 메뉴·뮤직박스 칸 index API 연결 완료. 변경 감지 폴링만 공개 Songs(2-3) | — |
 | `/cart` ↔ my/CartItems | metadata 없음 | — | — |
 | `/checkout` ↔ my/Orders | 화면 전체가 클라이언트, `cart` CSS import, "주문 / 결제"·"결제하기" 용어 | `POST /orders`(`cartItemIds`·수령 방식·결제수단·요청사항). 주문 대상은 `?cartItemIds=`로 받아 서버 장바구니에서 고른다 | 백엔드 `/api/v1/orders` 접근 정책 |
 | `/my/orders*` ↔ my/Orders | metadata 없음 | API 연결 | `/checkout` |

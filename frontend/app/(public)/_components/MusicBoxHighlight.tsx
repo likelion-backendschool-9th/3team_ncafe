@@ -1,19 +1,19 @@
 import Link from "next/link";
 import { DjBooth } from "@/app/_components/DjBooth";
-import { fetchMusicBoxSongs, fetchNowPlaying } from "@/app/_lib/songs/api";
 import { handwritingSequence } from "@/app/_lib/songs/handwriting";
 import { onAirOf } from "@/app/_lib/songs/types";
 import styles from "@/app/_components/music-box-highlight.module.css";
 import { MusicBoxRefresher } from "@/app/_components/MusicBoxRefresher";
 import { RequestMemo, RequestMemoBoard } from "@/app/_components/RequestMemo";
+import { fetchIndexSongs } from "../_lib/songs/api";
 
 // 홈 하단 뮤직박스 칸: 지금 흐르는 노래(DJ 부스)와 다음 차례 신청곡 3곡을 사연과 함께 보여 준다.
 // 곡이 끝나거나 관리자가 곡을 바꾸면 페이지를 다시 불러오지 않고 이 칸이 다음 곡으로 바뀐다.
 export async function MusicBoxHighlight() {
-  const [{ playlist }, now] = await Promise.all([fetchMusicBoxSongs(), fetchNowPlaying()]);
+  const now = await fetchIndexSongs();
   const playing = now.current;
   const onAir = onAirOf(now);
-  const nextUp = playlist.slice(0, 3);
+  const { nextUp } = now;
   // 턴테이블 옆 메모지와 다음 차례 메모 3장이 모두 다른 손글씨가 되게 한 번에 고른다.
   const [playingHand, ...memoHands] = handwritingSequence(String(playing?.id ?? nextUp[0]?.id ?? ""), nextUp.length + 1);
 
@@ -50,7 +50,7 @@ export async function MusicBoxHighlight() {
 
       <RequestMemoBoard
         title="다음 차례 신청곡"
-        caption={`플레이리스트에 담긴 신청곡 · 재생 대기 ${playlist.length}곡`}
+        caption={`플레이리스트에 담긴 신청곡 · 재생 대기 ${now.playlistCount}곡`}
         empty="아직 플레이리스트에 담긴 신청곡이 없어요."
       >
         {nextUp.map((request, index) => (

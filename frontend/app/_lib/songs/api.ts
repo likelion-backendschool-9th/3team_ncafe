@@ -10,11 +10,11 @@ function invalid(): never {
   throw new Error("신청곡 응답 형식이 올바르지 않습니다.");
 }
 
-function object(value: unknown): Json {
+export function object(value: unknown): Json {
   return typeof value === "object" && value !== null && !Array.isArray(value) ? (value as Json) : invalid();
 }
 
-function text(value: unknown): string {
+export function text(value: unknown): string {
   return typeof value === "string" ? value : invalid();
 }
 
@@ -22,7 +22,7 @@ function optionalText(value: unknown): string | null {
   return value === null ? null : text(value);
 }
 
-function integer(value: unknown): number {
+export function integer(value: unknown): number {
   return typeof value === "number" && Number.isSafeInteger(value) ? value : invalid();
 }
 
@@ -53,7 +53,7 @@ export function parseSongs(value: unknown): SongResponse[] {
   return Array.isArray(value) ? value.map(parseSong) : invalid();
 }
 
-function parseCurrent(value: unknown): CurrentSong | null {
+export function parseCurrent(value: unknown): CurrentSong | null {
   if (value === null) return null;
   const song = object(value);
   return {
