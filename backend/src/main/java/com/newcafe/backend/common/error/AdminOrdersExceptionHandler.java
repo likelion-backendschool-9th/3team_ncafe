@@ -13,6 +13,7 @@ public class AdminOrdersExceptionHandler {
     @ExceptionHandler(AdminOrderException.class)
     public ResponseEntity<ErrorResponse> handleOrderException(AdminOrderException exception) {
         HttpStatus status = switch (exception.getReason()) {
+            case INVALID_INPUT -> HttpStatus.BAD_REQUEST;
             case NOT_FOUND -> HttpStatus.NOT_FOUND;
             case INVALID_STATUS, STALE_STATUS -> HttpStatus.CONFLICT;
             case UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;

@@ -13,11 +13,12 @@ public record OrderResponse(
         String paymentMethod,
         String request,
         int totalAmount,
-        List<OrderItemResponse> items) {
+        List<OrderItemResponse> items,
+        String cancelReason) {
 
     public static OrderResponse from(Order order) {
         return new OrderResponse(order.getId(), order.getCreatedAt(), order.getStatus(), order.getOrderType(),
                 order.getPaymentMethod(), order.getRequest(), order.getTotalAmount(),
-                order.getItems().stream().map(OrderItemResponse::from).toList());
+                order.getItems().stream().map(OrderItemResponse::from).toList(), order.getCancelReason());
     }
 }

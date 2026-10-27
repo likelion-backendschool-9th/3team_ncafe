@@ -50,7 +50,7 @@ public class OrdersService {
     @Transactional
     public AdminOrderResponse changeStatus(ChangeOrderStatusRequest request) {
         Order order = findOrder(request.id());
-        order.changeStatus(request.expectedStatus(), request.statusVersion(), request.nextStatus());
+        order.changeStatus(request.expectedStatus(), request.statusVersion(), request.nextStatus(), request.cancelReason());
 
         // 응답에 증가한 @Version을 담고, 동시 갱신 충돌을 성공 응답 전에 감지한다.
         orderRepository.flush();
