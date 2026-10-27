@@ -7,7 +7,7 @@
 기존 DB 설계와 2026-10-26 구현에는 “사유 없이 관리자 취소”가 적용됐다. 반면 이전 프론트 커밋 `82497e5`에는 관리자 입력과 회원 표시가 있었다. 이번 요청은 이 불일치를 해소하고 **취소 사유를 실제 DB/API까지 연결해 복원**하는 요구다. 기존 문서의 “사유 없음”을 근거로 다시 제외하지 않는다.
 
 - 브랜치: 기존 `feature/admin-orders`만 사용한다. `develop` 직접 수정·커밋·푸시와 PR 머지는 하지 않는다.
-- 최초 계획 기준: `origin/develop` **`1eb12a3`**. 최종 구현은 **`40b7ece`**까지 rebase해 검증했다. 기존 PR #82는 `b897d26`으로 머지됐으므로 후속 문서/구현 PR에 예전 커밋을 중복 제안하지 않는다.
+- 최초 계획 기준: `origin/develop` **`1eb12a3`**. 최초 구현은 **`40b7ece`**까지, 아래 충돌 해결 후에는 **`6fe0f72`**까지 rebase해 검증했다. 기존 PR #82는 `b897d26`으로 머지됐으므로 후속 문서/구현 PR에 예전 커밋을 중복 제안하지 않는다.
 - 로컬 `develop`의 시작 위치 `62c139a7b6326caff606861b218bb1c846f943fa`는 유지한다.
 - 최초 계획 PR은 문서 2개만 변경했다. 후속 구현은 아래 명시한 Order/DTO·관리자·회원 표시와 테스트·SQL/계약 문서 범위로 진행한다. 개발 DB와 환경파일은 변경하지 않는다.
 
@@ -209,4 +209,13 @@ C1~C11은 위 단위·실제 PostgreSQL·브라우저 검증 범위에서 확인
 - 사유 없는 과거 행을 지우거나 사유를 생성하지 않는다. 새 관리자 취소는 사유 없는 옛 UI 요청을 400으로 거부한다.
 - D 리뷰: 공유 Order·고객 OrderResponse·회원 응답 검증/표시. DB 리뷰: nullable 필드·기존 행·CHECK·적용 순서. A 영역의 공통 인증/요청기/권한 설정은 수정하지 않았다.
 
-최종 푸시 전 `origin/develop`에 추가된 #101~#104를 확인하고 같은 작업 브랜치에 충돌 없이 rebase했다. 이 통합 후 build·lint·typecheck·백엔드 445개·대상 Playwright 28개를 다시 실행해 통과했다. 로컬 develop은 `62c139a` 그대로 유지했다.
+최초 구현 푸시 전 `origin/develop`에 추가된 #101~#104를 확인하고 같은 작업 브랜치에 충돌 없이 rebase했다. 이 통합 후 build·lint·typecheck·백엔드 445개·대상 Playwright 28개를 다시 실행해 통과했다. 로컬 develop은 `62c139a` 그대로 유지했다.
+
+### 후속 충돌 해결과 재검증 (2026-10-27)
+
+- PR #105의 중복 테이블·컬럼 이름 지정 제거와 이 PR의 취소 사유 필드 추가가 `Order.java`의 같은 위치에서 충돌했다. DB 실행 오류가 아니라 Git 내용 충돌이다. 최초 rebase는 AGENTS.md 규칙대로 중단·복원했고, 사용자 승인 후 `feature/admin-orders`만 `origin/develop` **`6fe0f72`** 기준으로 rebase했다.
+- `cancelReason`은 `@Column(length = MAX_CANCEL_REASON_LENGTH)`으로 유지하고, `totalAmount`를 포함한 기존 필드는 최신 팀 표기를 보존했다. 기존 이름 전략에 따라 DB 컬럼은 계속 `cancel_reason`·`total_amount`이며, SQL·API·필수 사유 규칙은 바꾸지 않았다. 다른 충돌은 없었다.
+- 통합한 #107의 권한 규칙과 #108의 테스트 태그 구분도 보존했다. 테스트 전용 PostgreSQL을 지정한 `./gradlew test` **445개 통과, 실패/오류/skip 0**. 여기에는 실제 PostgreSQL 주문 검사 6개(사유 저장·회원 조회·이전 null·동시 변경)가 포함된다. 프론트 `npm run lint`·`npm run typecheck`도 통과했다.
+- 재검증 첫 시도는 테스트 DB 기동 전에 시작해 연결 실패했다. 전용 15432 포트로 임시 DB를 기동한 뒤 전체 검사를 다시 실행해 위 결과를 확인했다. 기존 로컬 DB·개발/운영 데이터는 변경하지 않았다.
+- 위의 production build·브라우저 28개·migration 검증은 `40b7ece` 기준 최초 구현 결과다. 이번 충돌 해결에서 다시 실행한 결과와 구분한다. 별도 `integrationTest`(Testcontainers)는 이번에도 실행하지 않았다.
+- 로컬 `develop`은 `62c139a` 그대로 유지하며, PR은 사람이 머지한다.
