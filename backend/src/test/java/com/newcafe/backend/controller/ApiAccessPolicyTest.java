@@ -40,6 +40,7 @@ import com.newcafe.backend.dto.menus.MenuCategoryResponse;
 import com.newcafe.backend.dto.menus.MenuPageResponse;
 import com.newcafe.backend.dto.menus.MenuResponse;
 import com.newcafe.backend.dto.menus.MenuSearchRequest;
+import com.newcafe.backend.dto.songs.IndexSongsResponse;
 import com.newcafe.backend.entity.user.User;
 import com.newcafe.backend.entity.user.UserRole;
 import com.newcafe.backend.repository.UserRepository;
@@ -50,6 +51,7 @@ import com.newcafe.backend.service.my.CartItemsService;
 import com.newcafe.backend.service.my.OrdersService;
 import com.newcafe.backend.service.my.UsersService;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -184,6 +186,16 @@ class ApiAccessPolicyTest {
         verify(homeService).recommendedMenus();
     }
 
+    @Test
+    void anonymousVisitorsCanReadHomeSongs() throws Exception {
+        when(homeService.songs()).thenReturn(new IndexSongsResponse(null, List.of(), 0, Instant.parse("2026-10-27T03:01:00Z"), 5L));
+
+        mockMvc.perform(get("/api/v1/index/songs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.revision").value(5));
+        verify(homeService).songs();
+    }
+
     @ParameterizedTest
     @MethodSource("unsupportedRequests")
     void incorrectMethodsAndUndeclaredRoutesAreDeniedBeforeControllers(String method, String path) throws Exception {
@@ -209,6 +221,7 @@ class ApiAccessPolicyTest {
                 Arguments.of("POST", "/api/v1/menus/categories"),
                 Arguments.of("POST", "/api/v1/menus/americano"),
                 Arguments.of("POST", "/api/v1/index/menus"),
+                Arguments.of("POST", "/api/v1/index/songs"),
                 Arguments.of("GET", "/api/v1/guest/menus"),
                 Arguments.of("PATCH", "/api/v1/cart/items/11"),
                 Arguments.of("POST", "/api/v1/cart/items"),
