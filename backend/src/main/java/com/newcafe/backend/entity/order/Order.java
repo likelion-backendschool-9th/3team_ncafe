@@ -47,6 +47,8 @@ public class Order {
 
     public static final String RECEIVED = "received";
     public static final String STATUS_PATTERN = "received|preparing|ready|completed|canceled";
+    // 관리자 주문 목록의 "진행 중" 그룹
+    public static final List<String> ACTIVE_STATUSES = List.of("received", "preparing", "ready");
     private static final List<String> PROGRESS = List.of("received", "preparing", "ready", "completed");
 
     @Id
