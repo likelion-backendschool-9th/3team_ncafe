@@ -86,8 +86,8 @@ public class SecurityConfig {
                                 "/api/v1/musicbox/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/my").authenticated()
                         // 장바구니, 주문, 곡 신청, 내 신청곡은 고객 계정만 쓴다. 관리자는 /api/v1/admin/**을 쓴다.
-                        .requestMatchers("/api/v1/menus/*/cart/items", "/api/v1/cart/**", "/api/v1/orders/**",
-                                "/api/v1/musicbox/**", "/api/v1/my/**").hasRole("CUSTOMER")
+                        .requestMatchers("/api/v1/cart/**", "/api/v1/orders/**", "/api/v1/musicbox/**",
+                                "/api/v1/my/**").hasRole("CUSTOMER")
                         .anyRequest().denyAll())
                 .addFilterBefore(new SessionMemberFilter(sessionMembers, errors, sessionCookies, contextRepository),
                         AuthorizationFilter.class);

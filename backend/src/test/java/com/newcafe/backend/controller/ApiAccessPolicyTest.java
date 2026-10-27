@@ -218,6 +218,7 @@ class ApiAccessPolicyTest {
                 Arguments.of("POST", "/api/v1/menus"),
                 Arguments.of("POST", "/api/v1/menus/categories"),
                 Arguments.of("POST", "/api/v1/menus/americano"),
+                Arguments.of("POST", "/api/v1/menus/1/cart/items"),
                 Arguments.of("POST", "/api/v1/index/menus"),
                 Arguments.of("POST", "/api/v1/index/songs"),
                 Arguments.of("GET", "/api/v1/guest/menus"));
@@ -245,14 +246,13 @@ class ApiAccessPolicyTest {
                 Arguments.of("POST", "/api/v1/my"),
                 Arguments.of("PUT", "/api/v1/my"),
                 Arguments.of("PATCH", "/api/v1/cart/items/11"),
-                Arguments.of("POST", "/api/v1/cart/items"),
                 Arguments.of("PUT", "/api/v1/orders/7"),
                 Arguments.of("DELETE", "/api/v1/orders/7"));
     }
 
     static Stream<Arguments> cartRequests() {
         return Stream.of(
-                Arguments.of("POST", "/api/v1/menus/1/cart/items", "{\"temperature\":\"iced\",\"quantity\":1}"),
+                Arguments.of("POST", "/api/v1/cart/items", "{\"menuId\":1,\"temperature\":\"iced\",\"quantity\":1}"),
                 Arguments.of("GET", "/api/v1/cart/items", null),
                 Arguments.of("PUT", "/api/v1/cart/items/11", "{\"quantity\":2}"),
                 Arguments.of("DELETE", "/api/v1/cart/items/11", null));
@@ -269,7 +269,7 @@ class ApiAccessPolicyTest {
                 .andExpect(jsonPath("$.code").value("FORBIDDEN"));
         verifyNoInteractions(cartItemsService);
 
-        when(cartItemsService.add(eq(42L), eq(1L), any(CartItemRequest.class)))
+        when(cartItemsService.add(eq(42L), any(CartItemRequest.class)))
                 .thenReturn(new CartItemsService.Added(cartLine(), true));
         when(cartItemsService.list(42L)).thenReturn(new CartItemsResponse(List.of(cartLine()), 1, 3500));
         when(cartItemsService.changeQuantity(eq(42L), eq(11L), any(CartItemQuantityRequest.class))).thenReturn(cartLine());

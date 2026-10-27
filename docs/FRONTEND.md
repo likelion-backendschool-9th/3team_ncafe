@@ -87,7 +87,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 
 | 종류 | 페이지 | 컨트롤러·엔드포인트 | 근거 |
 | --- | --- | --- | --- |
-| 보조 | `/menus/[slug]` | `my/CartItemsController` `POST /menus/{id}/cart/items` | 백엔드 청사진: 담기 동작 |
+| 보조 | `/menus/[slug]` | `my/CartItemsController` `POST /cart/items`(본문 `menuId`) | 백엔드 청사진: 담기 동작 |
 | 보조 | `/` | `SongsController`(공개) `GET /musicbox/songs/now` | 공용 `MusicBoxRefresher`의 `revision` 폴링. 첫 화면 데이터는 `GET /index/songs`로 받는다(2026-10-27) |
 | 보조 | `/my/songs` | `SongsController`(공개) `GET /musicbox/songs/now`, `GET /musicbox/songs` | 현재 곡 부스, 재생 대기 순번, `revision`(2026-10-27) |
 | 보조 | `/my` | `AuthController` `POST /auth/logout` | 백엔드 청사진: 로그아웃 |

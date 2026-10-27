@@ -8,6 +8,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 public record CartItemRequest(
+        @NotNull(message = "메뉴를 선택해 주세요.")
+        Long menuId,
+
         // 온도 옵션이 없는 메뉴는 null이다. 메뉴가 지원하는 온도인지는 Service가 확인한다.
         @Pattern(regexp = "hot|iced", message = "온도는 hot 또는 iced만 사용할 수 있습니다.")
         String temperature,

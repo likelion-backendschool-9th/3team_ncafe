@@ -31,8 +31,9 @@ public class CartItemsService {
     }
 
     @Transactional
-    public Added add(Long userId, Long menuId, CartItemRequest request) {
+    public Added add(Long userId, CartItemRequest request) {
         lockMember(userId);
+        Long menuId = request.menuId();
         Menu menu = menuRepository.findByIdAndArchivedAtIsNull(menuId)
                 .orElseThrow(() -> new CartItemException(Reason.NOT_FOUND, "메뉴를 찾을 수 없습니다."));
         if (!menu.isAvailable()) {

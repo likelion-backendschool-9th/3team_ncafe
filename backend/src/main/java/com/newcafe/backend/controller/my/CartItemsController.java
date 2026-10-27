@@ -21,31 +21,32 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController("myCartItemsController")
+@RequestMapping("/api/v1/cart/items")
 @RequiredArgsConstructor
 public class CartItemsController {
 
     private final CartItemsService cartItemsService;
 
     // 새 줄이면 201, 같은 메뉴·온도 줄에 합쳤으면 200
-    @PostMapping("/api/v1/menus/{menuId}/cart/items")
+    @PostMapping
     public ResponseEntity<CartItemResponse> add(
             @AuthenticationPrincipal(errorOnInvalidType = true) SessionUserDetails member,
-            @PathVariable Long menuId,
             @Valid @RequestBody CartItemRequest request) {
-        CartItemsService.Added added = cartItemsService.add(member.getId(), menuId, request);
+        CartItemsService.Added added = cartItemsService.add(member.getId(), request);
         return ResponseEntity.status(added.created() ? HttpStatus.CREATED : HttpStatus.OK).body(added.item());
     }
 
-    @GetMapping("/api/v1/cart/items")
+    @GetMapping
     public ResponseEntity<CartItemsResponse> list(
             @AuthenticationPrincipal(errorOnInvalidType = true) SessionUserDetails member) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(cartItemsService.list(member.getId()));
     }
 
-    @PutMapping("/api/v1/cart/items/{id}")
+    @PutMapping("/{id}")
     public CartItemResponse changeQuantity(
             @AuthenticationPrincipal(errorOnInvalidType = true) SessionUserDetails member,
             @PathVariable Long id,
@@ -53,7 +54,7 @@ public class CartItemsController {
         return cartItemsService.changeQuantity(member.getId(), id, request);
     }
 
-    @DeleteMapping("/api/v1/cart/items/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> remove(
             @AuthenticationPrincipal(errorOnInvalidType = true) SessionUserDetails member,
             @PathVariable Long id) {
