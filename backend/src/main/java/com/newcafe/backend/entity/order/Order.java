@@ -35,7 +35,7 @@ import org.hibernate.annotations.Check;
 @Check(constraints = "status in ('received','preparing','ready','completed','canceled') "
         + "and order_type in ('dine-in','takeout') and payment_method in ('card','cash') "
         + "and total_amount >= 0 and status_version >= 0")
-@Table(name = "orders", indexes = {
+@Table(indexes = {
         @Index(name = "idx_orders_customer_created", columnList = "customer_id, created_at"),
         @Index(name = "idx_orders_status_created", columnList = "status, created_at")
 }, uniqueConstraints = {
@@ -53,16 +53,16 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "customer_id", nullable = false)
+    @Column(nullable = false)
     private Long customerId;
 
-    @Column(name = "customer_name_snapshot", nullable = false, length = 80)
+    @Column(nullable = false, length = 80)
     private String customerNameSnapshot;
 
-    @Column(name = "order_type", nullable = false, length = 20)
+    @Column(nullable = false, length = 20)
     private String orderType;
 
-    @Column(name = "payment_method", nullable = false, length = 20)
+    @Column(nullable = false, length = 20)
     private String paymentMethod;
 
     @Column(length = 100)
@@ -71,17 +71,17 @@ public class Order {
     @Column(nullable = false, length = 20)
     private String status = RECEIVED;
 
-    @Column(name = "total_amount", nullable = false)
+    @Column(nullable = false)
     private int totalAmount;
 
     @Version
-    @Column(name = "status_version", nullable = false)
+    @Column(nullable = false)
     private int statusVersion = 0;
 
-    @Column(name = "idempotency_key", nullable = false, length = 100)
+    @Column(nullable = false, length = 100)
     private String idempotencyKey;
 
-    @Column(name = "request_fingerprint", nullable = false, length = 64)
+    @Column(nullable = false, length = 64)
     private String requestFingerprint;
 
     @Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMPTZ")
