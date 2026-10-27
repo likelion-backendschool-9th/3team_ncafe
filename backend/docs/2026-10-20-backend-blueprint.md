@@ -3,14 +3,14 @@
 ## 한눈에
 
 - 끝나면: `backend/`에서 Spring Boot API가 PostgreSQL을 사용하고, 회원이 메뉴 탐색 → 장바구니 → 매장/포장 주문 → 주문 확인을 하며 관리자가 이를 운영할 수 있다.
-- 결정 필요: WBS의 실제 결제·고객 주문 취소·현재 곡 반복 모드를 후속 단계에서 구현할 때의 정책.
+- 결정 필요: WBS의 실제 결제·현재 곡 반복 모드를 후속 단계에서 구현할 때의 정책. 고객 주문 취소는 제공하지 않기로 확정했다(2026-10-27).
 - 규모: 기반 구축 후 기능별로 API와 프론트 화면을 함께 연결한다.
 - 기준: 2026-10-20에 읽은 [WBS `전체` 시트](https://docs.google.com/spreadsheets/d/14uSQMZDxGkvPw1hTfxbDsvIzxcyETHBFlY8h1oNOil0/edit?gid=0#gid=0)를 기능 목록의 우선 근거로, 같은 날짜의 [DB 설계](../../docs/database-design.md)를 이번 구현의 데이터·정책 기준으로 삼는다. 프론트엔드보다 WBS의 최신 항목을 우선한다.
 
 ## 먼저 확정할 질문
 
 1. Q1 — WBS 7~8의 실제 결제와 결제수단 CRUD를 별도 단계로 진행할 때, 사용할 PG와 토큰화·환불 규칙은 무엇인가?
-2. Q2 — WBS 6.2의 고객 주문 취소를 다시 포함할 때, 허용 상태와 이미 지불한 주문의 환불 규칙은 무엇인가?
+2. Q2 — (확정 2026-10-27) WBS 6.2의 고객 주문 취소는 제공하지 않는다. 주문 취소는 관리자가 `received`에서만 한다.
 3. Q3 — WBS 11의 반복 모드를 다시 포함할 때, 현재 곡 반복과 전체 목록 반복 중 무엇을 뜻하는가?
 
 현재 DB 설계에 따라 주문 확정 시 실제 청구 없이 `received`가 된다. 주문서의 `card`/`cash`는 카운터에서 사용할 결제수단 선택값이다. 질문 1~3은 이번 기반·핵심 API 구현의 선행 조건이 아니다. 테이블은 Spring Boot 배포 시 Hibernate가 생성·갱신한다.
@@ -61,7 +61,7 @@ S6 경계
 
 ### R4. 장바구니와 주문
 
-회원은 메뉴를 장바구니에 담아 조회·수량 변경·삭제·품목 선택을 하고, 선택한 품목으로 주문을 생성·조회한다. 관리자는 주문을 검색·상세 조회·상태 변경·접수 상태에서 취소한다. (WBS 5.x/12.x, 6.1/6.3/6.4, 14.x; 6.2는 후속)
+회원은 메뉴를 장바구니에 담아 조회·수량 변경·삭제·품목 선택을 하고, 선택한 품목으로 주문을 생성·조회한다. 관리자는 주문을 검색·상세 조회·상태 변경·접수 상태에서 취소한다. (WBS 5.x/12.x, 6.1/6.3/6.4, 14.x; 6.2는 제외)
 
 S7 정상
 - Given 회원 장바구니에 3개 품목이 있고 2개를 선택했다.
@@ -257,7 +257,7 @@ Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요
 | `OrdersController` | `GET /api/v1/admin/orders`(검색·필터·정렬), `GET /api/v1/admin/orders/{id}`, `PUT /api/v1/admin/orders/status`(인접 상태 변경·접수 취소 공통) | 5.1~5.3/12.1~12.3 |
 | `SongsController` | `GET /api/v1/admin/songs`, `PUT /api/v1/admin/songs/{id}/cancel`, `POST /api/v1/admin/songs/playlist`, `PUT /api/v1/admin/songs/playlist/{id}/order`, `PUT /api/v1/admin/songs/playlist/{id}`, `POST /api/v1/admin/songs/playlist/{id}/play`, `POST /api/v1/admin/songs/current/finish`, `POST /api/v1/admin/songs/current/cancel` | 10.1~10.9 |
 
-WBS 5.3의 `/api/v1/admin/orders/focus`와 12.3의 `/api/v1/admin/orders/status`는 같은 상태 변경 기능이다. 뒤에 기재된 **12.3의 `/status` 하나**를 계약 초안으로 사용한다. 메뉴 목록 API의 끝 슬래시는 제거하고 경로 표기를 통일한다. WBS 14.5의 `PUT /api/v1/cart/items/selection`은 DB 설계에 따라 화면의 선택 상태로 처리해 서버 API를 만들지 않는다. WBS 6.2 고객 주문 취소, 7~8 실제 결제·결제수단, 11 반복 모드는 현재 DB 설계에서 보류되어 이번 Controller에 배정하지 않는다. WBS 8.2·8.4는 API 주소가 없으므로 구현 착수 전에 계약을 정한다. 관리자 주문 취소는 2026-10-26에 같은 `PUT /api/v1/admin/orders/status`의 `nextStatus=canceled`로 계약했다. 요청은 `id`, `expectedStatus`, `statusVersion`, `nextStatus`이며 취소 사유는 받지 않는다. 목록의 `q`·`status`·`group`·`sort`·`page`·`size`와 응답 등 상세 계약은 [관리자 주문 구현 문서](../../docs/admin/orders/2026-10-26-backend-order-management.md)를 따른다.
+WBS 5.3의 `/api/v1/admin/orders/focus`와 12.3의 `/api/v1/admin/orders/status`는 같은 상태 변경 기능이다. 뒤에 기재된 **12.3의 `/status` 하나**를 계약 초안으로 사용한다. 메뉴 목록 API의 끝 슬래시는 제거하고 경로 표기를 통일한다. WBS 14.5의 `PUT /api/v1/cart/items/selection`은 DB 설계에 따라 화면의 선택 상태로 처리해 서버 API를 만들지 않는다. WBS 6.2 고객 주문 취소는 제공하지 않기로 확정했고(2026-10-27), 7~8 실제 결제·결제수단, 11 반복 모드는 현재 DB 설계에서 보류되어 이번 Controller에 배정하지 않는다. WBS 8.2·8.4는 API 주소가 없으므로 구현 착수 전에 계약을 정한다. 관리자 주문 취소는 2026-10-26에 같은 `PUT /api/v1/admin/orders/status`의 `nextStatus=canceled`로 계약했다. 요청은 `id`, `expectedStatus`, `statusVersion`, `nextStatus`이며 취소 사유는 받지 않는다. 목록의 `q`·`status`·`group`·`sort`·`page`·`size`와 응답 등 상세 계약은 [관리자 주문 구현 문서](../../docs/admin/orders/2026-10-26-backend-order-management.md)를 따른다.
 
 ## DB 설계 반영
 
@@ -286,7 +286,8 @@ WBS 5.3의 `/api/v1/admin/orders/focus`와 12.3의 `/api/v1/admin/orders/status`
 | 항목 | 이번 청사진의 처리 |
 | --- | --- |
 | WBS 13.x 카테고리, 14.x 장바구니 | 최신 WBS의 번호와 CRUD를 사용한다. 프론트엔드 청사진의 13.x 리뷰·15.0 장바구니 번호는 사용하지 않는다. |
-| WBS 6.2 고객 주문 취소, 11 반복 모드 | WBS 항목은 남겨 두되 현재 DB 설계에서 제외한 결정에 따라 후속 단계로 보류한다. Q2·Q3 후 API·스키마를 확장한다. |
+| WBS 6.2 고객 주문 취소 | 제공하지 않는다(2026-10-27 확정). 주문 취소는 관리자가 `received`에서만 한다. |
+| WBS 11 반복 모드 | WBS 항목은 남겨 두되 현재 DB 설계에서 제외한 결정에 따라 후속 단계로 보류한다. Q3 후 API·스키마를 확장한다. |
 | WBS 7~8 결제, 9.x 관리자 결제 | 현재는 카운터 결제수단 선택만 주문에 저장한다. 실제 결제·수단 CRUD는 Q1과 별도 설계 뒤 구현한다. 9.x는 세부 작업이 없다. |
 | 관리자 주문 5.x/12.x | 같은 기능이 중복되어 한 구현으로 합친다. 두 API 경로가 달라 계약을 하나로 확정한다. |
 | 프론트엔드 목 데이터 | UUID 메뉴 ID, `ice`, 영문 메뉴명·복수 카테고리와 DB 설계의 BIGINT ID, `iced`, `slug`·단일 카테고리가 충돌한다. API DTO를 확정한 뒤 프론트 어댑터를 교체한다. |
@@ -375,7 +376,6 @@ WBS 5.3의 `/api/v1/admin/orders/focus`와 12.3의 `/api/v1/admin/orders/status`
 ### 후속 작업: WBS에는 있으나 현재 DB 설계에서 보류
 
 - [ ] Q1 결정 후 WBS 7~8의 실제 주문 결제·결제 취소·결제수단 CRUD를 별도 스키마와 API로 설계한다. 카드 원문은 저장하지 않는다.
-- [ ] Q2 결정 후 WBS 6.2 고객 주문 취소를 추가한다. 결제 상태·환불 규칙과 함께 테스트한다.
 - [ ] Q3 결정 후 WBS 11 반복 모드를 추가한다. 기존 자동 다음 곡 규칙과 충돌하지 않는지 테스트한다.
 
 ## 브랜치·커밋
