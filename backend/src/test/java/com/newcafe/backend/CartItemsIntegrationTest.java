@@ -30,6 +30,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -48,6 +49,7 @@ import tools.jackson.databind.json.JsonMapper;
         "app.security.allowed-origins=http://localhost:3000"
 })
 @Import(BackendDatabaseIntegrationTest.DatabaseConfiguration.class)
+@Tag("integration")
 class CartItemsIntegrationTest {
 
     private static final String PASSWORD = "비밀번호123!";

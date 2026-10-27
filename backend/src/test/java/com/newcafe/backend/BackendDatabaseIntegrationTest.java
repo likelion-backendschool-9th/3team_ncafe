@@ -22,6 +22,7 @@ import javax.sql.DataSource;
 
 import jakarta.persistence.EntityManager;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -45,6 +46,7 @@ import tools.jackson.databind.json.JsonMapper;
 })
 @Import(BackendDatabaseIntegrationTest.DatabaseConfiguration.class)
 @Transactional
+@Tag("integration")
 class BackendDatabaseIntegrationTest {
 
     @Autowired

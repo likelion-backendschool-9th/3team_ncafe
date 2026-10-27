@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,6 +52,7 @@ import tools.jackson.databind.json.JsonMapper;
 })
 @Import({BackendDatabaseIntegrationTest.DatabaseConfiguration.class,
         SessionLifecycleIntegrationTest.SessionTracking.class})
+@Tag("integration")
 class SessionLifecycleIntegrationTest {
 
     private static final String LOGOUT = "/api/v1/auth/logout";

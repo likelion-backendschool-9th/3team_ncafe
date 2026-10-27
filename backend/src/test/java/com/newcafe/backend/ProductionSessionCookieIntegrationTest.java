@@ -13,6 +13,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Locale;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,6 +30,7 @@ import tools.jackson.databind.json.JsonMapper;
 })
 @ActiveProfiles("prod")
 @Import(BackendDatabaseIntegrationTest.DatabaseConfiguration.class)
+@Tag("integration")
 class ProductionSessionCookieIntegrationTest {
 
     @LocalServerPort

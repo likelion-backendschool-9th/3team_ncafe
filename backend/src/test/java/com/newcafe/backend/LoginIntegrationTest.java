@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -43,6 +44,7 @@ import tools.jackson.databind.json.JsonMapper;
         "app.security.allowed-origins=http://localhost:3000"
 })
 @Import(BackendDatabaseIntegrationTest.DatabaseConfiguration.class)
+@Tag("integration")
 class LoginIntegrationTest {
 
     private static final String PASSWORD = " 비밀번호123! ";

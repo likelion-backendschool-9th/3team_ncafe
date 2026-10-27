@@ -25,6 +25,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -46,6 +47,7 @@ import tools.jackson.databind.json.JsonMapper;
         "app.security.allowed-origins=http://localhost:3000"
 })
 @Import(BackendDatabaseIntegrationTest.DatabaseConfiguration.class)
+@Tag("integration")
 class SignupIntegrationTest {
 
     private static final String SIGNUP = "/api/v1/auth/signup";
