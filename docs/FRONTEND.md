@@ -126,8 +126,8 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | `/admin/menus` | `q`(메뉴명·slug), `categoryId`, `status`, `sort`=`newest`\|`oldest`\|`name`\|`price-low`\|`price-high`, `page`(1부터, 20개), flash `created`·`deleted`·`missing` | `MenuFilterSelect`, `MenuPagination`, `DeleteMenuButton` | 메뉴 관리 |
 | `/admin/menus/new`, `/[id]/edit` | params `id`(수정) | `MenuForm` | 메뉴 등록 · 메뉴 수정 |
 | `/admin/menus/[id]` | params `id`, flash `updated`·`deleteError` | `DeleteMenuButton` | 메뉴명 |
-| `/admin/orders` | `q`, `status`, `sort`=`newest`\|`oldest`, `view`=`list`\|`grid`, `activePage`·`completedPage`·`canceledPage`, flash | `OrderSectionAccordion`, `StatusChangeForm` | 주문 관리 |
-| `/admin/orders/[id]` | params `id`, 목록 쿼리 유지, flash | `StatusChangeForm` | 주문 {코드} |
+| `/admin/orders` | `q`, `status`, `sort`=`newest`\|`oldest`, `view`=`list`\|`grid`, `activePage`·`completedPage`·`canceledPage`, flash | `OrderSectionAccordion`, `StatusChangeForm`, `ConfirmCancelDialog` | 주문 관리 |
+| `/admin/orders/[id]` | params `id`, 목록 쿼리 유지, flash | `StatusChangeForm`, `ConfirmCancelDialog` | 주문 {숫자 ID} |
 | `/admin/songs` | 없음 | `RequestCard`, `AddToPlaylistForm`, `YouTubePreview`, `OnAirPlayer`, `CancelRequestForm` | 뮤직박스 운영 |
 | `/forbidden` | 없음 | 없음 | 접근 제한 |
 
@@ -136,7 +136,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 청사진 원문 흐름은 [frontend-청사진.md 3장](./frontend-청사진.md#3-주요-사용자-흐름)에 있다. 현재 코드의 흐름은 다음과 같다.
 
 - **주문:** `/menus` → `/menus/[slug]`(온도·수량, 담으려면 로그인) → `/cart`(주문 대상 항목 체크) → `/checkout`(수령 방식·요청사항·카운터 결제수단·동의) → `/my/orders/[id]`. 실제 결제는 없고 카운터에서 결제한다.
-- **주문 처리:** 관리자는 인접 상태로만 옮긴다: `received ↔ preparing ↔ ready ↔ completed`. 취소에는 사유가 필요하다. 고객은 `received` 상태에서 취소할 수 있다.
+- **주문 처리:** 관리자는 인접 상태로만 옮긴다: `received ↔ preparing ↔ ready ↔ completed`. 관리자 취소는 `received → canceled`만 가능하며 사유 입력은 없다. 서버의 `allowedStatuses`·`statusVersion`으로 처리한다. 고객 취소 화면은 아직 목 흐름이며 실제 고객 API 연결·취소 정책은 별도 작업이다.
 - **뮤직박스:** 회원 신청(`pending`) → 관리자가 YouTube 링크를 붙여 재생 목록에 담음(`queued`) → 지금 재생(`playing`) → `played`. 접수 취소는 `cancelled`다. 서버의 시작 시각과 영상 길이로 모든 화면의 재생 위치를 맞춘다.
 
 ## 5. 개발 규칙
@@ -292,7 +292,7 @@ export async function apiFetch<T>(path: `/api/v1/${string}`, init: RequestInit =
 
 변경은 Server Action으로 하고, 흐름은 `권한 확인 → 입력 검증 → API 호출 → revalidatePath → redirect` 순서다.
 
-1. **첫 줄에서 `requireRole`로 권한을 확인한다.** Server Action은 누구나 직접 호출할 수 있는 POST 엔드포인트다. 화면에서 버튼을 숨기는 것만으로는 막을 수 없다.
+1. **첫 단계에서 `requireRole`로 권한을 확인한다.** 관리자 주문 액션은 삭제 쿠키 전달을 위해 기존 `createAuthSession().current()`를 사용하는 지역 `requireOrderAdministrator`에서 같은 활성 상태·관리자 역할을 검사한다. Server Action은 누구나 직접 호출할 수 있는 POST 엔드포인트다. 화면에서 버튼을 숨기는 것만으로는 막을 수 없다.
 2. **필드 검증은 프론트에서도 한다.** 백엔드 `VALIDATION_ERROR`는 메시지 하나만 주므로, 필드 옆 오류(`aria-describedby`)와 첫 오류 필드 포커스는 `validate()`로 만든다.
 3. **실패하면 입력값(`values`)을 함께 돌려준다.** React 19의 action 폼은 제출 후 초기화되므로, 폼은 `defaultValue={state.values.x}`로 다시 채운다.
 4. **`try`는 API 호출만 감싼다.** `redirect()`는 내부적으로 예외를 던져 동작하므로 `try` 안에 넣으면 이동이 막힌다. `ApiRequestError`만 상태로 돌려주고, 나머지 예외는 다시 던져 `error.tsx`가 처리하게 한다.
@@ -329,9 +329,10 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 2026-10-25 인증 6단계에서 적용했다. 로그인·로그아웃의 실제 처리는 표준 Security 필터이며, AuthController 매핑은 인증 영역의 소유를 뜻한다. 상세 계약은 [인증 청사진](../backend/docs/2026-10-22-auth-blueprint.md)을 따른다.
 
 - `app/_lib/api/auth.ts`는 server-only이며 변경 요청에 CSRF·쿠키를 연결한다. BackendSession은 액션마다 새 쿠키 저장소를 만들고 모든 Set-Cookie를 유지하며 후속 요청에 갱신된 ID를 전달한다. 인증 변경에 위의 단순 조회 예시 요청기를 사용하지 않는다.
-- 가입·로그인 액션은 공개 인증 진입점이므로 기존 회원 requireRole 없이 입력 검증·백엔드 인증을 수행한다. 보호된 업무 액션은 기존 requireRole 규칙을 유지한다.
+- 가입·로그인 액션은 공개 인증 진입점이므로 기존 회원 requireRole 없이 입력 검증·백엔드 인증을 수행한다. 보호된 업무 액션은 첫 단계 권한 검사를 유지한다. 주문의 쓰기 가능한 세션 guard 예외는 위 Server Action 규칙을 따른다.
 - 로그인 후 새 CSRF를 받고, 가입만 성공한 경우 로그인 재시도로 안내한다. 비밀번호는 action state·응답·브라우저 저장소에 넣지 않는다.
 - SSR 회원 조회는 no-store이며 React cache는 한 렌더 안의 중복만 제거한다. Proxy는 보호 경로의 상태·역할을 확인하고 만료 쿠키를 반영한다. Server Components에서는 쿠키를 변경하지 않는다.
+- 관리자 주문 업무 요청은 `BackendSession.requestJson`으로 기존 jar·CSRF·오류 쿠키 전달을 재사용한다. `client.ts` 계약은 유지한다. 주문 POST는 Proxy의 일반 HTTP redirect 대신 액션의 권한 검사·redirect 처리를 사용하며, 주문 GET과 다른 경로의 Proxy 정책은 그대로다.
 - 다른 탭에는 임의 변경 알림만 전송한다. 탭 복귀·뒤로 가기에서 서버 인증을 새로 확인한다.
 
 - 인증 정보는 httpOnly 쿠키에 두고, localStorage에 두지 않는다.
@@ -352,7 +353,7 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 
 | 우선 | 항목 | 현재 코드·백엔드 상태 |
 | --- | --- | --- |
-| 높음 | 주문·결제의 상태와 취소 가능 조건 | 상태 5종, 한 단계씩 이동. 관리자 취소: 백엔드는 `received`만, 코드는 `preparing`도 허용. 고객 취소는 백엔드 보류 |
+| 높음 | 주문·결제의 상태와 취소 가능 조건 | 상태 5종, 인접 이동. 관리자 프론트/API 모두 `received`만 사유 없이 취소, 서버 선택지·버전 적용(2026-10-26). 고객 취소 API는 보류 |
 | 높음 | 결제 제공자, 결제수단 저장·수정 방식 | 실제 결제 없음, 카운터 결제수단만. 보류(Q1) |
 | 높음 | 역할별 가입·로그인 방식 | 목: 가입은 고객만, 이메일·비밀번호. 관리자 생성은 백엔드 계획 |
 | 높음 | 뮤직박스 신청 권한·사연 공개·대기 순서 | 회원만, 이름 공개, 글자 수 제한, 관리자가 순서 결정. 공개 동의는 없음 |
@@ -422,7 +423,7 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | `/cart` ↔ my/CartItems | metadata 없음 | — | — |
 | `/checkout` ↔ my/Orders | 화면 전체가 클라이언트, `cart` CSS import, "주문 / 결제"·"결제하기" 용어 | `POST /orders`(`cartItemIds`·수령 방식·결제수단·요청사항). 주문 대상은 `?cartItemIds=`로 받아 서버 장바구니에서 고른다 | 백엔드 `/api/v1/orders` 접근 정책 |
 | `/my/orders*` ↔ my/Orders | metadata 없음 | API 연결, 고객 취소 결정 | `/checkout` |
-| `/admin/orders*` ↔ **admin/Orders** | metadata 없음, page 226줄, 상태 select가 `aria-label`만 | 백엔드 API 구현(2026-10-26). 인증·API 연결, 숫자 ID·`temperature`·`statusVersion`·`allowedStatuses`, 취소 사유 제거·`received`만 취소. [계약](admin/orders/2026-10-26-backend-order-management.md) | Auth, `/checkout`, 회원 FK 통합 |
+| `/admin/orders*` ↔ **admin/Orders** | API 연결·컴포넌트 분리·보이는 label·title/noindex·loading/error 적용 | 실제 관리자 세션/CSRF, 세 그룹 DB 페이지·전체 요약, 숫자 ID·스냅샷·`iced`·버전/서버 선택지·사유 없는 접수 취소 구현(2026-10-26). [계획·검증 결과](admin/orders/2026-10-26-frontend-order-management.md), [계약](admin/orders/2026-10-26-backend-order-management.md) | 공통 skip link/메타데이터·관리자 홈 집계는 별도. 고객 전체 흐름은 D·회원 FK 통합 후 검증 |
 | `/musicbox` ↔ **Songs** | metadata·canonical 없음, `<main>`이 page에 있음. 공유 컴포넌트는 `app/_components`로 옮김, `loading`·`error` 추가 | 공개 조회·신청·`revision` 폴링 연결 완료([계획](musicbox/2026-10-27-frontend-customer-songs.md)) | — |
 | `/my/songs` ↔ **my/Songs** | metadata 없음. `loading`·`error` 추가 | 조회·삭제 API 연결 완료, 현재 곡은 보조 조회(2-3) | — |
 | `/admin/songs` ↔ **admin/Songs** | metadata 없음, page 203줄 | 선곡 API 연결 완료(#85). 변경 요청 CSRF·`revision` 폴링 보완(2026-10-27) | — |
