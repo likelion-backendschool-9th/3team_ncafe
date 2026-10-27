@@ -29,7 +29,8 @@ public class OrdersService {
     @Transactional(readOnly = true)
     public AdminOrderPageResponse list(OrderSearchRequest request) {
         Sort.Direction direction = "oldest".equals(request.sort()) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        var page = orderRepository.findAll(OrderSpecifications.adminSearch(request),
+        var spec = OrderSpecifications.adminSearch(request.q(), request.status(), request.group());
+        var page = orderRepository.findAll(spec,
                 PageRequest.of(request.page(), request.size(), Sort.by(direction, "createdAt", "id")));
 
         // 컬렉션 fetch join을 페이지 쿼리에 넣으면 메모리에서 페이지를 자르게 되므로 분리한다.

@@ -1,6 +1,5 @@
 package com.newcafe.backend.repository;
 
-import com.newcafe.backend.dto.orders.OrderSearchRequest;
 import com.newcafe.backend.entity.order.Order;
 import com.newcafe.backend.entity.order.OrderItem;
 
@@ -17,22 +16,22 @@ public final class OrderSpecifications {
     private OrderSpecifications() {
     }
 
-    public static Specification<Order> adminSearch(OrderSearchRequest request) {
+    public static Specification<Order> adminSearch(String q, String status, String group) {
         return (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (request.status() != null) {
-                predicates.add(builder.equal(root.get("status"), request.status()));
+            if (status != null) {
+                predicates.add(builder.equal(root.get("status"), status));
             }
 
-            if (request.group() != null) {
-                predicates.add("active".equals(request.group())
-                        ? root.get("status").in("received", "preparing", "ready")
-                        : builder.equal(root.get("status"), request.group()));
+            if (group != null) {
+                predicates.add("active".equals(group)
+                        ? root.get("status").in(Order.ACTIVE_STATUSES)
+                        : builder.equal(root.get("status"), group));
             }
 
-            if (request.q() != null) {
-                String pattern = "%" + escapeLike(request.q().toLowerCase(Locale.ROOT)) + "%";
+            if (q != null) {
+                String pattern = "%" + escapeLike(q.toLowerCase(Locale.ROOT)) + "%";
                 var itemQuery = query.subquery(Long.class);
                 var item = itemQuery.from(OrderItem.class);
                 itemQuery.select(item.get("id")).where(
