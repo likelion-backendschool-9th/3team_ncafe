@@ -15,7 +15,7 @@
 | #81 장바구니 백엔드 | `POST /menus/{id}/cart/items`, `GET /cart/items`, `PUT`·`DELETE /cart/items/{id}`. 고객만(`hasRole("CUSTOMER")`), 변경 요청은 CSRF 필요 |
 | #61 인증 | 세션 로그인, `getCurrentUser`·`requireRole`, `proxy.ts`의 `/cart`·`/checkout` 보호 |
 | #77 공개 메뉴 프론트 | `/menus/[slug]`가 백엔드 메뉴(숫자 `id`, `slug`, `supportsHot`/`supportsIced`)를 쓰고 `OrderPanel`에 `menuId=String(id)`를 넘긴다 |
-| #65 관리자 회원 화면 | 변경 요청 방식: `apiFetch`(`_lib/api/client.ts`) + 같은 세션의 CSRF 토큰(`admin/users/_lib/api.ts`의 `csrfHeaders()`) |
+| #65 관리자 회원 화면 | 변경 요청 방식: `apiFetch`(`_lib/api/client.ts`) + 같은 세션의 CSRF 토큰(`csrfHeaders()`, #87·#88에서 `_lib/api/client.ts`로 옮겨짐) |
 
 ## 대상 쌍
 
@@ -106,7 +106,7 @@ A로 하면 `/checkout` 쌍과 겹치는 파일이 `checkout/page.tsx`, `Checkou
 1. 계획 문서 저장
    - 커밋: `docs: 회원 장바구니 프론트 연결 계획 추가`
 2. 장바구니 요청기·타입
-   - `admin/users/_lib/api.ts`의 `csrfHeaders()`를 `app/_lib/api/csrf.ts`로 올린다(두 번째 사용처, 5-1 "위로 올리는 시점"). `admin/users`는 새 위치를 import한다. 동작은 같다.
+   - `csrfHeaders()`는 #87·#88이 `app/_lib/api/client.ts`로 옮긴 것을 쓴다. 10-27 rebase 때 같은 일을 하던 `app/_lib/api/csrf.ts`를 지웠다.
    - `app/(customer)/_lib/cart/types.ts`(백엔드 `CartItemResponse`·`CartItemsResponse`), `app/(customer)/_lib/cart/api.ts`(`server-only`, `apiFetch`로 조회·응답 검증). `/cart`와 `/checkout`이 함께 쓰므로 공통 부모 `(customer)/_lib`에 둔다(5-1)
 3. 담기 — F1~F3
    - `app/(public)/menus/[slug]/_actions.ts`: `addCartItem(menuId, menuSlug, temperature, quantity)`(`menuSlug`는 로그인 후 돌아올 주소). 첫 줄 `requireRole("customer", ...)`, 화면 온도 `ice` → API `iced`, `apiFetch` + `csrfHeaders()`, 실패는 `{ ok: false, message }`, 성공하면 `revalidatePath("/cart")`.
