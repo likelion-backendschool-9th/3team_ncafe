@@ -98,6 +98,7 @@
 .detail { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(2rem, 5vw, 4rem); align-items: start; padding-block: 2rem clamp(4rem, 8vw, 6rem); }
 .detailImageWrap { position: relative; aspect-ratio: 4 / 3; border: 9px solid var(--paper); outline: 1px solid var(--ink); box-shadow: 9px 10px 0 #74452e; background: #e6dbc8; }
 .detailImage { display: block; width: 100%; height: 100%; object-fit: cover; }
+.detailImage[data-brighten="true"] { filter: brightness(1.14) contrast(0.98); }
 .detailBody { display: grid; align-content: start; gap: 1rem; padding-top: 0.3rem; }
 .detailInfo {
   display: grid;
