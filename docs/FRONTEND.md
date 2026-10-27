@@ -21,7 +21,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | 관리자 | 메뉴 CRUD | 3.x | 구현. 백엔드 API 있음 |
 | 고객 | 메뉴 목록·상세 | 4.x | 구현 |
 | 고객 | 장바구니 | 14.1~14.4 (15.0) | 구현. 백엔드 API 연결 |
-| 고객 | 주문 등록·목록·상세 | 6.1, 6.3~6.4 | 구현. 고객 취소(6.2)는 백엔드 보류(Q2) |
+| 고객 | 주문 등록·목록·상세 | 6.1, 6.3~6.4 | 구현. 고객 취소(6.2)는 제공하지 않는다(2026-10-27 확정) |
 | 고객 | 결제·결제수단 CRUD | 7.x, 8.x | **보류(Q1).** 카운터 결제수단 선택만 있음 |
 | 관리자 | 주문 목록·상세·상태 변경·취소 | 5.x/12.x | 구현 |
 | 방문자/고객 | 뮤직박스 신청·대기·현재 곡 | 11.x | 구현. 신청은 회원만 |
@@ -59,7 +59,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | `/cart` | `my/CartItemsController` | `GET /cart/items`, `PUT`·`DELETE /cart/items/{id}` | 14.2~14.4 | |
 | `/checkout` | `my/OrdersController` | `POST /orders` | 6.1 | 공유 |
 | `/my` | **`my/UsersController`** | `GET /my` | 1.5 | 보조 |
-| `/my/orders`, `/my/orders/[id]` | `my/OrdersController` | `GET /orders`, `GET /orders/{id}` | 6.3~6.4 | 공유. 고객 취소 API 없음(Q2) |
+| `/my/orders`, `/my/orders/[id]` | `my/OrdersController` | `GET /orders`, `GET /orders/{id}` | 6.3~6.4 | 공유. 고객 취소는 제공하지 않는다(2026-10-27 확정) |
 | `/my/songs` | **`my/SongsController`** | `GET /my/songs`, `DELETE /my/songs/{id}` | 11.4~11.5 | 보조 |
 | `/admin` | 없음 | 관리자 Menus·Orders·Songs 목록 조합 | — | 예외 |
 | `/admin/users`, `/admin/users/[id]` | `admin/UsersController` | `GET /admin/users`, `GET`·`PUT /admin/users/{id}` | 2.1~2.3 | 공유 |
@@ -136,7 +136,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 청사진 원문 흐름은 [frontend-청사진.md 3장](./frontend-청사진.md#3-주요-사용자-흐름)에 있다. 현재 코드의 흐름은 다음과 같다.
 
 - **주문:** `/menus` → `/menus/[slug]`(온도·수량, 담으려면 로그인) → `/cart`(주문 대상 항목 체크) → `/checkout`(수령 방식·요청사항·카운터 결제수단·동의) → `/my/orders/[id]`. 실제 결제는 없고 카운터에서 결제한다.
-- **주문 처리:** 관리자는 인접 상태로만 옮긴다: `received ↔ preparing ↔ ready ↔ completed`. 관리자 취소는 `received → canceled`만 가능하며 사유 입력은 없다. 서버의 `allowedStatuses`·`statusVersion`으로 처리한다. 고객 취소 화면은 아직 목 흐름이며 실제 고객 API 연결·취소 정책은 별도 작업이다.
+- **주문 처리:** 관리자는 인접 상태로만 옮긴다: `received ↔ preparing ↔ ready ↔ completed`. 관리자 취소는 `received → canceled`만 가능하며 사유 입력은 없다. 서버의 `allowedStatuses`·`statusVersion`으로 처리한다. 고객 취소는 제공하지 않는다(2026-10-27 확정).
 - **뮤직박스:** 회원 신청(`pending`) → 관리자가 YouTube 링크를 붙여 재생 목록에 담음(`queued`) → 지금 재생(`playing`) → `played`. 접수 취소는 `cancelled`다. 서버의 시작 시각과 영상 길이로 모든 화면의 재생 위치를 맞춘다.
 
 ## 5. 개발 규칙
@@ -353,7 +353,7 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 
 | 우선 | 항목 | 현재 코드·백엔드 상태 |
 | --- | --- | --- |
-| 높음 | 주문·결제의 상태와 취소 가능 조건 | 상태 5종, 인접 이동. 관리자 프론트/API 모두 `received`만 사유 없이 취소, 서버 선택지·버전 적용(2026-10-26). 고객 취소 API는 보류 |
+| 높음 | 주문·결제의 상태와 취소 가능 조건 | 상태 5종, 인접 이동. 관리자 프론트/API 모두 `received`만 사유 없이 취소, 서버 선택지·버전 적용(2026-10-26). 고객 취소는 제공하지 않는다(2026-10-27 확정) |
 | 높음 | 결제 제공자, 결제수단 저장·수정 방식 | 실제 결제 없음, 카운터 결제수단만. 보류(Q1) |
 | 높음 | 역할별 가입·로그인 방식 | 목: 가입은 고객만, 이메일·비밀번호. 관리자 생성은 백엔드 계획 |
 | 높음 | 뮤직박스 신청 권한·사연 공개·대기 순서 | 회원만, 이름 공개, 글자 수 제한, 관리자가 순서 결정. 공개 동의는 없음 |
@@ -371,7 +371,6 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | 사이트 도메인, OG 이미지, 백엔드 주소 환경변수 이름 | 팀 |
 | 메뉴 `nameEn` 유지, 카테고리 단일·복수 (공개 메뉴 필터는 `categoryId`로 정함) | 백엔드 협의 |
 | 관리자 메뉴 카테고리 목록의 컨트롤러 | 백엔드 협의 |
-| 고객 취소 화면 유지 여부(Q2). 관리자 취소는 `PUT /admin/orders/status`의 `nextStatus=canceled`로 확정(2026-10-26) | 백엔드·팀 |
 | GLOSSARY에 없는 용어: 고객·회원·방문자, 인덱스, 주문·뮤직박스 상태 라벨 | GLOSSARY 관리자 |
 
 ## 7. 진행 현황
@@ -422,7 +421,7 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | `/` ↔ Home | `<main>`이 page에 있음 | index API. 뮤직박스 칸은 공개 Songs 조회로 연결 완료(2-3) | 공개 Menus |
 | `/cart` ↔ my/CartItems | metadata 없음 | — | — |
 | `/checkout` ↔ my/Orders | 화면 전체가 클라이언트, `cart` CSS import, "주문 / 결제"·"결제하기" 용어 | `POST /orders`(`cartItemIds`·수령 방식·결제수단·요청사항). 주문 대상은 `?cartItemIds=`로 받아 서버 장바구니에서 고른다 | 백엔드 `/api/v1/orders` 접근 정책 |
-| `/my/orders*` ↔ my/Orders | metadata 없음 | API 연결, 고객 취소 결정 | `/checkout` |
+| `/my/orders*` ↔ my/Orders | metadata 없음 | API 연결 | `/checkout` |
 | `/admin/orders*` ↔ **admin/Orders** | API 연결·컴포넌트 분리·보이는 label·title/noindex·loading/error 적용 | 실제 관리자 세션/CSRF, 세 그룹 DB 페이지·전체 요약, 숫자 ID·스냅샷·`iced`·버전/서버 선택지·사유 없는 접수 취소 구현(2026-10-26). [계획·검증 결과](admin/orders/2026-10-26-frontend-order-management.md), [계약](admin/orders/2026-10-26-backend-order-management.md) | 공통 skip link/메타데이터·관리자 홈 집계는 별도. 고객 전체 흐름은 D·회원 FK 통합 후 검증 |
 | `/musicbox` ↔ **Songs** | metadata·canonical 없음, `<main>`이 page에 있음. 공유 컴포넌트는 `app/_components`로 옮김, `loading`·`error` 추가 | 공개 조회·신청·`revision` 폴링 연결 완료([계획](musicbox/2026-10-27-frontend-customer-songs.md)) | — |
 | `/my/songs` ↔ **my/Songs** | metadata 없음. `loading`·`error` 추가 | 조회·삭제 API 연결 완료, 현재 곡은 보조 조회(2-3) | — |
