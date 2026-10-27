@@ -55,7 +55,7 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | `/login`, `/signup` | **`AuthController`** | `POST /auth/login`, `POST /auth/signup` | 1.1, 1.3 | 공유 |
 | `/menus` | `MenusController`(공개) | `GET /menus`(`q`,`categoryId`,`status`,`sort`,`page`,`size`), `GET /menus/categories` | 4.1 | 공유 |
 | `/menus/[slug]` | `MenusController`(공개) | `GET /menus/{slug}` | 4.2 | 공유, 보조 |
-| `/musicbox` | **`SongsController`**(공개) | `GET /musicbox/songs`, `GET /songs/now`, `POST /musicbox/songs` | 11.1~11.3 | 신청은 고객 회원만 |
+| `/musicbox` | **`SongsController`**(공개) | `GET /musicbox/songs`, `GET /musicbox/songs/now`, `POST /musicbox/songs` | 11.1~11.3 | 신청은 고객 회원만 |
 | `/cart` | `my/CartItemsController` | `GET /cart/items`, `PUT`·`DELETE /cart/items/{id}` | 14.2~14.4 | |
 | `/checkout` | `my/OrdersController` | `POST /orders` | 6.1 | 공유 |
 | `/my` | **`my/UsersController`** | `GET /my` | 1.5 | 보조 |
@@ -88,8 +88,8 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | 종류 | 페이지 | 컨트롤러·엔드포인트 | 근거 |
 | --- | --- | --- | --- |
 | 보조 | `/menus/[slug]` | `my/CartItemsController` `POST /menus/{id}/cart/items` | 백엔드 청사진: 담기 동작 |
-| 보조 | `/` | `SongsController`(공개) `GET /songs/now` | 공용 `MusicBoxRefresher`의 `revision` 폴링. 첫 화면 데이터는 `GET /index/songs`로 받는다(2026-10-27) |
-| 보조 | `/my/songs` | `SongsController`(공개) `GET /songs/now`, `GET /musicbox/songs` | 현재 곡 부스, 재생 대기 순번, `revision`(2026-10-27) |
+| 보조 | `/` | `SongsController`(공개) `GET /musicbox/songs/now` | 공용 `MusicBoxRefresher`의 `revision` 폴링. 첫 화면 데이터는 `GET /index/songs`로 받는다(2026-10-27) |
+| 보조 | `/my/songs` | `SongsController`(공개) `GET /musicbox/songs/now`, `GET /musicbox/songs` | 현재 곡 부스, 재생 대기 순번, `revision`(2026-10-27) |
 | 보조 | `/my` | `AuthController` `POST /auth/logout` | 백엔드 청사진: 로그아웃 |
 | 보조 | `/checkout` | `my/CartItemsController` `GET /cart/items` | 주문 대상 항목 조회. `/cart`가 넘긴 `?cartItemIds=`의 줄만 고른다(2026-10-26 결정, 새 엔드포인트 없음) |
 | 없음 | `/admin` | 관리자 목록 API 조합 | 백엔드 청사진: 대시보드 API 없음 |

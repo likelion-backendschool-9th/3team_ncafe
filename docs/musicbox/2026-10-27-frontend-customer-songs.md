@@ -4,7 +4,7 @@
 
 - 끝나면 아래가 목 저장소 대신 백엔드 API(#79·#89·#90)로 동작한다. 전용 DB로 돌린 e2e와 `lint`·`typecheck`가 통과한다.
   - 대상 화면: `/musicbox`, `/my/songs`, 홈 뮤직박스 칸
-  - 열린 화면은 3초마다 `GET /api/v1/songs/now`의 `revision`만 확인한다.
+  - 열린 화면은 3초마다 `GET /api/v1/musicbox/songs/now`의 `revision`만 확인한다.
 - 결정: Q1 A, Q2 A (10-27 승인). #85는 10-27 develop에 머지돼 단계 6도 이 브랜치에서 한다.
 - 규모: 8단계(0~7), 약 7.5시간
 - 컴포넌트 분리(10-27 추가 결정): 다른 라우트의 `musicbox/_components` import 10건을 FRONTEND.md 5-1 배치 단계대로 옮긴다 (단계 0).
@@ -29,18 +29,20 @@
   - 이유:
     - 홈의 주 컨트롤러 엔드포인트 `GET /index/songs`는 아직 없다.
     - `/my/songs`의 현재 곡 표시는 2-3에서 "근거 없음, 6-2에서 정한다"로 남아 있다.
-    - 변경 감지에 쓰는 `revision`은 `GET /songs/now`에만 있다.
+    - 변경 감지에 쓰는 `revision`은 `GET /musicbox/songs/now`에만 있다.
   - (A, 추천) 보조로 쓴다.
-    - `/`: `GET /musicbox/songs`, `GET /songs/now`
-    - `/my/songs`: `GET /songs/now`, `GET /musicbox/songs`(재생 대기 순번 계산용)
+    - `/`: `GET /musicbox/songs`, `GET /musicbox/songs/now`
+    - `/my/songs`: `GET /musicbox/songs/now`, `GET /musicbox/songs`(재생 대기 순번 계산용)
     - 2-3 예외 목록과 백엔드 청사진에 2줄을 추가한다.
     - 백엔드 변경은 없다.
   - (B) `GET /index/songs`(현재 곡, 다음 3곡, `revision`)를 백엔드에 새로 만든다 (약 +1.5시간).
     - `/my/songs`는 현재 곡 부스와 재생 대기 순번을 뺀다.
 
+- 현재 곡 API는 10-27에 `GET /api/v1/songs/now`에서 `GET /api/v1/musicbox/songs/now`로 옮겼다. 이 문서의 경로는 새 경로로 고쳤다 (고침 10-27).
+
 ## 1. 공개 뮤직박스 조회 (R1)
 
-`/musicbox`는 `GET /musicbox/songs`와 `GET /songs/now`로 현재 곡, 목록, 오늘 접수 수를 그린다.
+`/musicbox`는 `GET /musicbox/songs`와 `GET /musicbox/songs/now`로 현재 곡, 목록, 오늘 접수 수를 그린다.
 
 S1 정상
 - Given 백엔드에 재생 중 1곡(`id=20`), 플레이리스트 2곡, 접수 1곡, 재생 완료 1곡이 있다.
@@ -58,7 +60,7 @@ S3 백엔드 오류
 
 ## 2. 변경 감지 (R2)
 
-열린 화면은 3초마다 브라우저에서 `GET /api/v1/songs/now`를 부르고, `revision`이 처음 그릴 때와 다르면 `router.refresh()`한다.
+열린 화면은 3초마다 브라우저에서 `GET /api/v1/musicbox/songs/now`를 부르고, `revision`이 처음 그릴 때와 다르면 `router.refresh()`한다.
 
 S4 변화 감지
 - Given `/musicbox`를 `revision=5`로 그렸다.
@@ -102,7 +104,7 @@ S10 백엔드 거절
 
 ## 4. 내 신청곡 조회·삭제 (R4)
 
-`/my/songs`는 `GET /my/songs`로 내 곡을, `GET /songs/now`로 현재 곡을 보여 준다 (Q2). 삭제는 `DELETE /my/songs/{id}`다.
+`/my/songs`는 `GET /my/songs`로 내 곡을, `GET /musicbox/songs/now`로 현재 곡을 보여 준다 (Q2). 삭제는 `DELETE /my/songs/{id}`다.
 
 S11 정상
 - Given 고객 7의 곡이 3개 있다: `playing` 1, `queued`(플레이리스트 2번째) 1, `cancelled` 1.
@@ -129,7 +131,7 @@ S14 정상
 
 ## 6. 사연 읽기 (R6)
 
-`/api/story-speech`는 목 대신 서버에서 `GET /songs/now`를 불러 현재 곡을 확인한다.
+`/api/story-speech`는 목 대신 서버에서 `GET /musicbox/songs/now`를 불러 현재 곡을 확인한다.
 
 S15 정상
 - Given 현재 곡이 `id=20`이고 사연이 있다.
@@ -180,7 +182,7 @@ S17 정리
      - 공용 컴포넌트(`RequestTable`, `NowPlaying`, `DjBooth`, `RequestMemo`)의 타입을 `MusicRequest`에서 `SongResponse`로 바꾼다 (id `string` → `number`).
    - 확인: `npm run typecheck`, `npm run lint`
 2. 변경 감지 — S4, S5, S6 (약 1시간)
-   - 파일: `MusicBoxRefresher.tsx` (props `revision: number`, `/api/v1/songs/now` 폴링). 고객 화면 3곳이 `revision`을 넘긴다.
+   - 파일: `MusicBoxRefresher.tsx` (props `revision: number`, `/api/v1/musicbox/songs/now` 폴링). 고객 화면 3곳이 `revision`을 넘긴다.
    - 확인: e2e S4
 3. 신청곡 접수 — S7~S10 (약 1시간)
    - 파일: `(public)/musicbox/_actions.ts`(`submitMusicRequest`: `requireRole` 대신 회원·역할 확인 → 검증 → `apiFetch` + `csrfHeaders`), `RequestForm.tsx`(필드 오류·입력값 유지·관리자 안내)
@@ -251,7 +253,7 @@ S17 정리
 - 백엔드 계약 (10-27 develop `72da8e7` 확인):
   - `SongResponse` 필드: `id`(Long), `requesterName`, `songTitle`, `artist`, `story`, `status`(소문자), `youtubeVideoId`, `playlistOrder`, `createdAt`, `playedAt`, `startedAt`, `durationSeconds`. `userId`는 없다.
   - `GET /musicbox/songs`는 `{playlist, inbox, played}`를 돌려준다.
-  - `GET /songs/now`는 `{current, serverNow, revision}`을 돌려주고, `current`에는 `endsAt`이 있다.
+  - `GET /musicbox/songs/now`는 `{current, serverNow, revision}`을 돌려주고, `current`에는 `endsAt`이 있다.
   - 권한: 조회는 누구나, 신청과 `/my/songs/**`는 `CUSTOMER`이고 쓰기 요청에는 CSRF가 필요하다 (#90).
 - 프론트 공통 (10-27 확인):
   - `app/_lib/api/client.ts`에 `apiFetch`와 `csrfHeaders`가 있다. `admin/menus/_actions.ts`가 이 방식을 쓴다.

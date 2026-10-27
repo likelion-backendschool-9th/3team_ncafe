@@ -21,26 +21,26 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/musicbox/songs")
 @RequiredArgsConstructor
 public class SongsController {
 
     private final SongsService songsService;
     private final CurrentUserContext currentUserContext;
 
-    @PostMapping("/musicbox/songs")
+    @PostMapping
     public ResponseEntity<SongResponse> create(@Valid @RequestBody CreateSongRequest request) {
         AuthenticatedUser user = currentUserContext.requireCurrentUser();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(songsService.create(user.id(), user.displayName(), request));
     }
 
-    @GetMapping("/musicbox/songs")
+    @GetMapping
     public MusicBoxSongsResponse list() {
         return songsService.list();
     }
 
-    @GetMapping("/songs/now")
+    @GetMapping("/now")
     public NowPlayingResponse now() {
         return songsService.now();
     }

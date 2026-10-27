@@ -148,7 +148,7 @@ Boot 4.1에서는 기존 `spring-boot-starter-web`보다 `spring-boot-starter-we
 
 ## 3계층 아키텍처
 
-요청 흐름은 **Controller → Service → Repository → PostgreSQL**로 고정한다. Controller는 **시스템 단위**로 나눈다. 같은 시스템의 목록·상세·등록·수정 API는 하나의 Controller에서 다루고, 파일명은 `도메인명 + 계층명`으로 짓는다(예: `MenusController.java`·`MenusService.java`·`MenuRepository.java`). 여러 도메인의 데이터를 조합하는 화면은 `HomeController`처럼 화면 이름을 쓴다. `/musicbox`는 화면 경로이며 곡 관련 API는 `SongsController`가 담당한다. `/checkout`의 주문 확정은 주문 시스템의 기능이므로 `my/OrdersController`가 담당한다. 공개 조회 시스템은 `controller/`·`service/` 바로 아래에, 로그인한 회원의 장바구니·주문과 마이페이지는 각 `my/`, 관리자 시스템은 각 `admin/` 하위 폴더에 둔다. 폴더는 화면 URL이 아니라 API의 사용 권한과 업무 범위에 따라 정하며, 메서드별 인증·권한도 검사한다. 예외로 곡 신청(`POST /api/v1/musicbox/songs`)은 로그인이 필요하지만 같은 경로의 공개 목록과 함께 공통 `SongsController`가 받고, 메서드에서 회원을 확인한다. Repository와 Entity는 여러 시스템이 공유한다. 여러 시스템이 같은 업무 규칙을 실행해야 하면 `service/support/`에 둔다 (아래 트리 설명).
+요청 흐름은 **Controller → Service → Repository → PostgreSQL**로 고정한다. Controller는 **시스템 단위**로 나눈다. 같은 시스템의 목록·상세·등록·수정 API는 하나의 Controller에서 다루고, 파일명은 `도메인명 + 계층명`으로 짓는다(예: `MenusController.java`·`MenusService.java`·`MenuRepository.java`). 여러 도메인의 데이터를 조합하는 화면은 `HomeController`처럼 화면 이름을 쓴다. `/musicbox`는 화면 경로이며 곡 관련 API는 `SongsController`가 담당한다. 누구나 쓰는 뮤직박스 API는 기능 이름으로 `/api/v1/musicbox/songs` 아래에 모은다. `/checkout`의 주문 확정은 주문 시스템의 기능이므로 `my/OrdersController`가 담당한다. 공개 조회 시스템은 `controller/`·`service/` 바로 아래에, 로그인한 회원의 장바구니·주문과 마이페이지는 각 `my/`, 관리자 시스템은 각 `admin/` 하위 폴더에 둔다. 폴더는 화면 URL이 아니라 API의 사용 권한과 업무 범위에 따라 정하며, 메서드별 인증·권한도 검사한다. 예외로 곡 신청(`POST /api/v1/musicbox/songs`)은 로그인이 필요하지만 같은 경로의 공개 목록과 함께 공통 `SongsController`가 받고, 메서드에서 회원을 확인한다. Repository와 Entity는 여러 시스템이 공유한다. 여러 시스템이 같은 업무 규칙을 실행해야 하면 `service/support/`에 둔다 (아래 트리 설명).
 
 ```text
 backend/
@@ -213,7 +213,7 @@ Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요
 
 | 위치 | 프론트 페이지 → 시스템 이름 (`*Controller.java`, `*Service.java`) |
 | --- | --- |
-| 기본 | `/` → `Home`, `/login`·`/signup` 및 `/my`의 로그아웃 동작 → `Auth`, `/menus`의 카테고리 필터·목록과 `/menus/[slug]` → `Menus`(조회), `/musicbox` → `Songs`(공개 목록·현재 곡·곡 신청). `/`의 뮤직박스 칸은 `Home`의 `GET /index/songs`(지금 곡과 사연, 다음 3곡, 플레이리스트 곡 수)로 그리고 변경 감지 폴링만 `GET /songs/now`를 쓴다. `/my/songs`의 현재 곡은 `Songs`의 공개 조회(`GET /musicbox/songs`, `GET /songs/now`)를 보조로 쓴다 |
+| 기본 | `/` → `Home`, `/login`·`/signup` 및 `/my`의 로그아웃 동작 → `Auth`, `/menus`의 카테고리 필터·목록과 `/menus/[slug]` → `Menus`(조회), `/musicbox` → `Songs`(공개 목록·현재 곡·곡 신청). `/`의 뮤직박스 칸은 `Home`의 `GET /index/songs`(지금 곡과 사연, 다음 3곡, 플레이리스트 곡 수)로 그리고 변경 감지 폴링만 `GET /musicbox/songs/now`를 쓴다. `/my/songs`의 현재 곡은 `Songs`의 공개 조회(`GET /musicbox/songs`, `GET /musicbox/songs/now`)를 보조로 쓴다 |
 | `my/` | `/my`·`/profile/update` → `Users`(`profile/update`는 WBS 화면, 추가 예정), `/menus/[slug]`의 담기 동작·`/cart` → `CartItems`, `/checkout`·`/my/orders`·`/my/orders/[id]` → `Orders`, `/my/songs` → `Songs` |
 | `admin/` | `/admin/users`·`/admin/users/[id]`·`/admin/users/new` → `Users`(`users/new`는 DB 설계 확장, 추가 예정), `/admin/categories` → `Categories`, `/admin/menus`·`/admin/menus/[id]`·`/admin/menus/new`·`/admin/menus/[id]/edit` → `Menus`, `/admin/orders`·`/admin/orders/[id]` → `Orders`, `/admin/songs` → `Songs` |
 
@@ -240,7 +240,7 @@ Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요
 | `HomeController` | `GET /api/v1/index/menus`, `GET /api/v1/index/songs` | 인덱스 조회 |
 | `AuthController` | `POST /api/v1/auth/login`, `POST /api/v1/auth/signup`, `POST /api/v1/auth/logout` | 1.1~1.3 |
 | `MenusController` | `GET /api/v1/menus` (`q`, `category`, `status`, `sort`), `GET /api/v1/menus/categories`(공개 메뉴 필터용 추가 계약), `GET /api/v1/menus/{slug}` | 4.1~4.3, 화면 연동 |
-| `SongsController` | `GET /api/v1/musicbox/songs`, `POST /api/v1/musicbox/songs`, `GET /api/v1/songs/now` | 11.1~11.3 |
+| `SongsController` | `GET /api/v1/musicbox/songs`, `POST /api/v1/musicbox/songs`, `GET /api/v1/musicbox/songs/now` | 11.1~11.3 |
 
 | `my/` Controller | 담당 API | WBS |
 | --- | --- | --- |

@@ -71,7 +71,7 @@ class SongsAccessPolicyTest {
     @Test
     void anonymousVisitorsCanReadMusicBox() throws Exception {
         mockMvc.perform(get("/api/v1/musicbox/songs")).andExpect(status().isOk());
-        mockMvc.perform(get("/api/v1/songs/now")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/musicbox/songs/now")).andExpect(status().isOk());
 
         verify(songsService).list();
         verify(songsService).now();
