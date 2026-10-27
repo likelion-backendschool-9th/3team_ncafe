@@ -31,7 +31,7 @@ export function MusicBoxRefresher({ revision, endsAt, serverNow }: MusicBoxRefre
       checking = true;
       try {
         // 누구나 볼 수 있는 조회라 세션·CSRF 없이 rewrites로 백엔드를 바로 부른다. 시간이 다 된 곡은 이 조회에서 정리돼 revision에 반영된다.
-        const response = await fetch("/api/v1/songs/now", { cache: "no-store" });
+        const response = await fetch("/api/v1/musicbox/songs/now", { cache: "no-store" });
         if (!response.ok) return;
         const data = (await response.json()) as { revision?: unknown };
         if (!stopped && typeof data.revision === "number" && data.revision !== revision) router.refresh();

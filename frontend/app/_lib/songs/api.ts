@@ -75,6 +75,6 @@ export async function fetchMusicBoxSongs(): Promise<MusicBoxSongs> {
 }
 
 export async function fetchNowPlaying(): Promise<NowPlaying> {
-  const body = object(await apiFetch<unknown>("/api/v1/songs/now"));
+  const body = object(await apiFetch<unknown>("/api/v1/musicbox/songs/now"));
   return { current: parseCurrent(body.current), serverNow: text(body.serverNow), revision: integer(body.revision) };
 }
