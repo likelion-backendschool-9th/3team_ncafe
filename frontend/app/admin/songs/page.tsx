@@ -1,6 +1,7 @@
 import { MusicBoxRefresher } from "@/app/_components/MusicBoxRefresher";
 import { requireRole } from "@/app/_lib/session/session";
 import { fetchNowPlaying } from "@/app/_lib/songs/api";
+import { onAirOf, type SongResponse } from "@/app/_lib/songs/types";
 import { cancelCurrent, cancelRequest, finishCurrent, moveInPlaylist, moveToPlayed, playNow, returnToInbox } from "./_actions";
 import { AddToPlaylistForm } from "./_components/AddToPlaylistForm";
 import { CancelRequestForm } from "./_components/CancelRequestForm";
@@ -8,8 +9,7 @@ import { OnAirPlayer } from "./_components/OnAirPlayer";
 import { RequestCard } from "./_components/RequestCard";
 import { YouTubePreview } from "./_components/YouTubePreview";
 import { fetchSongs } from "./_lib/api";
-import { inboxOf, onAirOf, playlistOf } from "./_lib/helpers";
-import type { SongResponse } from "./_lib/types";
+import { inboxOf, playlistOf } from "./_lib/helpers";
 import styles from "./music-box.module.css";
 
 const requestedAtFormat = new Intl.DateTimeFormat("ko-KR", {
@@ -36,7 +36,9 @@ function MediaPreview({ request }: { request: SongResponse }) {
 
 export default async function AdminMusicBoxPage() {
   await requireRole("admin", "/admin/songs");
-  const [songs, { revision }] = await Promise.all([fetchSongs(), fetchNowPlaying()]);
+  // 지금 곡을 먼저 받는다. 그 사이 곡이 바뀌면 revision이 옛 값이라 MusicBoxRefresher가 곧 다시 받아 맞춘다.
+  const now = await fetchNowPlaying();
+  const songs = await fetchSongs();
   const playing = songs.find((song) => song.status === "playing");
   const playlist = playlistOf(songs);
   const inbox = inboxOf(songs);
@@ -44,11 +46,12 @@ export default async function AdminMusicBoxPage() {
     .filter((song) => song.status === "played")
     .sort((a, b) => (b.playedAt ?? "").localeCompare(a.playedAt ?? ""))
     .slice(0, 10);
-  const onAir = onAirOf(playing);
+  // 손님 화면과 같이 서버 시각(serverNow)으로 재생 위치를 맞춘다. 두 조회 사이에 곡이 바뀌었으면 다시 받을 때까지 맞추지 않는다.
+  const onAir = now.current?.id === playing?.id ? onAirOf(now) : null;
 
   return (
     <div className={styles.page}>
-      <MusicBoxRefresher revision={revision} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
+      <MusicBoxRefresher revision={now.revision}endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
       <header className={styles.heading}>
         <p className="eyebrow">MUSIC BOX</p>
         <h1>뮤직박스 운영</h1>
