@@ -4,7 +4,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/app/_lib/session/session";
 import { getMenu } from "../../_lib/menus/api";
-import { visibleMenuImage } from "../../_lib/menus/image";
 import type { MenuResponse } from "../../_lib/menus/types";
 import styles from "../menus.module.css";
 import { BackButton } from "./_components/BackButton";
@@ -32,7 +31,6 @@ export default async function MenuDetailPage({ params }: Props) {
   const { slug } = await params;
   const [menu, user] = await Promise.all([getMenu(slug), getCurrentUser()]);
   if (!menu) notFound();
-  const image = visibleMenuImage(menu.imageUrl);
 
   return (
     <main className={styles.page}>
@@ -49,12 +47,11 @@ export default async function MenuDetailPage({ params }: Props) {
         <div className={styles.detail}>
           <div className={styles.detailImageWrap}>
             <Image
-              src={image.src}
+              src={menu.imageUrl}
               alt={`${menu.name} 이미지`}
               width={520}
               height={390}
               unoptimized
-              data-brighten={image.brighten}
               className={styles.detailImage}
             />
           </div>
