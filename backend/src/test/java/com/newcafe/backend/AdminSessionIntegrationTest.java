@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -46,6 +47,7 @@ import tools.jackson.databind.json.JsonMapper;
         "app.security.allowed-origins=http://localhost:3000"
 })
 @Import(BackendDatabaseIntegrationTest.DatabaseConfiguration.class)
+@Tag("integration")
 class AdminSessionIntegrationTest {
 
     private static final String CATEGORIES = "/api/v1/admin/categories";

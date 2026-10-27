@@ -22,6 +22,7 @@ import java.util.UUID;
 
 import javax.sql.DataSource;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -31,6 +32,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+@Tag("integration")
 class AuthenticationRestartIntegrationTest {
 
     private static final String PASSWORD = " 비밀번호123! ";
