@@ -6,6 +6,7 @@ import com.newcafe.backend.entity.menu.Menu;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -39,7 +40,12 @@ public interface MenuRepository extends JpaRepository<Menu, Long>, JpaSpecificat
     Optional<Menu> findBySlugAndArchivedAtIsNull(String slug);
 
     @EntityGraph(attributePaths = "category")
-    List<Menu> findTop16ByAvailableTrueAndRecommendedTrueAndArchivedAtIsNullOrderByCreatedAtDescIdDesc();
+    @Query("""
+            select menu from Menu menu
+            where menu.available = true and menu.recommended = true and menu.archivedAt is null
+            order by menu.createdAt desc, menu.id desc
+            """)
+    List<Menu> findRecommended(Limit limit);
 
     @Override
     @EntityGraph(attributePaths = "category")

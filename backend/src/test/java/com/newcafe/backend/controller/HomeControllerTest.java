@@ -28,6 +28,7 @@ import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Limit;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -59,8 +60,7 @@ class HomeControllerTest {
     @Test
     void s10RecommendedMenusAreReturned() throws Exception {
         List<Menu> menus = IntStream.range(0, 16).mapToObj(i -> recommendedMenu((long) i + 1)).toList();
-        when(menuRepository.findTop16ByAvailableTrueAndRecommendedTrueAndArchivedAtIsNullOrderByCreatedAtDescIdDesc())
-                .thenReturn(menus);
+        when(menuRepository.findRecommended(Limit.of(16))).thenReturn(menus);
 
         mockMvc.perform(get("/api/v1/index/menus"))
                 .andExpect(status().isOk())
@@ -72,8 +72,7 @@ class HomeControllerTest {
 
     @Test
     void s11NoRecommendedMenusReturnsEmptyList() throws Exception {
-        when(menuRepository.findTop16ByAvailableTrueAndRecommendedTrueAndArchivedAtIsNullOrderByCreatedAtDescIdDesc())
-                .thenReturn(List.of());
+        when(menuRepository.findRecommended(Limit.of(16))).thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/index/menus"))
                 .andExpect(status().isOk())
