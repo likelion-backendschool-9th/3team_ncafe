@@ -1,4 +1,4 @@
-import { mockMusicBoxRepository } from "@/app/_lib/mock/music-box";
+import { fetchNowPlaying } from "@/app/_lib/songs/api";
 
 export const runtime = "nodejs";
 
@@ -55,12 +55,12 @@ export async function POST(request: Request) {
     return Response.json({ message: "잘못된 요청입니다." }, { status: 400 });
   }
 
-  if (typeof requestId !== "string" || !requestId) {
+  if (typeof requestId !== "number" || !Number.isSafeInteger(requestId) || requestId <= 0) {
     return Response.json({ message: "잘못된 요청입니다." }, { status: 400 });
   }
 
-  const requests = await mockMusicBoxRepository.list();
-  const current = requests.find((item) => item.status === "playing");
+  // 화면이 보낸 사연이 아니라 백엔드의 현재 곡 사연만 읽는다. 다른 곡 id로 임의 문장을 읽게 할 수 없다.
+  const { current } = await fetchNowPlaying();
   if (!current || current.id !== requestId || !current.story.trim()) {
     return Response.json({ message: "현재 곡의 사연을 찾을 수 없어요." }, { status: 404 });
   }

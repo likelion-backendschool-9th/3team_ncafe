@@ -1,12 +1,6 @@
 import Link from "next/link";
-import type { MusicRequest } from "@/app/_lib/mock/music-box";
+import type { RequestRow } from "../_lib/rows";
 import styles from "../music-box.module.css";
-
-export type RequestRow = {
-  request: MusicRequest;
-  // 대기 중인 곡의 순번(1부터). 대기 중이 아니면 null.
-  queuePosition: number | null;
-};
 
 type RequestTableProps = {
   rows: RequestRow[];
@@ -27,7 +21,8 @@ const requestedAtFormat = new Intl.DateTimeFormat("ko-KR", {
   hourCycle: "h23",
 });
 
-function requestedAt(value: string): string {
+function requestedAt(value: string | null): string {
+  if (value === null) return "—";
   const parts = Object.fromEntries(requestedAtFormat.formatToParts(new Date(value)).map((part) => [part.type, part.value]));
   return `${parts.month}.${parts.day} ${parts.hour}:${parts.minute}`;
 }

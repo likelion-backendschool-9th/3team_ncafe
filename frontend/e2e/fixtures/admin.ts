@@ -38,6 +38,11 @@ export async function loginAsAdmin(page: Page, next: string) {
   await expect(page).toHaveURL(new RegExp(`${next}$`));
 }
 
+// 뮤직박스 시나리오는 화면 순서와 개수를 확인하므로 전용 DB의 신청곡을 비우고 시작한다.
+export function resetMusicBox() {
+  testSql("delete from songs");
+}
+
 // 같은 세션의 CSRF 토큰을 붙여 백엔드 관리자 API를 직접 부른다. 다른 창의 변경이나 시나리오 준비에 쓴다.
 export async function adminApi<T = unknown>(page: Page, method: "POST" | "PUT" | "DELETE", path: string, data?: unknown): Promise<T> {
   const request = page.context().request;

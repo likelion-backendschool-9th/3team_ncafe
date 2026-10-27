@@ -1,5 +1,6 @@
-import { MusicBoxRefresher } from "@/app/(public)/musicbox/_components/MusicBoxRefresher";
+import { MusicBoxRefresher } from "@/app/_components/MusicBoxRefresher";
 import { requireRole } from "@/app/_lib/session/session";
+import { fetchNowPlaying } from "@/app/_lib/songs/api";
 import { cancelCurrent, cancelRequest, finishCurrent, moveInPlaylist, moveToPlayed, playNow, returnToInbox } from "./_actions";
 import { AddToPlaylistForm } from "./_components/AddToPlaylistForm";
 import { CancelRequestForm } from "./_components/CancelRequestForm";
@@ -7,7 +8,7 @@ import { OnAirPlayer } from "./_components/OnAirPlayer";
 import { RequestCard } from "./_components/RequestCard";
 import { YouTubePreview } from "./_components/YouTubePreview";
 import { fetchSongs } from "./_lib/api";
-import { inboxOf, musicBoxVersion, onAirOf, playlistOf } from "./_lib/helpers";
+import { inboxOf, onAirOf, playlistOf } from "./_lib/helpers";
 import type { SongResponse } from "./_lib/types";
 import styles from "./music-box.module.css";
 
@@ -35,7 +36,7 @@ function MediaPreview({ request }: { request: SongResponse }) {
 
 export default async function AdminMusicBoxPage() {
   await requireRole("admin", "/admin/songs");
-  const songs = await fetchSongs();
+  const [songs, { revision }] = await Promise.all([fetchSongs(), fetchNowPlaying()]);
   const playing = songs.find((song) => song.status === "playing");
   const playlist = playlistOf(songs);
   const inbox = inboxOf(songs);
@@ -47,7 +48,7 @@ export default async function AdminMusicBoxPage() {
 
   return (
     <div className={styles.page}>
-      <MusicBoxRefresher version={musicBoxVersion(songs)} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
+      <MusicBoxRefresher revision={revision} endsAt={onAir?.endsAt ?? null} serverNow={onAir?.serverNow ?? null} />
       <header className={styles.heading}>
         <p className="eyebrow">MUSIC BOX</p>
         <h1>뮤직박스 운영</h1>

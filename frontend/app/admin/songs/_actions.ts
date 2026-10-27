@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { apiFetch, ApiRequestError } from "@/app/_lib/api/client";
+import { apiFetch, ApiRequestError, csrfHeaders } from "@/app/_lib/api/client";
 import { requireRole } from "@/app/_lib/session/session";
 import { parseYouTubeVideoId } from "@/app/_lib/youtube";
 
@@ -32,6 +32,7 @@ export async function addToPlaylist(id: number, _previous: PlaylistFormState, fo
   try {
     await apiFetch("/api/v1/admin/songs/playlist", {
       method: "POST",
+      headers: await csrfHeaders(),
       body: JSON.stringify({ songId: id, youtubeVideoId: videoId, durationSeconds }),
     });
   } catch (e) {
@@ -46,6 +47,7 @@ export async function returnToInbox(id: number): Promise<void> {
   await requireAdmin();
   await apiFetch(`/api/v1/admin/songs/${id}/return-to-inbox`, {
     method: "PUT",
+    headers: await csrfHeaders(),
   });
   refreshMusicBox();
 }
@@ -54,6 +56,7 @@ export async function moveToPlayed(id: number): Promise<void> {
   await requireAdmin();
   await apiFetch(`/api/v1/admin/songs/${id}/move-to-played`, {
     method: "PUT",
+    headers: await csrfHeaders(),
   });
   refreshMusicBox();
 }
@@ -62,6 +65,7 @@ export async function moveInPlaylist(id: number, direction: "up" | "down"): Prom
   await requireAdmin();
   await apiFetch(`/api/v1/admin/songs/playlist/${id}/order`, {
     method: "PUT",
+    headers: await csrfHeaders(),
     body: JSON.stringify({ direction }),
   });
   refreshMusicBox();
@@ -71,6 +75,7 @@ export async function playNow(id: number): Promise<void> {
   await requireAdmin();
   await apiFetch(`/api/v1/admin/songs/playlist/${id}/play`, {
     method: "POST",
+    headers: await csrfHeaders(),
   });
   refreshMusicBox();
 }
@@ -79,6 +84,7 @@ export async function finishCurrent(id: number): Promise<void> {
   await requireAdmin();
   await apiFetch("/api/v1/admin/songs/current/finish", {
     method: "POST",
+    headers: await csrfHeaders(),
     body: JSON.stringify({ id }),
   });
   refreshMusicBox();
@@ -88,6 +94,7 @@ export async function cancelCurrent(id: number): Promise<void> {
   await requireAdmin();
   await apiFetch("/api/v1/admin/songs/current/cancel", {
     method: "POST",
+    headers: await csrfHeaders(),
     body: JSON.stringify({ id }),
   });
   refreshMusicBox();
@@ -97,6 +104,7 @@ export async function cancelRequest(id: number): Promise<void> {
   await requireAdmin();
   await apiFetch(`/api/v1/admin/songs/${id}/cancel`, {
     method: "PUT",
+    headers: await csrfHeaders(),
   });
   refreshMusicBox();
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { finishPlaying, reportDuration } from "@/app/(public)/musicbox/_actions";
-import { clock, useYouTubePlayback } from "@/app/(public)/musicbox/_components/useYouTubePlayback";
+import { clock, useYouTubePlayback } from "@/app/_components/useYouTubePlayback";
+import { finishCurrent } from "../_actions";
 import type { OnAir } from "../_lib/helpers";
 import { youtubeWatchUrl } from "@/app/_lib/youtube";
 import styles from "../music-box.module.css";
@@ -12,8 +12,9 @@ export function OnAirPlayer({ requestId, videoId, title, onAir }: { requestId: n
   const { frameRef, playing, current, duration, error, soundBlocked, unmute } = useYouTubePlayback(videoId, {
     live: true,
     sync: onAir,
-    onEnded: () => void finishPlaying(String(requestId)),
-    onDuration: onAir?.durationSeconds ? undefined : (seconds) => void reportDuration(String(requestId), videoId, seconds),
+    // 길이를 모르는 곡은 서버가 시간으로 넘기지 못하므로, 영상이 끝나면 관리자 화면이 종료를 알린다.
+    // 서버가 이미 넘긴 곡이면 백엔드가 무시한다.
+    onEnded: () => void finishCurrent(requestId),
   });
 
   return (

@@ -2,10 +2,10 @@ import localFont from "next/font/local";
 
 // 신청곡 메모의 손글씨. 손님마다 다른 사람이 쓴 쪽지처럼 보이도록 4가지 글씨를 돌려 쓴다.
 // 파일이 커서(하나에 약 0.9MB) 미리 받지 않고, 메모가 있는 화면에서 쓰일 때만 받는다.
-const ddurae = localFont({ src: "../../../fonts/Griun-HangeulDDURAE-Regular.woff2", display: "swap", preload: false });
-const hyoje = localFont({ src: "../../../fonts/Griun-Hyoje-Regular.woff2", display: "swap", preload: false });
-const ahyoung = localFont({ src: "../../../fonts/Griun-AhyoungsHandwriteIn2019-Regular.woff2", display: "swap", preload: false });
-const hoisin = localFont({ src: "../../../fonts/Griun-Hoisin-Regular.woff2", display: "swap", preload: false });
+const ddurae = localFont({ src: "../../fonts/Griun-HangeulDDURAE-Regular.woff2", display: "swap", preload: false });
+const hyoje = localFont({ src: "../../fonts/Griun-Hyoje-Regular.woff2", display: "swap", preload: false });
+const ahyoung = localFont({ src: "../../fonts/Griun-AhyoungsHandwriteIn2019-Regular.woff2", display: "swap", preload: false });
+const hoisin = localFont({ src: "../../fonts/Griun-Hoisin-Regular.woff2", display: "swap", preload: false });
 
 const handwritings = [ddurae, hyoje, ahyoung, hoisin].map((font) => font.className);
 

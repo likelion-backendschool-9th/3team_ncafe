@@ -153,6 +153,8 @@
   word-break: keep-all;
 }
 .counter { position: absolute; right: 0; bottom: 0.35rem; color: var(--faint); font-family: var(--font-body), sans-serif; font-size: 0.72rem; }
+.storyField .fieldError { display: block; margin-top: 0.3rem; }
+.fieldError { grid-column: 2; color: #9b2924; font-family: var(--font-body), sans-serif; font-size: 0.82rem; font-weight: 700; }
 .formError { margin: 0.6rem 0 0; color: #9b2924; font-family: var(--font-body), sans-serif; font-size: 0.88rem; font-weight: 700; }
 
 .slipFoot {

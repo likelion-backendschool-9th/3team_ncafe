@@ -51,22 +51,22 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 
 | 페이지 URL | 주 컨트롤러 | 엔드포인트 (`/api/v1` 생략) | WBS | 비고 |
 | --- | --- | --- | --- | --- |
-| `/` | `HomeController` | `GET /index/menus`, `GET /index/songs` | 인덱스 | |
+| `/` | `HomeController` | `GET /index/menus`, `GET /index/songs` | 인덱스 | 보조 |
 | `/login`, `/signup` | **`AuthController`** | `POST /auth/login`, `POST /auth/signup` | 1.1, 1.3 | 공유 |
 | `/menus` | `MenusController`(공개) | `GET /menus`(`q`,`categoryId`,`status`,`sort`,`page`,`size`), `GET /menus/categories` | 4.1 | 공유 |
 | `/menus/[slug]` | `MenusController`(공개) | `GET /menus/{slug}` | 4.2 | 공유, 보조 |
-| `/musicbox` | `SongsController`(공개) | `GET /musicbox/songs`, `GET /songs/now` | 11.2~11.3 | 보조 |
+| `/musicbox` | **`SongsController`**(공개) | `GET /musicbox/songs`, `GET /songs/now`, `POST /musicbox/songs` | 11.1~11.3 | 신청은 고객 회원만 |
 | `/cart` | `my/CartItemsController` | `GET /cart/items`, `PUT`·`DELETE /cart/items/{id}` | 14.2~14.4 | 현재 localStorage |
 | `/checkout` | `my/OrdersController` | `POST /orders` | 6.1 | 공유 |
 | `/my` | **`my/UsersController`** | `GET /my` | 1.5 | 보조 |
 | `/my/orders`, `/my/orders/[id]` | `my/OrdersController` | `GET /orders`, `GET /orders/{id}` | 6.3~6.4 | 공유. 고객 취소 API 없음(Q2) |
-| `/my/songs` | `my/SongsController` | `GET /my/songs`, `DELETE /my/songs/{id}` | 11.4~11.5 | |
+| `/my/songs` | **`my/SongsController`** | `GET /my/songs`, `DELETE /my/songs/{id}` | 11.4~11.5 | 보조 |
 | `/admin` | 없음 | 관리자 Menus·Orders·Songs 목록 조합 | — | 예외 |
 | `/admin/users`, `/admin/users/[id]` | `admin/UsersController` | `GET /admin/users`, `GET`·`PUT /admin/users/{id}` | 2.1~2.3 | 공유 |
 | `/admin/categories` | **`admin/CategoriesController`** | `GET`·`POST /admin/categories`, `PUT`·`DELETE /admin/categories/{id}`, `PUT /admin/categories/order` | 13.x | |
 | `/admin/menus`, `/new`, `/[id]`, `/[id]/edit` | **`admin/MenusController`** | `GET /admin/menus`(`q`,`categoryId`,`status`,`sort`,`page`,`size`), `POST`, `GET`·`PUT`·`DELETE /admin/menus/{id}` | 3.1~3.5 | 공유(4개 화면) |
 | `/admin/orders`, `/admin/orders/[id]` | **`admin/OrdersController`** | `GET /admin/orders`(`q`,`status`,`group`,`sort`,`page`,`size`), `GET /admin/orders/{id}`, `PUT /admin/orders/status`(접수 취소 포함) | 5.x/12.x | 공유 |
-| `/admin/songs` | `admin/SongsController` | 선곡 API 8종(백엔드 청사진 `admin/SongsController` 행) | 10.x | |
+| `/admin/songs` | **`admin/SongsController`** | 선곡 API 8종(백엔드 청사진 `admin/SongsController` 행) | 10.x | |
 | `/forbidden` | 없음 | — | — | 예외(프론트 전용) |
 
 **계획됐거나 청사진에만 있는 페이지 (모두 프론트 미구현)**
@@ -81,7 +81,6 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 
 - **청사진 URL과의 대응:** `/menus/[id]`→`/menus/[slug]`, `/orders*`→`/my/orders*`, `/music-box`→`/musicbox`, `/profile`→`/my`, `/admin/music-box`→`/admin/songs`. 청사진에 없던 추가 페이지는 `/my/songs`, `/admin/categories`, `/forbidden`이다.
 - **페이지가 아닌 라우트 핸들러:**
-  - `/api/music-box/version`: 뮤직박스 변경 감지 폴링(목 기준)
   - `/api/story-speech`: 외부 Typecast TTS 호출, 백엔드와 무관
 
 ### 2-3. 예외 목록
@@ -89,14 +88,14 @@ WBS 번호는 최신 WBS(백엔드 청사진)를 따르고, 괄호 안은 청사
 | 종류 | 페이지 | 컨트롤러·엔드포인트 | 근거 |
 | --- | --- | --- | --- |
 | 보조 | `/menus/[slug]` | `my/CartItemsController` `POST /menus/{id}/cart/items` | 백엔드 청사진: 담기 동작 |
-| 보조 | `/musicbox` | `my/SongsController` `POST /musicbox/songs` | 백엔드 청사진: 곡 신청 |
+| 보조 | `/` | `SongsController`(공개) `GET /musicbox/songs`, `GET /songs/now` | 홈 뮤직박스 칸의 현재 곡·다음 곡·`revision`. `GET /index/songs`가 없어 공개 조회를 쓴다(2026-10-27) |
+| 보조 | `/my/songs` | `SongsController`(공개) `GET /songs/now`, `GET /musicbox/songs` | 현재 곡 부스, 재생 대기 순번, `revision`(2026-10-27) |
 | 보조 | `/my` | `AuthController` `POST /auth/logout` | 백엔드 청사진: 로그아웃 |
 | 없음 | `/admin` | 관리자 목록 API 조합 | 백엔드 청사진: 대시보드 API 없음 |
 | 없음 | `/forbidden`, 결제·리뷰·주문 완료 화면 | — | 프론트 전용, 또는 보류·범위 밖 |
 
-다음 세 곳은 코드상 다른 컨트롤러가 필요하지만 근거가 없어 예외로 인정하지 않는다. 6-2에서 정한다.
+다음 두 곳은 코드상 다른 컨트롤러가 필요하지만 근거가 없어 예외로 인정하지 않는다. 6-2에서 정한다.
 - `/checkout`의 주문 대상 항목 조회
-- `/my/songs`의 현재 곡 표시
 - 관리자 메뉴 화면의 카테고리 목록
 
 ## 3. 라우트별 명세
@@ -370,9 +369,8 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | 백엔드 인증 방식(세션·토큰, CSRF, 쿠키 이름) | 백엔드 |
 | 사이트 도메인, OG 이미지, 백엔드 주소 환경변수 이름 | 팀 |
 | 메뉴 `nameEn` 유지, 카테고리 단일·복수 (공개 메뉴 필터는 `categoryId`로 정함) | 백엔드 협의 |
-| `/checkout` 주문 대상 조회, `/my/songs` 현재 곡, 관리자 메뉴 카테고리 목록의 컨트롤러 | 백엔드 협의 |
+| `/checkout` 주문 대상 조회, 관리자 메뉴 카테고리 목록의 컨트롤러 | 백엔드 협의 |
 | 고객 취소 화면 유지 여부(Q2). 관리자 취소는 `PUT /admin/orders/status`의 `nextStatus=canceled`로 확정(2026-10-26) | 백엔드·팀 |
-| `/api/music-box/version` 대체(`revision`·`serverNow`) | 백엔드 협의 |
 | GLOSSARY에 없는 용어: 고객·회원·방문자, 인덱스, 주문·뮤직박스 상태 라벨 | GLOSSARY 관리자 |
 
 ## 7. 진행 현황
@@ -404,7 +402,6 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | h1이 page 밖에 있음 | `SignupForm.tsx`, 공통 `StatePanel`(`/forbidden`, `error`, `not-found`) |
 | 인증 요청기·Proxy·`/api/v1` rewrites 완료. 라우트별 `loading`·`error`는 남음 | `frontend/` |
 | `MenuCard`를 `(public)`만 쓰는데 `app/_components`에 있음 | `app/_components/MenuCard.tsx` |
-| 다른 라우트의 `_components`를 import(10건) | `(public)/page.tsx`→`musicbox`, `my/songs`→`musicbox` 6건, `admin/songs`→`musicbox` 3건 |
 | 장바구니 Context가 루트 layout 전체를 감쌈 | `app/layout.tsx`, `_lib/cart/CartContext.tsx` |
 
 ### 8-2. 쌍별 작업
@@ -422,14 +419,14 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 | `/admin/menus*` ↔ **admin/Menus** | 목록·등록 metadata, `categoryId`·`page` 완료. 상세·수정 `generateMetadata` 없음 | API 연결 완료([계획](admin/menus/2026-10-27-frontend-admin-menus.md)). 이미지 파일 업로드는 저장소 결정 후 | — |
 | `/menus` ↔ Menus | metadata·canonical 없음, `<main>`이 page에 있음 | 공개 메뉴 API | 백엔드 공개 Menus |
 | `/menus/[slug]` ↔ Menus | `generateMetadata` 없음, 대화상자 이동이 `router.push`(`OrderPanel.tsx:195,203`) | slug 조회, 담기 API | `/menus`, `/cart` API |
-| `/` ↔ Home | `<main>`이 page에 있음, `musicbox` 컴포넌트 import | index API | 공개 Menus·Songs |
+| `/` ↔ Home | `<main>`이 page에 있음 | index API. 뮤직박스 칸은 공개 Songs 조회로 연결 완료(2-3) | 공개 Menus |
 | `/cart` ↔ my/CartItems | 화면 전체가 클라이언트, "주문하기"가 `router.push`(`CartView.tsx:22`), Context+localStorage | 서버 장바구니, 체크는 로컬 상태, `iced` | 담기, Auth |
 | `/checkout` ↔ my/Orders | 화면 전체가 클라이언트, `cart` CSS import, "주문 / 결제"·"결제하기" 용어 | `POST /orders`(`cartItemIds`·수령 방식·결제수단·요청사항) | `/cart`, 조회 방식 결정 |
 | `/my/orders*` ↔ my/Orders | metadata 없음 | API 연결, 고객 취소 결정 | `/checkout` |
 | `/admin/orders*` ↔ **admin/Orders** | metadata 없음, page 226줄, 상태 select가 `aria-label`만 | 백엔드 API 구현(2026-10-26). 인증·API 연결, 숫자 ID·`temperature`·`statusVersion`·`allowedStatuses`, 취소 사유 제거·`received`만 취소. [계약](admin/orders/2026-10-26-backend-order-management.md) | Auth, `/checkout`, 회원 FK 통합 |
-| `/musicbox` ↔ Songs | metadata·canonical 없음, `<main>`이 page에 있음, 공유 컴포넌트가 이 폴더에 있음 | 공개 API, 신청 API, 변경 감지 방식 | Auth, 백엔드 Songs |
-| `/my/songs` ↔ my/Songs | metadata 없음, `musicbox` 컴포넌트 6건 import | 조회·삭제 API, 현재 곡 결정 | `/musicbox` |
-| `/admin/songs` ↔ admin/Songs | metadata 없음, page 203줄, `musicbox` 컴포넌트 3건 import | 선곡 API 8종 | `/musicbox` |
+| `/musicbox` ↔ **Songs** | metadata·canonical 없음, `<main>`이 page에 있음. 공유 컴포넌트는 `app/_components`로 옮김, `loading`·`error` 추가 | 공개 조회·신청·`revision` 폴링 연결 완료([계획](musicbox/2026-10-27-frontend-customer-songs.md)) | — |
+| `/my/songs` ↔ **my/Songs** | metadata 없음. `loading`·`error` 추가 | 조회·삭제 API 연결 완료, 현재 곡은 보조 조회(2-3) | — |
+| `/admin/songs` ↔ **admin/Songs** | metadata 없음, page 203줄 | 선곡 API 연결 완료(#85). 변경 요청 CSRF·`revision` 폴링 보완(2026-10-27) | — |
 | `/admin` (없음) | metadata 없음 | 관리자 API로 집계 | 관리자 세 쌍 |
 | `/forbidden` (없음) | h1이 `StatePanel` 안, noindex 없음 | — | — |
 
