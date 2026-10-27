@@ -87,6 +87,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/cart/items").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/cart/items/*").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/cart/items/*").hasRole("CUSTOMER")
+                        // 주문 생성과 내 주문 조회도 고객 계정만 쓴다. 관리자는 /api/v1/admin/orders를 쓴다.
+                        .requestMatchers(HttpMethod.POST, "/api/v1/orders").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/orders", "/api/v1/orders/*").hasRole("CUSTOMER")
                         // 뮤직박스 화면은 비로그인 손님도 본다. 신청과 내 신청곡은 고객 계정만 쓴다.
                         .requestMatchers(HttpMethod.GET, "/api/v1/musicbox/songs", "/api/v1/songs/now").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/musicbox/songs").hasRole("CUSTOMER")
