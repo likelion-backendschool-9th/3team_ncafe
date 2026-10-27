@@ -17,6 +17,17 @@ function refreshMusicBox(): void {
   for (const path of ["/", "/musicbox", "/my/songs", pagePath]) revalidatePath(path);
 }
 
+// 결과 없는 선곡 변경. 다른 화면이나 시간 경과로 곡 상태가 먼저 바뀌었으면(404·409) 오류 화면 대신 최신 목록을 보여 준다.
+async function changeSong(path: `/api/v1/${string}`, init: RequestInit): Promise<void> {
+  await requireAdmin();
+  try {
+    await apiFetch(path, { ...init, headers: await csrfHeaders() });
+  } catch (error) {
+    if (!(error instanceof ApiRequestError) || ![404, 409].includes(error.status)) throw error;
+  }
+  refreshMusicBox();
+}
+
 export async function addToPlaylist(id: number, _previous: PlaylistFormState, formData: FormData): Promise<PlaylistFormState> {
   await requireAdmin();
   const raw = formData.get("youtubeUrl");
@@ -44,67 +55,29 @@ export async function addToPlaylist(id: number, _previous: PlaylistFormState, fo
 }
 
 export async function returnToInbox(id: number): Promise<void> {
-  await requireAdmin();
-  await apiFetch(`/api/v1/admin/songs/${id}/return-to-inbox`, {
-    method: "PUT",
-    headers: await csrfHeaders(),
-  });
-  refreshMusicBox();
+  await changeSong(`/api/v1/admin/songs/${id}/return-to-inbox`, { method: "PUT" });
 }
 
 export async function moveToPlayed(id: number): Promise<void> {
-  await requireAdmin();
-  await apiFetch(`/api/v1/admin/songs/${id}/move-to-played`, {
-    method: "PUT",
-    headers: await csrfHeaders(),
-  });
-  refreshMusicBox();
+  await changeSong(`/api/v1/admin/songs/${id}/move-to-played`, { method: "PUT" });
 }
 
 export async function moveInPlaylist(id: number, direction: "up" | "down"): Promise<void> {
-  await requireAdmin();
-  await apiFetch(`/api/v1/admin/songs/playlist/${id}/order`, {
-    method: "PUT",
-    headers: await csrfHeaders(),
-    body: JSON.stringify({ direction }),
-  });
-  refreshMusicBox();
+  await changeSong(`/api/v1/admin/songs/playlist/${id}/order`, { method: "PUT", body: JSON.stringify({ direction }) });
 }
 
 export async function playNow(id: number): Promise<void> {
-  await requireAdmin();
-  await apiFetch(`/api/v1/admin/songs/playlist/${id}/play`, {
-    method: "POST",
-    headers: await csrfHeaders(),
-  });
-  refreshMusicBox();
+  await changeSong(`/api/v1/admin/songs/playlist/${id}/play`, { method: "POST" });
 }
 
 export async function finishCurrent(id: number): Promise<void> {
-  await requireAdmin();
-  await apiFetch("/api/v1/admin/songs/current/finish", {
-    method: "POST",
-    headers: await csrfHeaders(),
-    body: JSON.stringify({ id }),
-  });
-  refreshMusicBox();
+  await changeSong("/api/v1/admin/songs/current/finish", { method: "POST", body: JSON.stringify({ id }) });
 }
 
 export async function cancelCurrent(id: number): Promise<void> {
-  await requireAdmin();
-  await apiFetch("/api/v1/admin/songs/current/cancel", {
-    method: "POST",
-    headers: await csrfHeaders(),
-    body: JSON.stringify({ id }),
-  });
-  refreshMusicBox();
+  await changeSong("/api/v1/admin/songs/current/cancel", { method: "POST", body: JSON.stringify({ id }) });
 }
 
 export async function cancelRequest(id: number): Promise<void> {
-  await requireAdmin();
-  await apiFetch(`/api/v1/admin/songs/${id}/cancel`, {
-    method: "PUT",
-    headers: await csrfHeaders(),
-  });
-  refreshMusicBox();
+  await changeSong(`/api/v1/admin/songs/${id}/cancel`, { method: "PUT" });
 }
