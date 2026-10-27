@@ -76,26 +76,18 @@ public class SecurityConfig {
                         .accessDeniedHandler(errors))
                 .authorizeHttpRequests(authorize -> authorize
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                        // 로그인·로그아웃은 필터가 처리하므로 메서드까지 지정해 GET 요청이 닿지 않게 한다.
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/csrf").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/signup", "/api/v1/auth/login",
                                 "/api/v1/auth/logout").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/menus", "/api/v1/menus/**",
-                                "/api/v1/index/menus", "/api/v1/index/songs").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/my").authenticated()
-                        // 장바구니는 고객 계정만 쓴다 (database-design.md cart_items).
-                        .requestMatchers(HttpMethod.POST, "/api/v1/menus/*/cart/items").hasRole("CUSTOMER")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/cart/items").hasRole("CUSTOMER")
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/cart/items/*").hasRole("CUSTOMER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/cart/items/*").hasRole("CUSTOMER")
-                        // 주문 생성과 내 주문 조회도 고객 계정만 쓴다. 관리자는 /api/v1/admin/orders를 쓴다.
-                        .requestMatchers(HttpMethod.POST, "/api/v1/orders").hasRole("CUSTOMER")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/orders", "/api/v1/orders/*").hasRole("CUSTOMER")
-                        // 뮤직박스 화면은 비로그인 손님도 본다. 신청과 내 신청곡은 고객 계정만 쓴다.
-                        .requestMatchers(HttpMethod.GET, "/api/v1/musicbox/songs", "/api/v1/musicbox/songs/now").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/musicbox/songs").hasRole("CUSTOMER")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/my/songs").hasRole("CUSTOMER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/my/songs/*").hasRole("CUSTOMER")
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        // 메뉴, 홈, 뮤직박스 화면은 비로그인 손님도 본다.
+                        .requestMatchers(HttpMethod.GET, "/api/v1/menus/**", "/api/v1/index/**",
+                                "/api/v1/musicbox/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/my").authenticated()
+                        // 장바구니, 주문, 곡 신청, 내 신청곡은 고객 계정만 쓴다. 관리자는 /api/v1/admin/**을 쓴다.
+                        .requestMatchers("/api/v1/menus/*/cart/items", "/api/v1/cart/**", "/api/v1/orders/**",
+                                "/api/v1/musicbox/**", "/api/v1/my/**").hasRole("CUSTOMER")
                         .anyRequest().denyAll())
                 .addFilterBefore(new SessionMemberFilter(sessionMembers, errors, sessionCookies, contextRepository),
                         AuthorizationFilter.class);
