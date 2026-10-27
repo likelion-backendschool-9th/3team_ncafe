@@ -4,6 +4,7 @@ import { customerOrderStatusLabels, type CustomerOrderResponse } from "./_lib/ty
 import { getCustomerOrders } from "./_lib/api";
 import { orderCode, orderDate, orderSummary, won } from "./_format";
 import styles from "./orders.module.css";
+import { OrderCancelReason } from "./_components/OrderCancelReason";
 
 type Props = {
   title: string;
@@ -34,6 +35,7 @@ function OrderSection({ title, description, orders }: Props) {
                   <div><span className={styles.fieldLabel}>주문 메뉴</span><strong>{orderSummary(order)}</strong></div>
                   <div><span className={styles.fieldLabel}>총 주문 금액</span><strong>{won.format(order.totalAmount)}원</strong></div>
                 </div>
+                {order.status === "canceled" && <OrderCancelReason reason={order.cancelReason} />}
                 <Link className={styles.detailLink} href={`/my/orders/${order.id}`}>주문 상세보기 <span aria-hidden="true">→</span></Link>
               </article>
             </li>

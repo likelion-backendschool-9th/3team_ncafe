@@ -6,7 +6,7 @@ import { ApiRequestError } from "@/app/_lib/api/client";
 import { requireRole } from "@/app/_lib/session/session";
 import { updateAdminOrderStatus } from "./_lib/api";
 import { orderDetailHref, orderListHref, parseOrderReturnQuery, type OrderQuery } from "./_lib/searchParams";
-import { isOrderStatus, isPositiveId, MAX_API_INTEGER, type OrderActionState, type OrderStatus } from "./_lib/types";
+import { cancellationReasonError, isOrderStatus, isPositiveId, MAX_API_INTEGER, type OrderActionState, type OrderStatus } from "./_lib/types";
 
 function returnQuery(value: unknown): OrderQuery {
   return parseOrderReturnQuery(typeof value === "string" ? value : "");
@@ -32,10 +32,21 @@ async function update(id: number, expectedStatus: OrderStatus, statusVersion: nu
     || statusVersion < 0 || statusVersion > MAX_API_INTEGER || !value) {
     return { error: "주문 정보와 변경할 상태를 확인해 주세요.", value };
   }
+  const field = formData.get("cancelReason");
+  // HTML form transport uses CRLF; textarea.value and its maxLength use LF.
+  const rawReason = typeof field === "string" ? field.replace(/\r\n?/g, "\n") : field;
+  if (value === "canceled") {
+    const error = cancellationReasonError(rawReason);
+    if (error) return { error, value };
+  } else if (rawReason !== null && (typeof rawReason !== "string" || rawReason.trim())) {
+    return { error: "취소할 때만 취소 사유를 입력할 수 있습니다.", value };
+  }
+  // Preserve input length for the backend; normalize only after validating it.
+  const reason = value === "canceled" && typeof rawReason === "string" ? { cancelReason: rawReason } : {};
   const path = returnPath(id, query, detail);
   let updated;
   try {
-    updated = await updateAdminOrderStatus({ id, expectedStatus, statusVersion, nextStatus: value });
+    updated = await updateAdminOrderStatus({ id, expectedStatus, statusVersion, nextStatus: value, ...reason });
   } catch (error) {
     if (!(error instanceof ApiRequestError)) throw error;
     if (error.status === 401) redirect(`/login?next=${encodeURIComponent(path)}`);

@@ -160,14 +160,14 @@ erDiagram
 
 | 테이블 | 필수 컬럼 | 제약 및 읽기 방식 |
 | --- | --- | --- |
-| `orders` | `id`, `customer_id`, `customer_name_snapshot`, `order_type`, `payment_method`, `request`, `status`, `total_amount`, `status_version`, `created_at`, `updated_at` | 상태는 `received`, `preparing`, `ready`, `completed`, `canceled`. `order_type`은 `dine-in` 또는 `takeout`, `payment_method`는 카운터에서 낼 `card` 또는 `cash` 선택이다. 실제 결제 상태나 거래 식별자는 저장하지 않는다. `request`는 주문 요청사항이며 최대 100자다. 취소 사유는 입력하지 않는다. 금액은 0 이상. 고객은 본인 주문만 조회한다. |
+| `orders` | `id`, `customer_id`, `customer_name_snapshot`, `order_type`, `payment_method`, `request`, `status`, `cancel_reason`, `total_amount`, `status_version`, `created_at`, `updated_at` | 상태는 `received`, `preparing`, `ready`, `completed`, `canceled`. `order_type`은 `dine-in` 또는 `takeout`, `payment_method`는 카운터에서 낼 `card` 또는 `cash` 선택이다. 실제 결제 상태나 거래 식별자는 저장하지 않는다. `request`는 주문 요청사항이며 최대 100자다. 관리자는 취소 사유를 필수 입력하며 `cancel_reason`에 저장한다(입력 최대 200 UTF-16 단위, DB varchar 200). 과거 취소 주문을 위해 컬럼은 nullable이다. 금액은 0 이상. 고객은 본인 주문만 조회한다. |
 | `order_items` | `id`, `order_id`, `menu_id`, `menu_name`, `image_url`, `temperature`, `quantity`, `unit_price`, `line_total` | 주문 당시 데이터의 불변 스냅샷. `temperature`는 `hot`, `iced`, `NULL` 중 하나다. `quantity > 0`, `unit_price >= 0`, `line_total = quantity * unit_price`. `menu_id`는 과거 메뉴 추적용이며 메뉴 숨김 후에도 주문 조회는 스냅샷으로 가능해야 한다. |
 
 한 주문에 여러 메뉴가 들어가므로 주문의 현재 상태·총액은 `orders`에 한 번만 두고, 메뉴별 수량·단가를 `order_items`에 둔다. 주문 항목은 주문과 함께 생성되고 이후 수정되지 않으므로 별도 생성·수정 시각은 두지 않는다.
 
 주문 확정은 요청에 전달된 장바구니 항목 ID만 대상으로 한다. 서버가 항목의 소유권과 현재 메뉴의 판매 상태·온도 옵션·가격을 다시 확인하고, 클라이언트가 표시한 예상 총액과 다르면 주문을 만들지 않는다. 성공하면 주문·주문 항목을 저장하고 주문한 장바구니 줄만 제거한다. 전체 과정은 한 트랜잭션이다.
 
-상태 이동은 `received ↔ preparing ↔ ready ↔ completed`에서 인접한 한 단계만 허용한다. `received → canceled`는 관리자만 가능하며 사유 입력 없이 이후 이동은 없다. 고객 취소 API는 제공하지 않는다. 변경 이력은 별도로 저장하지 않는다. 되돌리기는 현재 상태에서 이전 인접 상태로 바꾸며, `status_version`을 검사하고 증가시켜 다른 관리자의 선행 변경을 감지한다. 고객에게는 취소 상태를 보여준다. 취소 시각은 마지막 상태 변경인 `updated_at`으로 확인할 수 있다.
+상태 이동은 `received ↔ preparing ↔ ready ↔ completed`에서 인접한 한 단계만 허용한다. `received → canceled`는 관리자만 가능하며 취소 사유 입력 후 상태·사유·버전을 함께 저장한다. 취소 후 이동·사유 편집은 없다. 고객 취소 API는 제공하지 않는다. 변경 이력은 별도로 저장하지 않는다. 되돌리기는 현재 상태에서 이전 인접 상태로 바꾸며, `status_version`을 검사하고 증가시켜 다른 관리자의 선행 변경을 감지한다. 고객은 본인 주문 목록·상세에서 취소 상태와 저장된 사유를 조회한다. 과거 주문의 null 사유는 임의로 채우지 않는다. 취소 시각은 마지막 상태 변경인 `updated_at`으로 확인할 수 있다.
 
 ### 뮤직박스
 
@@ -191,7 +191,7 @@ erDiagram
 
 1. 메뉴 등록 폼에 slug 입력·중복 검증을 추가하고 영문 메뉴명 입력·표시를 제거한다. slug는 URL 식별자이며 영문 표시명이 아니다. 고객 메뉴 상세 `/menus/{slug}`를 적용한다. 관리자 메뉴·장바구니·주문의 `menuId`와 회원·주문·신청곡 등의 경로 ID를 숫자 ID로 바꾸고, 메뉴 카테고리 선택은 하나로 제한한다. 프론트의 온도 값 `ice`를 `iced`로 통일한다.
 2. 브라우저 `localStorage` 장바구니를 회원별 서버 장바구니 API로 바꾼다. 기존 목 장바구니는 이관하지 않으며 초기화한다. 장바구니 체크 상태는 서버에 저장하지 않고, 주문 요청에 선택된 장바구니 항목 ID를 보낸다. 가격·판매 상태는 조회 때 현재 메뉴와 결합한다.
-3. 주문 페이지의 매장/포장, 카운터 결제수단, 요청사항을 주문 API에 연결한다. 고객 취소 버튼과 API는 제거한다. 관리자는 `received`에서만 사유 없이 취소할 수 있고, 고객 주문 목록·상세에는 취소 상태를 표시한다.
+3. 주문 페이지의 매장/포장, 카운터 결제수단, 요청사항을 주문 API에 연결한다. 고객 취소 버튼과 API는 제거한다. 관리자는 `received`에서만 사유를 필수 입력해 취소하고, 고객 주문 목록·상세에는 본인 주문의 취소 상태·사유를 표시한다. 컬럼 적용은 [취소 사유 연동 문서](admin/orders/2026-10-27-order-cancellation-reason.md)를 따른다.
 4. 새 관리자 회원관리 화면의 검색·필터·페이지 이동·고객 정지/해제를 DB 쿼리와 API로 연결한다. 관리자 생성 화면/API를 추가한다. 관리자 정지/해제는 현재 화면 규칙대로 거부한다.
 5. 뮤직박스 API는 `startedAt`, `durationSeconds`, 현재 곡, 버전 정보를 제공한다. 자동 다음 곡 전환은 서버에서 보장하며 반복 모드 API는 만들지 않는다.
 

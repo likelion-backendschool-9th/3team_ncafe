@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -32,6 +33,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Check;
 
 @Entity
+@Check(name = "ck_orders_cancel_reason", constraints = "cancel_reason is null or "
+        + "(status = 'canceled' and char_length(btrim(cancel_reason)) > 0)")
 @Check(constraints = "status in ('received','preparing','ready','completed','canceled') "
         + "and order_type in ('dine-in','takeout') and payment_method in ('card','cash') "
         + "and total_amount >= 0 and status_version >= 0")
@@ -47,6 +50,9 @@ public class Order {
 
     public static final String RECEIVED = "received";
     public static final String STATUS_PATTERN = "received|preparing|ready|completed|canceled";
+    public static final int MAX_CANCEL_REASON_LENGTH = 200;
+    // Match JavaScript String.trim(), including non-breaking spaces and BOM.
+    private static final Pattern REASON_EDGE_WHITESPACE = Pattern.compile("^[\\s\\p{Z}\\uFEFF]+|[\\s\\p{Z}\\uFEFF]+$");
     private static final List<String> PROGRESS = List.of("received", "preparing", "ready", "completed");
 
     @Id
@@ -70,6 +76,9 @@ public class Order {
 
     @Column(nullable = false, length = 20)
     private String status = RECEIVED;
+
+    @Column(length = MAX_CANCEL_REASON_LENGTH)
+    private String cancelReason;
 
     @Column(nullable = false)
     private int totalAmount;
@@ -145,6 +154,10 @@ public class Order {
     }
 
     public void changeStatus(String expectedStatus, Integer expectedVersion, String nextStatus) {
+        changeStatus(expectedStatus, expectedVersion, nextStatus, null);
+    }
+
+    public void changeStatus(String expectedStatus, Integer expectedVersion, String nextStatus, String reason) {
         if (!Objects.equals(status, expectedStatus) || !Objects.equals(statusVersion, expectedVersion)) {
             throw new AdminOrderException(Reason.STALE_STATUS, "주문 상태가 변경되었습니다. 새로고침해 주세요.");
         }
@@ -152,7 +165,23 @@ public class Order {
             throw new AdminOrderException(Reason.INVALID_STATUS, "현재 상태에서 변경할 수 없는 주문 상태입니다.");
         }
 
+        String normalized = reason == null ? "" : REASON_EDGE_WHITESPACE.matcher(reason)
+                .replaceAll("").replace("\r\n", "\n").replace('\r', '\n');
+        if (reason != null && reason.length() > MAX_CANCEL_REASON_LENGTH) {
+            throw new AdminOrderException(Reason.INVALID_INPUT, "취소 사유는 200자 이내로 입력해 주세요.");
+        }
+        if (reason != null && reason.indexOf('\0') >= 0) {
+            throw new AdminOrderException(Reason.INVALID_INPUT, "취소 사유에 사용할 수 없는 문자가 있습니다.");
+        }
+        if ("canceled".equals(nextStatus) && normalized.isEmpty()) {
+            throw new AdminOrderException(Reason.INVALID_INPUT, "고객에게 전달할 취소 사유를 입력해 주세요.");
+        }
+        if (!"canceled".equals(nextStatus) && !normalized.isEmpty()) {
+            throw new AdminOrderException(Reason.INVALID_INPUT, "취소할 때만 취소 사유를 입력할 수 있습니다.");
+        }
+
         status = nextStatus;
+        cancelReason = "canceled".equals(nextStatus) ? normalized : null;
         updatedAt = Instant.now();
     }
 

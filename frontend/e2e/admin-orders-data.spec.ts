@@ -1,10 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { parseAdminOrder, parseAdminOrderPage, type AdminOrderPageResponse, type AdminOrderResponse, type OrderApiQuery } from "../app/admin/orders/_lib/types";
+import { cancellationReasonError, parseAdminOrder, parseAdminOrderPage, type AdminOrderPageResponse, type AdminOrderResponse, type OrderApiQuery } from "../app/admin/orders/_lib/types";
 import { parseOrderId, parseOrderReturnQuery, parseOrderSearchParams, orderListHref, serializeOrderQuery } from "../app/admin/orders/_lib/searchParams";
 import { loadOrderDashboard } from "../app/admin/orders/_lib/queries";
 
 const order: AdminOrderResponse = {
-  id: 123456789, customerId: 3, customerName: "손님", orderType: "dine-in", paymentMethod: "cash", request: null,
+  id: 123456789, customerId: 3, customerName: "손님", orderType: "dine-in", paymentMethod: "cash", request: null, cancelReason: null,
   status: "received", statusVersion: 2, totalAmount: 8000, allowedStatuses: ["preparing", "canceled"],
   items: [{ id: 99, menuId: 8, menuName: "당시 메뉴", imageUrl: "/images/menus/coffee.png", temperature: "iced",
     quantity: 2, unitPrice: 4000, lineTotal: 8000 }],
@@ -79,4 +79,13 @@ test("a failed summary is an error instead of a fabricated zero-order dashboard"
     if (request.size === 1) throw new Error("backend unavailable");
     return page(request, 1);
   })).rejects.toThrow("backend unavailable");
+});
+
+test("cancellation reason contract rejects missing/invalid data and preserves legacy null", () => {
+  for (const value of [null, undefined, 42, "", " \n\t", "\u00a0\ufeff", "가".repeat(201), "😀".repeat(101)]) expect(cancellationReasonError(value)).toBeTruthy();
+  for (const value of ["가", "가".repeat(200), "😀".repeat(100)]) expect(cancellationReasonError(value)).toBeUndefined();
+  for (const cancelReason of [undefined, "", 42, "가".repeat(201)]) expect(() => parseAdminOrder({ ...order, status: "canceled", cancelReason })).toThrow();
+  expect(parseAdminOrder({ ...order, status: "canceled", cancelReason: null }).cancelReason).toBeNull();
+  expect(parseAdminOrder({ ...order, status: "canceled", cancelReason: "재료 소진\n다음에 이용해 주세요." }).cancelReason).toContain("\n");
+  expect(() => parseAdminOrder({ ...order, cancelReason: "임의 사유" })).toThrow();
 });

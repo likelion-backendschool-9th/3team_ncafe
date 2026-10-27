@@ -21,6 +21,7 @@ export type CustomerOrderResponse = {
   orderType: CustomerOrderType;
   paymentMethod: CustomerPaymentMethod;
   request: string | null;
+  cancelReason: string | null;
   totalAmount: number;
   items: CustomerOrderItemResponse[];
 };
