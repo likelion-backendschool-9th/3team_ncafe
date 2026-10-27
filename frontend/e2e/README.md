@@ -38,7 +38,7 @@ npx playwright install chromium
 npm run test:e2e -- e2e/session-auth.spec.ts e2e/backend-session.spec.ts e2e/admin-orders.spec.ts e2e/admin-orders-data.spec.ts
 ```
 
-위 인증·관리자 주문 28개 검사 중 12개는 쿠키·CSRF 전송과 주문 응답/URL/페이지 파서 검사, 16개는 실제 Chromium 브라우저 흐름(인증 8개·주문 8개)이다. 주문 검사는 관리자·고객을 실제 가입/로그인 API로 만들고 테스트 DB에서 해당 관리자 역할과 주문 fixture만 설정한다. 각 주문 테스트는 자신이 만든 회원·메뉴·주문만 정리한다. 기존 인증 fixture를 전역 삭제하지 않는다. `E2E_BASE_URL`과 `E2E_PG_CONTAINER`로 검증 서버·전용 DB 컨테이너 이름을 바꿀 수 있다. Playwright를 임시 경로에 설치했다면 설치와 실행에 같은 `PLAYWRIGHT_BROWSERS_PATH`를 지정한다. 결과·스크린샷·실패 trace는 운영체제 임시 폴더의 `ncafe-auth-e2e-results`에 기록한다.
+위 인증·관리자 주문 25개 검사 중 9개는 쿠키·CSRF 전송과 주문 응답/URL/페이지 파서 검사, 16개는 실제 Chromium 브라우저 흐름(인증 8개·주문 8개)이다. 주문 검사는 관리자·고객을 실제 가입/로그인 API로 만들고 테스트 DB에서 해당 관리자 역할과 주문 fixture만 설정한다. 각 주문 테스트는 자신이 만든 회원·메뉴·주문만 정리한다. 기존 인증 fixture를 전역 삭제하지 않는다. `E2E_BASE_URL`과 `E2E_PG_CONTAINER`로 검증 서버·전용 DB 컨테이너 이름을 바꿀 수 있다. Playwright를 임시 경로에 설치했다면 설치와 실행에 같은 `PLAYWRIGHT_BROWSERS_PATH`를 지정한다. 결과·스크린샷·실패 trace는 운영체제 임시 폴더의 `ncafe-auth-e2e-results`에 기록한다.
 
 완료 후 직접 실행한 서버들을 종료하고 `docker stop ncafe-auth-e2e-pg`로 전용 DB를 제거한다. 일반 프론트 실행은 중계 서버 없이 실제 백엔드의 `API_ORIGIN`을 사용한다.
 

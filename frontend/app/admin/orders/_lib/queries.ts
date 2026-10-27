@@ -6,7 +6,7 @@ export type OrderCounts = Record<OrderGroup, number> & { total: number };
 type ReadOrders = (query: OrderApiQuery) => Promise<AdminOrderPageResponse>;
 export const ORDER_PAGE_SIZE = 10;
 
-// The reader is supplied by the server page; grouping/pagination has no cookie or transport dependency.
+// 조회 함수는 서버 page가 넘긴다. 그룹·페이지 계산은 쿠키나 요청 방식에 의존하지 않는다.
 export async function loadOrderDashboard(query: OrderQuery, read: ReadOrders) {
   const groups = ORDER_GROUPS.filter(group => !query.status || group === (
     query.status === "completed" || query.status === "canceled" ? query.status : "active"));

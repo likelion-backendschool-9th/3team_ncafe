@@ -72,23 +72,6 @@ export class BackendSession {
     return parseMember(await (await this.send("/api/v1/my")).json());
   }
 
-  // Business requests share the authentication cookie jar and error-cookie relay.
-  // A mutation gets a fresh token once; never replay a potentially committed write.
-  async requestJson(path: `/api/v1/${string}`, init: RequestInit = {}): Promise<unknown> {
-    const method = (init.method ?? "GET").toUpperCase();
-    if (!["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"].includes(method)) {
-      throw new Error("지원하지 않는 요청 방식입니다.");
-    }
-    const headers = new Headers(init.headers);
-    if (!["GET", "HEAD"].includes(method)) {
-      const csrf = await this.csrf();
-      headers.set(csrf.headerName, csrf.token);
-    }
-    if (init.body !== undefined && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-    const response = await this.send(path, { ...init, method, headers });
-    return response.status === 204 || method === "HEAD" ? undefined : response.json();
-  }
-
   async signup(input: SignupInput): Promise<Member> {
     const csrf = await this.csrf();
     return parseMember(await (await this.send("/api/v1/auth/signup", {

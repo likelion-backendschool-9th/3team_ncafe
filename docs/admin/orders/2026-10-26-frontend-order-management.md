@@ -72,7 +72,7 @@ frontend/app/admin/orders/
 
 ## 3. 세션·CSRF와 공통 요청기
 
-착수 당시 `api/client.ts`에는 CSRF·응답 Set-Cookie 전달 기능이 없고, `BackendSession`의 `send`·`csrf`는 private이었다. 구현에서는 기존 메서드를 유지하며 업무용 `requestJson`을 추가했다. **기존 `apiFetch`에 PUT만 추가하는 방식으로 연결하지 않는다.**
+착수 당시 `api/client.ts`에는 CSRF·응답 Set-Cookie 전달 기능이 없고, `BackendSession`의 `send`·`csrf`는 private이었다. 구현에서는 기존 메서드를 유지하며 업무용 `requestJson`을 추가했다. **기존 `apiFetch`에 PUT만 추가하는 방식으로 연결하지 않는다.** (고침 10-27: #95에서 다른 업무 화면과 같이 `apiFetch`·`csrfHeaders`·`requireRole`로 통일하고 `requestJson`을 지웠다)
 
 1. 인증 담당과 공유할 최소 변경으로 `BackendSession`에 업무용 `requestJson` 진입점을 추가하는 방향을 사용한다. 기존 private 전송·CSRF·쿠키 jar를 재사용하며 인증 메서드의 계약은 유지한다.
 2. 조회는 현재 요청의 JSESSIONID로 생성한 읽기용 세션을 `_lib/api.ts`에서 사용한다. no-store를 유지하고 Server Component에서는 쿠키를 쓰지 않는다. 조회 중 만료된 쿠키는 기존 Proxy·다음 액션의 전송 규칙을 따른다.

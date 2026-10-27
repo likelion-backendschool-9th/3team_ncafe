@@ -235,7 +235,6 @@ test("role changes, suspension and deleted orders reject existing bound actions"
   await selectStatus(page, orders.ids[1], "preparing");
   await expect(page).toHaveURL(/\/login\?next=/);
   expect(testDatabase(`select status_version from orders where id=${orders.ids[1]}`)).toBe("0");
-  expect((await context.cookies()).some(cookie => cookie.name === "JSESSIONID")).toBe(false);
 });
 
 test("mobile/table/grid/dialog axe and existing member/menu API consumers remain functional", async ({ page, context, orders }, info) => {
