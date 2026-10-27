@@ -160,16 +160,16 @@ backend/
 │  │  ├─ MenusController.java, SongsController.java
 │  │  ├─ my/UsersController.java, CartItemsController.java
 │  │  │     OrdersController.java, SongsController.java
-│  │  └─ admin/UsersController.java, CategoriesController.java
-│  │           MenusController.java, OrdersController.java
-│  │           SongsController.java
+│  │  └─ admin/HomeController.java, UsersController.java
+│  │           CategoriesController.java, MenusController.java
+│  │           OrdersController.java, SongsController.java
 │  ├─ service/
 │  │  ├─ HomeService.java, AuthService.java
 │  │  ├─ MenusService.java, SongsService.java
 │  │  ├─ my/UsersService.java, CartItemsService.java
 │  │  │     OrdersService.java, SongsService.java
-│  │  ├─ admin/UsersService.java, CategoriesService.java
-│  │  │        MenusService.java, OrdersService.java
+│  │  ├─ admin/HomeService.java, UsersService.java
+│  │  │        CategoriesService.java, MenusService.java, OrdersService.java
 │  │  │        SongsService.java
 │  │  └─ support/MusicBoxSettler.java   # 여러 시스템이 같이 쓰는 Service 계층 부품
 │  ├─ repository/
@@ -251,9 +251,10 @@ Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요
 
 | `admin/` Controller | 담당 API | WBS |
 | --- | --- | --- |
+| `HomeController` | `GET /api/v1/admin/index/menus`(메뉴 현황 `totalCount`·`availableCount`·`unavailableCount`, 삭제한 메뉴 제외. 추가 계약, 2026-10-27) | 관리자 인덱스 조회 |
 | `UsersController` | `GET/POST /api/v1/admin/users`(POST는 DB 설계의 추가 기능), `GET/PUT /api/v1/admin/users/{id}` | 2.1~2.3, POST는 WBS 외 |
 | `CategoriesController` | `POST /api/v1/admin/categories`, `PUT/DELETE /api/v1/admin/categories/{id}`, `PUT /api/v1/admin/categories/order`; 화면 목록용 `GET /api/v1/admin/categories`는 추가 계약 | 13.1~13.4 |
-| `MenusController` | `GET/POST /api/v1/admin/menus`(GET은 검색·필터), `GET/PUT/DELETE /api/v1/admin/menus/{id}`; 관리자 인덱스 메뉴 현황 `GET /api/v1/admin/menus/summary`는 추가 계약 | 3.1~3.5 |
+| `MenusController` | `GET/POST /api/v1/admin/menus`(GET은 검색·필터), `GET/PUT/DELETE /api/v1/admin/menus/{id}` | 3.1~3.5 |
 | `OrdersController` | `GET /api/v1/admin/orders`(검색·필터·정렬), `GET /api/v1/admin/orders/{id}`, `PUT /api/v1/admin/orders/status`(인접 상태 변경·접수 취소 공통) | 5.1~5.3/12.1~12.3 |
 | `SongsController` | `GET /api/v1/admin/songs`, `PUT /api/v1/admin/songs/{id}/cancel`, `POST /api/v1/admin/songs/playlist`, `PUT /api/v1/admin/songs/playlist/{id}/order`, `PUT /api/v1/admin/songs/playlist/{id}`, `POST /api/v1/admin/songs/playlist/{id}/play`, `POST /api/v1/admin/songs/current/finish`, `POST /api/v1/admin/songs/current/cancel` | 10.1~10.9 |
 
