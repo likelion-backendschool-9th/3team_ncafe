@@ -329,16 +329,17 @@ export async function createMenu(_previous: MenuFormState, formData: FormData): 
 2026-10-25 인증 6단계에서 적용했다. 로그인·로그아웃의 실제 처리는 표준 Security 필터이며, AuthController 매핑은 인증 영역의 소유를 뜻한다. 상세 계약은 [인증 청사진](../backend/docs/2026-10-22-auth-blueprint.md)을 따른다.
 
 - `app/_lib/api/auth.ts`는 server-only이며 변경 요청에 CSRF·쿠키를 연결한다. BackendSession은 액션마다 새 쿠키 저장소를 만들고 모든 Set-Cookie를 유지하며 후속 요청에 갱신된 ID를 전달한다. 인증 변경에 위의 단순 조회 예시 요청기를 사용하지 않는다.
-- 가입·로그인 액션은 공개 인증 진입점이므로 기존 회원 requireRole 없이 입력 검증·백엔드 인증을 수행한다. 보호된 업무 액션은 첫 단계 권한 검사를 유지한다. 주문의 쓰기 가능한 세션 guard 예외는 위 Server Action 규칙을 따른다.
+- 가입·로그인 액션은 공개 인증 진입점이므로 기존 회원 requireRole 없이 입력 검증·백엔드 인증을 수행한다. 보호된 업무 액션은 첫 단계 권한 검사를 유지한다.
 - 로그인 후 새 CSRF를 받고, 가입만 성공한 경우 로그인 재시도로 안내한다. 비밀번호는 action state·응답·브라우저 저장소에 넣지 않는다.
 - SSR 회원 조회는 no-store이며 React cache는 한 렌더 안의 중복만 제거한다. Proxy는 보호 경로의 상태·역할을 확인하고 만료 쿠키를 반영한다. Server Components에서는 쿠키를 변경하지 않는다.
-- 관리자 주문 업무 요청은 `BackendSession.requestJson`으로 기존 jar·CSRF·오류 쿠키 전달을 재사용한다. `client.ts` 계약은 유지한다. 주문 POST는 Proxy의 일반 HTTP redirect 대신 액션의 권한 검사·redirect 처리를 사용하며, 주문 GET과 다른 경로의 Proxy 정책은 그대로다.
+- 관리자 주문 업무 요청은 `BackendSession.requestJson`으로 기존 jar·CSRF·오류 쿠키 전달을 재사용한다. `client.ts` 계약은 유지한다.
 - 다른 탭에는 임의 변경 알림만 전송한다. 탭 복귀·뒤로 가기에서 서버 인증을 새로 확인한다.
 
 - 인증 정보는 httpOnly 쿠키에 두고, localStorage에 두지 않는다.
 - 브라우저 호출은 `next.config.ts` rewrites로 프록시한다. 대상은 **`/api/v1/:path*`만**이다. `/api/*` 전체를 넘기면 기존 라우트 핸들러가 가려진다.
 - 프록시 없이 호출하면 포트만 달라도 CORS 대상이다. 그때는 `credentials: "include"`, 백엔드 `allowCredentials`, 정확한 origin이 필요하다.
 - `proxy.ts`가 `/cart`, `/checkout`, `/my/*`, `/admin/*`를 1차로 보호하고, 최종 권한 검증은 백엔드가 한다. Server Action의 권한 확인은 계속 유지한다.
+- Server Action 요청(`Next-Action` 헤더가 있는 POST)은 Proxy가 redirect하지 않고 그대로 넘긴다. Proxy의 HTTP redirect는 Action 응답으로 해석되지 않아 화면이 멈추기 때문이다. 세션 만료·권한 없음은 각 Action의 `requireRole` 등이 Next의 `redirect()`로 처리한다(2026-10-27, #94).
 
 ### 5-8. 기타
 
