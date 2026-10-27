@@ -1,10 +1,10 @@
 "use client";
 
-import { startTransition, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCart } from "@/app/_lib/cart/CartContext";
+import type { CartItemResponse } from "../../_lib/cart/types";
 import {
   MAX_ORDER_REQUEST_LENGTH,
   orderTypeLabels,
@@ -28,9 +28,9 @@ const paymentMethodHints: Record<PaymentMethod, string> = {
   cash: "카운터에서 현금으로 결제",
 };
 
-export function CheckoutView() {
+// 주문 대상은 page.tsx가 서버 장바구니에서 골라 넘긴다.
+export function CheckoutView({ items: orderItems }: { items: CartItemResponse[] }) {
   const router = useRouter();
-  const { items, hydrated, removeItem } = useCart();
   const [orderType, setOrderType] = useState<OrderType | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [request, setRequest] = useState("");
@@ -40,9 +40,8 @@ export function CheckoutView() {
   const [isPending, beginOrder] = useTransition();
   const submitting = useRef(false);
 
-  const orderItems = items.filter((item) => item.selected && item.available);
   const totalQuantity = orderItems.reduce((sum, item) => sum + item.quantity, 0);
-  const totalAmount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const totalAmount = orderItems.reduce((sum, item) => sum + item.lineTotal, 0);
   const missing = [
     !orderType && "수령 방식",
     !paymentMethod && "결제 수단",
@@ -54,11 +53,11 @@ export function CheckoutView() {
     submitting.current = true;
     setError(null);
 
-    const purchasedIds = orderItems.map((item) => item.id);
+    // 주문 확정은 아직 목 주문 저장소라 지금 형식(hot/ice)으로 넘긴다. 주문 API를 연결할 때 cartItemIds로 바꾼다.
     const input = {
       items: orderItems.map((item) => ({
-        menuId: item.menuId,
-        option: item.temperature,
+        menuId: String(item.menuId),
+        option: item.temperature === "iced" ? "ice" as const : item.temperature,
         quantity: item.quantity,
       })),
       expectedTotalAmount: totalAmount,
@@ -74,11 +73,7 @@ export function CheckoutView() {
           setError(result.message);
           return;
         }
-        // 장바구니를 비우는 순간 "주문할 메뉴 없음" 화면이 잠깐 보이지 않도록 먼저 표시해 둔다
-        startTransition(() => {
-          setPlaced(true);
-          purchasedIds.forEach(removeItem);
-        });
+        setPlaced(true);
         router.replace(`/my/orders/${encodeURIComponent(result.orderId)}?placed=1`);
       } catch {
         setError("주문 결과를 확인하지 못했습니다. 다시 주문하기 전에 주문목록을 확인해 주세요.");
@@ -88,8 +83,8 @@ export function CheckoutView() {
     });
   }
 
-  if (!hydrated || placed) {
-    return <p className={styles.loading} role="status">{placed ? "주문이 접수되었습니다. 주문 상세로 이동합니다..." : "주문서를 불러오는 중..."}</p>;
+  if (placed) {
+    return <p className={styles.loading} role="status">주문이 접수되었습니다. 주문 상세로 이동합니다...</p>;
   }
 
   if (orderItems.length === 0) {
@@ -120,14 +115,14 @@ export function CheckoutView() {
                   <span className={cart.nameRow}>
                     <strong className={styles.itemName}>{item.name}</strong>
                     {item.temperature && (
-                      <span className={cart.tempBadge} data-temp={item.temperature}>
+                      <span className={cart.tempBadge} data-temp={item.temperature === "hot" ? "hot" : "ice"}>
                         {item.temperature === "hot" ? "HOT" : "ICE"}
                       </span>
                     )}
                   </span>
-                  <span className={styles.itemMeta}>수량 {item.quantity}개 × {won.format(item.price)}원</span>
+                  <span className={styles.itemMeta}>수량 {item.quantity}개 × {won.format(item.unitPrice)}원</span>
                 </div>
-                <strong className={styles.itemTotal}>{won.format(item.price * item.quantity)}원</strong>
+                <strong className={styles.itemTotal}>{won.format(item.lineTotal)}원</strong>
               </li>
             ))}
           </ul>
