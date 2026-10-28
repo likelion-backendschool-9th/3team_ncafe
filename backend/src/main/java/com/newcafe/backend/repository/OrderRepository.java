@@ -23,6 +23,8 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 
     Page<Order> findAllByCustomerId(Long customerId, Pageable pageable);
 
+    long countByStatusIn(Collection<String> statuses);
+
     @EntityGraph(attributePaths = "items")
     Optional<Order> findByIdAndCustomerId(Long id, Long customerId);
 

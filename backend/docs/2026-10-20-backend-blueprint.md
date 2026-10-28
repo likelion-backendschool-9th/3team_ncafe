@@ -251,7 +251,7 @@ Controller와 Service는 **같은 시스템 이름**을 공유한다. DTO는 요
 
 | `admin/` Controller | 담당 API | WBS |
 | --- | --- | --- |
-| `HomeController` | `GET /api/v1/admin/index/menus`(메뉴 현황 `totalCount`·`availableCount`·`unavailableCount`, 삭제한 메뉴 제외. 추가 계약, 2026-10-27) | 관리자 인덱스 조회 |
+| `HomeController` | `GET /api/v1/admin/index/menus`(메뉴 현황 `totalCount`·`availableCount`·`unavailableCount`, 삭제한 메뉴 제외. 추가 계약, 2026-10-27), `GET /api/v1/admin/index/orders`(처리 중 주문 `activeCount`, 주문 목록 "처리 중" 그룹과 같은 `received`·`preparing`·`ready`), `GET /api/v1/admin/index/songs`(대기 신청곡 `pendingCount`, `pending` 상태. 추가 계약, 2026-10-28) | 관리자 인덱스 조회 |
 | `UsersController` | `GET/POST /api/v1/admin/users`(POST는 DB 설계의 추가 기능), `GET/PUT /api/v1/admin/users/{id}` | 2.1~2.3, POST는 WBS 외 |
 | `CategoriesController` | `POST /api/v1/admin/categories`, `PUT/DELETE /api/v1/admin/categories/{id}`, `PUT /api/v1/admin/categories/order`; 화면 목록용 `GET /api/v1/admin/categories`는 추가 계약 | 13.1~13.4 |
 | `MenusController` | `GET/POST /api/v1/admin/menus`(GET은 검색·필터), `GET/PUT/DELETE /api/v1/admin/menus/{id}` | 3.1~3.5 |
