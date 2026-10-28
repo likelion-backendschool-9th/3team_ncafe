@@ -18,8 +18,12 @@ import com.newcafe.backend.common.security.SessionUserDetails;
 import com.newcafe.backend.common.security.WithSessionUser;
 import com.newcafe.backend.config.PasswordConfig;
 import com.newcafe.backend.config.SecurityConfig;
+import com.newcafe.backend.entity.order.Order;
+import com.newcafe.backend.entity.song.SongStatus;
 import com.newcafe.backend.entity.user.UserRole;
 import com.newcafe.backend.repository.MenuRepository;
+import com.newcafe.backend.repository.OrderRepository;
+import com.newcafe.backend.repository.SongRepository;
 import com.newcafe.backend.repository.UserRepository;
 import com.newcafe.backend.service.admin.HomeService;
 
@@ -27,6 +31,8 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -51,6 +57,12 @@ class HomeControllerTest {
     @MockitoBean
     private MenuRepository menuRepository;
 
+    @MockitoBean
+    private OrderRepository orderRepository;
+
+    @MockitoBean
+    private SongRepository songRepository;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -62,24 +74,26 @@ class HomeControllerTest {
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = {"menus", "orders", "songs"})
     @WithAnonymousUser
-    void anonymousCannotReadMenuSummary() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/index/menus"))
+    void anonymousCannotReadSummaries(String section) throws Exception {
+        mockMvc.perform(get("/api/v1/admin/index/" + section))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"));
 
-        verifyNoInteractions(menuRepository);
+        verifyNoInteractions(menuRepository, orderRepository, songRepository);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = {"menus", "orders", "songs"})
     @WithSessionUser(role = UserRole.CUSTOMER)
-    void customerCannotReadMenuSummary() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/index/menus"))
+    void customerCannotReadSummaries(String section) throws Exception {
+        mockMvc.perform(get("/api/v1/admin/index/" + section))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("FORBIDDEN"));
 
-        verifyNoInteractions(menuRepository);
+        verifyNoInteractions(menuRepository, orderRepository, songRepository);
     }
 
     @Test
@@ -101,5 +115,23 @@ class HomeControllerTest {
                 .andExpect(jsonPath("$.totalCount").value(0))
                 .andExpect(jsonPath("$.availableCount").value(0))
                 .andExpect(jsonPath("$.unavailableCount").value(0));
+    }
+
+    @Test
+    void orderSummaryCountsActiveOrders() throws Exception {
+        when(orderRepository.countByStatusIn(Order.ACTIVE_STATUSES)).thenReturn(4L);
+
+        mockMvc.perform(get("/api/v1/admin/index/orders"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.activeCount").value(4));
+    }
+
+    @Test
+    void songSummaryCountsPendingSongs() throws Exception {
+        when(songRepository.countByStatus(SongStatus.pending)).thenReturn(2L);
+
+        mockMvc.perform(get("/api/v1/admin/index/songs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pendingCount").value(2));
     }
 }

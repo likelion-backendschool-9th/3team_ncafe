@@ -14,6 +14,8 @@ public interface SongRepository extends JpaRepository<Song, Long> {
 
     List<Song> findByStatus(SongStatus status);
 
+    long countByStatus(SongStatus status);
+
     Optional<Song> findFirstByStatus(SongStatus status);
 
     Optional<Song> findFirstByStatusOrderByPlaylistOrderAsc(SongStatus status);

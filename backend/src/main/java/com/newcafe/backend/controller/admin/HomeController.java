@@ -1,6 +1,8 @@
 package com.newcafe.backend.controller.admin;
 
 import com.newcafe.backend.dto.menus.MenuSummaryResponse;
+import com.newcafe.backend.dto.orders.OrderSummaryResponse;
+import com.newcafe.backend.dto.songs.SongSummaryResponse;
 import com.newcafe.backend.service.admin.HomeService;
 
 import lombok.RequiredArgsConstructor;
@@ -19,5 +21,15 @@ public class HomeController {
     @GetMapping("/menus")
     public MenuSummaryResponse menus() {
         return homeService.menuSummary();
+    }
+
+    @GetMapping("/orders")
+    public OrderSummaryResponse orders() {
+        return homeService.orderSummary();
+    }
+
+    @GetMapping("/songs")
+    public SongSummaryResponse songs() {
+        return homeService.songSummary();
     }
 }
