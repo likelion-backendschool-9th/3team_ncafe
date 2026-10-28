@@ -3,7 +3,7 @@
 import { clock, useYouTubePlayback } from "@/app/_components/useYouTubePlayback";
 import { VolumeControl } from "@/app/_components/VolumeControl";
 import { finishCurrent } from "../_actions";
-import type { OnAir } from "../_lib/helpers";
+import type { OnAir } from "@/app/_lib/songs/types";
 import { youtubeWatchUrl } from "@/app/_lib/youtube";
 import styles from "../music-box.module.css";
 
